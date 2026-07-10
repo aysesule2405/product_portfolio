@@ -25,6 +25,7 @@ export function visualWorkFileName(work: { id: string }): string {
 
 export const rootFiles: FileTreeEntry[] = [
   { label: "index.tsx", href: "/" },
+  { label: "fieldmap.md", href: "/#field-map" },
   { label: "process.md", href: "/#process" },
   { label: "community.md", href: "/#community" },
   { label: "about.md", href: "/about" },

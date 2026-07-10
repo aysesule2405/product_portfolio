@@ -3,7 +3,6 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { Project } from "@/lib/types";
 import { categories } from "@/lib/data/categories";
-import { categoryStyle } from "@/lib/category-color";
 import { EvidenceGlyph } from "@/components/ui/EvidenceGlyph";
 import { Tag } from "@/components/ui/Tag";
 import { WindowChrome } from "@/components/ui/WindowChrome";
@@ -19,8 +18,7 @@ export function ProjectCard({ project }: { project: Project }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="motion-card group relative flex flex-col overflow-hidden rounded-2xl border border-line bg-bg-raised"
-      style={categoryStyle(project.primaryCategory)}
+      className={`motion-card project-card project-theme-${project.slug} group relative flex flex-col overflow-hidden rounded-2xl border`}
     >
       <Link
         href={`/work/${project.slug}`}
@@ -63,7 +61,7 @@ export function ProjectCard({ project }: { project: Project }) {
             })}
           </div>
 
-          <h3 className="font-sans text-xl font-semibold text-ink">{project.title}</h3>
+          <h3 className="project-card-title font-sans text-xl font-semibold">{project.title}</h3>
           <p className="text-sm leading-relaxed text-ink-soft">{project.oneLiner}</p>
 
           <div className="mt-auto space-y-2 border-t border-line pt-4 text-sm">
@@ -72,7 +70,7 @@ export function ProjectCard({ project }: { project: Project }) {
               {project.keyDecision}
             </p>
             {project.outcome ? (
-              <p className="cat-tint-text font-medium">{project.outcome}</p>
+              <p className="project-card-outcome font-medium">{project.outcome}</p>
             ) : null}
           </div>
 

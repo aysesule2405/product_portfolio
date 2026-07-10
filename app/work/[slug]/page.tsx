@@ -14,7 +14,6 @@ import { CaseStudyStats } from "@/components/work/CaseStudyStats";
 import { CaseStudyOutlineRegistrar } from "@/components/work/CaseStudyOutlineRegistrar";
 import { projects, getProjectBySlug } from "@/lib/data/projects";
 import { categories } from "@/lib/data/categories";
-import { categoryStyle } from "@/lib/category-color";
 import { OutlineSection } from "@/lib/outline-context";
 
 export function generateStaticParams() {
@@ -45,7 +44,6 @@ export default async function CaseStudyPage({
   if (!project) notFound();
 
   const { caseStudy } = project;
-  const style = categoryStyle(project.primaryCategory);
 
   const currentIndex = projects.findIndex((p) => p.slug === project.slug);
   const next = projects[(currentIndex + 1) % projects.length];
@@ -70,9 +68,9 @@ export default async function CaseStudyPage({
   ];
 
   return (
-    <article>
+    <article className={`project-case project-theme-${project.slug}`}>
       <CaseStudyOutlineRegistrar sections={sections} />
-      <header className="cat-tint-bg border-b border-line" style={style}>
+      <header className="project-hero border-b">
         <Container className="py-14 sm:py-20">
           <Link
             href="/#field-map"
@@ -89,7 +87,7 @@ export default async function CaseStudyPage({
               <FieldLabel>
                 {project.fieldNumber} · Case study · {project.dateLabel}
               </FieldLabel>
-              <h1 className="mt-4 font-sans text-3xl font-semibold leading-tight text-ink sm:text-5xl">
+              <h1 className="project-hero-title mt-4 font-sans text-3xl font-semibold leading-tight sm:text-5xl">
                 {project.title}
               </h1>
               <p className="mt-4 text-lg leading-relaxed text-ink-soft">{project.oneLiner}</p>
@@ -202,7 +200,7 @@ export default async function CaseStudyPage({
             <p>{caseStudy.whatShipped}</p>
           </CaseStudyEntry>
           <CaseStudyEntry id="outcome" label="Outcome">
-            <p className="cat-tint-text font-medium" style={style}>{caseStudy.outcome}</p>
+            <p className="project-hero-accent font-medium">{caseStudy.outcome}</p>
           </CaseStudyEntry>
           <CaseStudyEntry id="what-learned" label="What I learned">
             <p>{caseStudy.whatILearned}</p>

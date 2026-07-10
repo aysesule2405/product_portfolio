@@ -1,5 +1,4 @@
 import { EvidenceRailData, ProblemCategory } from "@/lib/types";
-import { categoryStyle } from "@/lib/category-color";
 import { FieldLabel } from "@/components/ui/FieldLabel";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
@@ -15,13 +14,12 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 export function EvidenceRail({
   data,
-  category,
 }: {
   data: EvidenceRailData;
   category: ProblemCategory;
 }) {
   return (
-    <aside className="rounded-2xl border border-line bg-bg-raised p-6 lg:sticky lg:top-24" style={categoryStyle(category)}>
+    <aside className="rounded-2xl border border-line bg-bg-raised p-6 lg:sticky lg:top-24">
       <FieldLabel>Evidence rail</FieldLabel>
       <dl className="mt-4">
         <Row label="Users">{data.users}</Row>

@@ -10,14 +10,15 @@ import { categories } from "@/lib/data/categories";
 
 const WIDTH = 1600;
 const HEIGHT = 1000;
+const FULLSCREEN_SVG_SCALE = 0.92;
 
 const CLUSTERS: { id: TimelineLane; label: string; cx: number; cy: number; spread: number; blurb: string }[] = [
   {
     id: "roots",
     label: "Practice",
-    cx: 300,
-    cy: 260,
-    spread: 155,
+    cx: 370,
+    cy: 285,
+    spread: 220,
     blurb: "Ceramics, painting, and design — where the eye training started, long before product work.",
   },
   {
@@ -41,7 +42,7 @@ const CLUSTERS: { id: TimelineLane; label: string; cx: number; cy: number; sprea
     label: "Community",
     cx: 320,
     cy: 830,
-    spread: 145,
+    spread: 205,
     blurb: "Leading ACM-Women, GDSC, and Design Club — mentoring 70+ students along the way.",
   },
 ];
@@ -57,11 +58,257 @@ const MAGNITUDE: Record<TimelineNodeKind, number> = {
   artwork: 6,
 };
 
+const SKY_CONSTELLATIONS = [
+  // Real constellations — shapes checked against their actual asterisms.
+  {
+    id: "orion",
+    name: "Orion",
+    x: 1120,
+    y: 700,
+    scale: 1.2,
+    // Two shoulders + three-star belt + two feet — the hourglass silhouette
+    // that makes Orion recognizable, rather than an arbitrary polygon.
+    points: [
+      [10, 0], // Betelgeuse (shoulder)
+      [110, 14], // Bellatrix (shoulder)
+      [46, 58], // Mintaka (belt)
+      [62, 66], // Alnilam (belt)
+      [78, 74], // Alnitak (belt)
+      [26, 132], // Saiph (foot)
+      [104, 140], // Rigel (foot)
+    ],
+    lines: [
+      [0, 2],
+      [1, 4],
+      [2, 3],
+      [3, 4],
+      [2, 5],
+      [4, 6],
+    ],
+  },
+  {
+    id: "cassiopeia",
+    name: "Cassiopeia",
+    x: 720,
+    y: 160,
+    scale: 1.05,
+    points: [
+      [0, 44],
+      [48, 4],
+      [94, 54],
+      [142, 12],
+      [196, 58],
+    ],
+    lines: [
+      [0, 1],
+      [1, 2],
+      [2, 3],
+      [3, 4],
+    ],
+  },
+  {
+    id: "ursa-major",
+    name: "Ursa Major",
+    x: 1040,
+    y: 120,
+    scale: 1.0,
+    points: [
+      [0, 54],
+      [48, 20],
+      [96, 40],
+      [138, 14],
+      [194, 18],
+      [244, 52],
+      [202, 94],
+    ],
+    lines: [
+      [0, 1],
+      [1, 2],
+      [2, 3],
+      [3, 4],
+      [4, 5],
+      [5, 6],
+      [6, 3],
+    ],
+  },
+  {
+    id: "cygnus",
+    name: "Cygnus",
+    x: 170,
+    y: 560,
+    scale: 0.95,
+    // Deneb–Sadr–Albireo as the main axis, with the two wingtips on
+    // opposite sides of the hub so it actually reads as the Northern Cross.
+    points: [
+      [78, 0], // Deneb (tail)
+      [70, 62], // Sadr (hub)
+      [54, 148], // Albireo (head)
+      [0, 80], // Gienah (wingtip)
+      [150, 46], // Delta Cygni (wingtip)
+    ],
+    lines: [
+      [0, 1],
+      [1, 2],
+      [1, 3],
+      [1, 4],
+    ],
+  },
+  {
+    id: "lyra",
+    name: "Lyra",
+    x: 1320,
+    y: 500,
+    scale: 0.92,
+    points: [
+      [0, 0],
+      [52, 30],
+      [100, 18],
+      [126, 66],
+      [70, 96],
+      [22, 58],
+    ],
+    lines: [
+      [0, 1],
+      [1, 2],
+      [2, 3],
+      [3, 4],
+      [4, 5],
+      [5, 1],
+    ],
+  },
+  {
+    id: "taurus",
+    name: "Taurus",
+    x: 650,
+    y: 900,
+    scale: 0.85,
+    // The Hyades "V" (Aldebaran as the eye) with the two horn lines
+    // extending outward, same simplification most star charts use.
+    points: [
+      [100, 40], // Aldebaran (eye)
+      [55, 80], // vertex
+      [10, 45], // other V tip
+      [130, 0], // horn tip
+      [5, 0], // horn tip
+    ],
+    lines: [
+      [0, 1],
+      [1, 2],
+      [0, 3],
+      [2, 4],
+    ],
+  },
+  {
+    id: "pegasus",
+    name: "Pegasus",
+    x: 560,
+    y: 45,
+    scale: 0.85,
+    // The Great Square with a neck-and-head line off one corner.
+    points: [
+      [0, 0],
+      [110, 0],
+      [110, 110],
+      [0, 110],
+      [-40, 140],
+      [-80, 170],
+    ],
+    lines: [
+      [0, 1],
+      [1, 2],
+      [2, 3],
+      [3, 0],
+      [3, 4],
+      [4, 5],
+    ],
+  },
+  // Invented asterisms named after pieces from the art portfolio — same
+  // decorative style as the real ones, drawn from the visual-practice work
+  // (see lib/data/visual-work.ts) instead of the night sky.
+  {
+    id: "venus",
+    name: "Venus",
+    x: 110,
+    y: 90,
+    scale: 0.85,
+    // A standing figure in contrapposto, after "Venus After Botticelli".
+    points: [
+      [50, 0], // head
+      [50, 20], // neck
+      [38, 60], // waist
+      [54, 60], // hip
+      [30, 130], // left foot
+      [66, 130], // right foot
+    ],
+    lines: [
+      [0, 1],
+      [1, 2],
+      [1, 3],
+      [2, 4],
+      [3, 5],
+    ],
+  },
+  {
+    id: "girl-moon",
+    name: "Girl & Moon",
+    x: 1520,
+    y: 70,
+    scale: 0.8,
+    // A crescent moon with a small figure looking up at it, after "Girl & Moon".
+    points: [
+      [40, 0], // crescent tip
+      [65, 22], // crescent outer
+      [70, 48], // crescent outer
+      [48, 70], // crescent tip
+      [8, 88], // girl's head
+      [8, 120], // girl's feet
+    ],
+    lines: [
+      [0, 1],
+      [1, 2],
+      [2, 3],
+      [3, 4],
+      [4, 5],
+    ],
+  },
+  {
+    id: "night-sea",
+    name: "Night Sea",
+    x: 1450,
+    y: 880,
+    scale: 0.9,
+    // Waves under a moon with its reflection, after "Night Sea".
+    points: [
+      [60, 0], // moon
+      [0, 50], // wave
+      [25, 65], // wave
+      [50, 48], // wave
+      [75, 66], // wave
+      [100, 50], // wave
+      [60, 80], // reflection
+    ],
+    lines: [
+      [1, 2],
+      [2, 3],
+      [3, 4],
+      [4, 5],
+      [0, 6],
+    ],
+  },
+];
+
 interface PositionedNode extends TimelineNode {
   x: number;
   y: number;
   r: number;
   order: number;
+}
+
+interface AsterismPath {
+  id: string;
+  d: string;
+  dash?: string;
+  opacity: number;
 }
 
 function mulberry32(seed: number) {
@@ -96,15 +343,72 @@ function useBackgroundStars(count: number) {
   }, [count]);
 }
 
-/** Scatters a cluster's members around its anchor with even, organic
- * coverage (golden-angle spiral) — the same distribution real starfields
- * and sunflower seed-heads use, so points never land in a grid. */
-function spiralScatter(cx: number, cy: number, count: number, spread: number) {
-  const GOLDEN_ANGLE = 137.508 * (Math.PI / 180);
-  return Array.from({ length: count }, (_, i) => {
-    const r = spread * Math.sqrt((i + 0.6) / count);
-    const theta = i * GOLDEN_ANGLE;
-    return { x: cx + r * Math.cos(theta), y: cy + r * Math.sin(theta) };
+function jitter(seed: number, amount: number) {
+  return (mulberry32(seed)() - 0.5) * amount;
+}
+
+/** Rounds to 3 decimal places so coordinate strings serialize identically
+ * between server and client — Math.cos/Math.sin can differ by a single
+ * float64 ULP across JS engines, which otherwise trips a React hydration
+ * mismatch on these node positions. */
+function round(n: number) {
+  return Math.round(n * 1000) / 1000;
+}
+
+/** Each field-map lane gets a different asterism silhouette. Keeping this
+ * deterministic avoids hydration drift while breaking the old repeated
+ * spiral fingerprint across all four clusters. */
+function constellationScatter(cluster: (typeof CLUSTERS)[number], members: TimelineNode[]) {
+  const count = members.length;
+  const last = Math.max(count - 1, 1);
+
+  return members.map((node, i) => {
+    const t = count === 1 ? 0.5 : i / last;
+    const seed = hashString(`${cluster.id}-${node.id}`);
+
+    if (cluster.id === "roots") {
+      const angle = (-155 + t * 205) * (Math.PI / 180);
+      const radius = cluster.spread * (0.58 + (i % 3) * 0.18);
+      return {
+        x: round(cluster.cx + Math.cos(angle) * radius + jitter(seed, 30)),
+        y: round(cluster.cy + Math.sin(angle) * radius * 0.78 + jitter(seed + 1, 26)),
+      };
+    }
+
+    if (cluster.id === "experience") {
+      const row = i % 2 === 0 ? -1 : 1;
+      return {
+        x: round(cluster.cx + (t - 0.5) * cluster.spread * 1.55 + jitter(seed, 22)),
+        y: round(cluster.cy + row * (42 + i * 8) + (0.5 - Math.abs(t - 0.5)) * 54 + jitter(seed + 1, 18)),
+      };
+    }
+
+    if (cluster.id === "projects") {
+      const wave = Math.sin(t * Math.PI * 2.2) * 82;
+      const step = i % 3 === 0 ? -34 : i % 3 === 1 ? 18 : 52;
+      return {
+        x: round(cluster.cx - cluster.spread * 1.05 + t * cluster.spread * 2.1 + jitter(seed, 28)),
+        y: round(cluster.cy + wave + step + jitter(seed + 1, 22)),
+      };
+    }
+
+    if (cluster.id === "community") {
+      const columns = 3;
+      const col = i % columns;
+      const row = Math.floor(i / columns);
+      const rowOffset = row % 2 === 0 ? 0 : 44;
+      return {
+        x: round(cluster.cx - 150 + col * 130 + rowOffset + jitter(seed, 18)),
+        y: round(cluster.cy - 96 + row * 94 + (col === 1 ? -20 : col === 2 ? 18 : 0) + jitter(seed + 1, 16)),
+      };
+    }
+
+    const angle = (t * 330 - 70) * (Math.PI / 180);
+    const radius = cluster.spread * (0.56 + (i % 4) * 0.12);
+    return {
+      x: round(cluster.cx + Math.cos(angle) * radius * 0.9 + jitter(seed, 26)),
+      y: round(cluster.cy + Math.sin(angle) * radius * 0.7 + (i % 2 === 0 ? -18 : 22) + jitter(seed + 1, 24)),
+    };
   });
 }
 
@@ -143,6 +447,138 @@ function linePath(points: { x: number; y: number }[]): string {
   return d;
 }
 
+function branchPath(from: { x: number; y: number }, to: { x: number; y: number }) {
+  return `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
+}
+
+function realConstellationPath(constellation: (typeof SKY_CONSTELLATIONS)[number], line: number[]) {
+  const from = constellation.points[line[0]];
+  const to = constellation.points[line[1]];
+  return `M ${from[0]} ${from[1]} L ${to[0]} ${to[1]}`;
+}
+
+function RealSkyConstellations() {
+  return (
+    <g opacity="0.62" aria-hidden>
+      {SKY_CONSTELLATIONS.map((constellation, index) => (
+        <motion.g
+          key={constellation.id}
+          transform={`translate(${constellation.x} ${constellation.y}) scale(${constellation.scale})`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.15 + index * 0.08 }}
+        >
+          <g fill="none" stroke="color-mix(in srgb, var(--star-yellow) 48%, var(--star-blue-white) 52%)" strokeWidth="1" strokeLinecap="round">
+            {constellation.lines.map((line, i) => (
+              <motion.path
+                key={`${constellation.id}-line-${i}`}
+                d={realConstellationPath(constellation, line)}
+                strokeDasharray="4 7"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 0.38 }}
+                transition={{ duration: 0.9, delay: 0.24 + index * 0.08 + i * 0.03, ease: "easeInOut" }}
+              />
+            ))}
+          </g>
+          {constellation.points.map(([x, y], i) => (
+            <motion.circle
+              key={`${constellation.id}-star-${i}`}
+              cx={x}
+              cy={y}
+              r={i === 0 ? 3.2 : 2.2}
+              fill={i === 0 ? "var(--star-blue-white)" : "var(--star-yellow)"}
+              initial={{ opacity: 0, scale: 0.4 }}
+              animate={{ opacity: i === 0 ? 0.85 : 0.62, scale: 1 }}
+              transition={{ duration: 0.45, delay: 0.2 + index * 0.08 + i * 0.04 }}
+            />
+          ))}
+          <text
+            x={0}
+            y={-14}
+            className="fill-ink-faint font-mono"
+            style={{ fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase" }}
+          >
+            {constellation.name}
+          </text>
+        </motion.g>
+      ))}
+    </g>
+  );
+}
+
+function byAngle(points: PositionedNode[], cx: number, cy: number) {
+  return [...points].sort((a, b) => Math.atan2(a.y - cy, a.x - cx) - Math.atan2(b.y - cy, b.x - cx));
+}
+
+function clusterAsterisms(cluster: (typeof CLUSTERS)[number], members: PositionedNode[]): AsterismPath[] {
+  if (members.length < 2) return [];
+  const ordered = nearestNeighborOrder(members).map((i) => members[i]);
+  const angular = byAngle(members, cluster.cx, cluster.cy);
+  const paths: AsterismPath[] = [];
+
+  if (cluster.id === "community") {
+    paths.push({
+      id: `${cluster.id}-orbit`,
+      d: `${linePath([...angular, angular[0]])} Z`,
+      dash: "7 10",
+      opacity: 0.34,
+    });
+    const anchor = angular[Math.floor(angular.length / 2)];
+    angular
+      .filter((_, i) => i % 3 === 0)
+      .slice(0, 3)
+      .forEach((node, i) => {
+        if (node.id !== anchor.id) paths.push({ id: `${cluster.id}-branch-${i}`, d: branchPath(anchor, node), opacity: 0.38 });
+      });
+    return paths;
+  }
+
+  if (cluster.id === "projects") {
+    const upper = ordered.filter((node) => node.y <= cluster.cy + 26);
+    const lower = ordered.filter((node) => node.y > cluster.cy + 26);
+    paths.push({ id: `${cluster.id}-upper`, d: linePath(upper), opacity: 0.46 });
+    paths.push({ id: `${cluster.id}-lower`, d: linePath(lower), opacity: 0.42 });
+    if (upper.length && lower.length) {
+      paths.push({
+        id: `${cluster.id}-bridge-a`,
+        d: branchPath(upper[Math.floor(upper.length / 2)], lower[Math.floor(lower.length / 2)]),
+        dash: "4 8",
+        opacity: 0.34,
+      });
+      paths.push({
+        id: `${cluster.id}-bridge-b`,
+        d: branchPath(upper[upper.length - 1], lower[0]),
+        dash: "3 9",
+        opacity: 0.28,
+      });
+    }
+    return paths.filter((path) => path.d);
+  }
+
+  if (cluster.id === "experience") {
+    const center = ordered.reduce((best, node) => {
+      const bestDist = (best.x - cluster.cx) ** 2 + (best.y - cluster.cy) ** 2;
+      const nodeDist = (node.x - cluster.cx) ** 2 + (node.y - cluster.cy) ** 2;
+      return nodeDist < bestDist ? node : best;
+    }, ordered[0]);
+    ordered
+      .filter((node) => node.id !== center.id)
+      .forEach((node, i) => {
+        paths.push({ id: `${cluster.id}-ray-${i}`, d: branchPath(center, node), opacity: i === 0 ? 0.46 : 0.34 });
+      });
+    return paths;
+  }
+
+  const main = ordered.filter((_, i) => i % 2 === 0);
+  const branch = ordered.filter((_, i) => i % 2 === 1);
+  paths.push({ id: `${cluster.id}-main`, d: linePath(main.length > 1 ? main : ordered), opacity: 0.48 });
+  branch.slice(0, 3).forEach((node, i) => {
+    const anchor = main[Math.min(i, main.length - 1)] ?? ordered[0];
+    paths.push({ id: `${cluster.id}-branch-${i}`, d: branchPath(anchor, node), dash: i % 2 === 0 ? undefined : "4 8", opacity: 0.36 });
+  });
+  return paths.filter((path) => path.d);
+}
+
 function usePositionedNodes(nodes: TimelineNode[]): PositionedNode[] {
   return useMemo(() => {
     const result: PositionedNode[] = [];
@@ -150,7 +586,7 @@ function usePositionedNodes(nodes: TimelineNode[]): PositionedNode[] {
       const members = nodes
         .filter((n) => n.lane === cluster.id)
         .sort((a, b) => a.date.localeCompare(b.date));
-      const points = spiralScatter(cluster.cx, cluster.cy, members.length, cluster.spread);
+      const points = constellationScatter(cluster, members);
       members.forEach((node, i) => {
         result.push({ ...node, x: points[i].x, y: points[i].y, r: MAGNITUDE[node.kind] ?? 7, order: result.length });
       });
@@ -191,11 +627,12 @@ function Star({
   const seed = hashString(node.id);
   const idleDuration = 2.6 + mulberry32(seed)() * 2.2;
   const idleDelay = mulberry32(seed + 17)() * 2.5;
+  const starColor = `color-mix(in srgb, ${categoryColorVar(node.category)} 54%, var(--star-yellow) 46%)`;
 
   return (
     <g opacity={isDimmed ? 0.24 : 1} style={{ transition: "opacity 0.2s ease" }}>
       <motion.circle
-        style={{ x: node.x, y: node.y, color: categoryColorVar(node.category) }}
+        style={{ x: node.x, y: node.y, color: starColor }}
         fill="currentColor"
         filter="url(#star-glow)"
         initial={false}
@@ -214,7 +651,7 @@ function Star({
       />
 
       <motion.g
-        style={{ x: node.x, y: node.y, color: categoryColorVar(node.category) }}
+        style={{ x: node.x, y: node.y, color: starColor }}
         initial={{ opacity: 0, scale: 0 }}
         animate={
           !revealed
@@ -304,26 +741,30 @@ export function CommitConstellation({
   }, [positioned]);
 
   const clusterPaths = useMemo(() => {
-    return CLUSTERS.map((cluster) => {
+    return CLUSTERS.flatMap((cluster) => {
       const members = positioned.filter((n) => n.lane === cluster.id);
-      const order = nearestNeighborOrder(members);
-      const ordered = order.map((i) => members[i]);
-      return { id: cluster.id, d: linePath(ordered) };
+      return clusterAsterisms(cluster, members);
     });
   }, [positioned]);
 
   const threads = useMemo(() => {
     const seen = new Set<string>();
-    const result: { d: string; category: ProblemCategory; key: string }[] = [];
+    const categoryCounts = new Map<ProblemCategory, number>();
+    const result: { d: string; category: ProblemCategory; key: string; dash: string }[] = [];
     positioned.forEach((node) => {
       node.threadsTo.forEach((otherId) => {
         const other = byId.get(otherId);
         if (!other || other.lane === node.lane) return;
         const key = [node.id, otherId].sort().join("::");
         if (seen.has(key)) return;
+        const count = categoryCounts.get(node.category) ?? 0;
+        if (count >= 3) return;
         seen.add(key);
-        const d = `M ${node.x} ${node.y} L ${other.x} ${other.y}`;
-        result.push({ d, category: node.category, key });
+        categoryCounts.set(node.category, count + 1);
+        const mx = (node.x + other.x) / 2;
+        const my = (node.y + other.y) / 2 - 28 + (count % 2) * 56;
+        const d = `M ${node.x} ${node.y} Q ${mx} ${my} ${other.x} ${other.y}`;
+        result.push({ d, category: node.category, key, dash: count % 2 === 0 ? "2 8" : "1 7" });
       });
     });
     return result;
@@ -375,11 +816,11 @@ export function CommitConstellation({
           key={thread.key}
           d={thread.d}
           fill="none"
-          stroke={categoryColorVar(thread.category)}
-          strokeWidth={1}
-          strokeDasharray="2 5"
+          stroke={`color-mix(in srgb, ${categoryColorVar(thread.category)} 26%, var(--star-yellow) 74%)`}
+          strokeWidth={0.9}
+          strokeDasharray={thread.dash}
           initial={{ opacity: 0 }}
-          animate={{ opacity: isInView ? 0.28 : 0 }}
+          animate={{ opacity: isInView ? 0.22 : 0 }}
           transition={{ duration: 0.8, delay: 1.1 + (i % 7) * 0.05 }}
         />
       ))}
@@ -389,10 +830,11 @@ export function CommitConstellation({
           key={cluster.id}
           d={cluster.d}
           fill="none"
-          stroke="var(--line-strong)"
-          strokeWidth={1.3}
+          stroke="color-mix(in srgb, var(--star-yellow) 72%, var(--star-blue-white) 28%)"
+          strokeWidth={1.1}
+          strokeDasharray={cluster.dash}
           initial={{ pathLength: 0, opacity: 0 }}
-          animate={isInView ? { pathLength: 1, opacity: 0.6 } : { pathLength: 0, opacity: 0 }}
+          animate={isInView ? { pathLength: 1, opacity: cluster.opacity } : { pathLength: 0, opacity: 0 }}
           transition={{
             pathLength: { duration: 1, delay: i * 0.25, ease: "easeInOut" },
             opacity: { duration: 0.3, delay: i * 0.25 },
@@ -559,7 +1001,11 @@ export function CommitConstellation({
                 active ? "bg-bg-inset text-ink" : "text-ink-faint hover:text-ink-soft"
               )}
             >
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: categoryColorVar(cat.id) }} />
+              <span
+                aria-hidden
+                className="h-1.5 w-1.5 rounded-full"
+                style={{ background: `color-mix(in srgb, ${categoryColorVar(cat.id)} 38%, var(--star-yellow) 62%)` }}
+              />
               {cat.shortLabel}
             </button>
           );
@@ -640,13 +1086,13 @@ function ShootingStar({ shouldReduceMotion }: { shouldReduceMotion: boolean }) {
 }
 
 /** Where the view should land so a given cluster's anchor sits centered in
- * the viewport, accounting for the svg's internal 0.75x render scale and the
+ * the viewport, accounting for the svg's internal render scale and the
  * wrapper's center-origin transform (see the derivation in the tour effect
  * below — kept as a pure function so the math only lives in one place). */
 function viewForCluster(cluster: { cx: number; cy: number }, scale: number) {
   return {
-    x: scale * 0.75 * (WIDTH / 2 - cluster.cx),
-    y: scale * 0.75 * (HEIGHT / 2 - cluster.cy),
+    x: scale * FULLSCREEN_SVG_SCALE * (WIDTH / 2 - cluster.cx),
+    y: scale * FULLSCREEN_SVG_SCALE * (HEIGHT / 2 - cluster.cy),
     scale,
   };
 }
@@ -732,10 +1178,11 @@ function ConstellationFullscreen({
   }
 
   function onPointerMove(e: React.PointerEvent) {
-    if (!dragRef.current) return;
-    const dx = e.clientX - dragRef.current.startX;
-    const dy = e.clientY - dragRef.current.startY;
-    setView((v) => ({ ...v, x: dragRef.current!.viewX + dx, y: dragRef.current!.viewY + dy }));
+    const drag = dragRef.current;
+    if (!drag) return;
+    const dx = e.clientX - drag.startX;
+    const dy = e.clientY - drag.startY;
+    setView((v) => ({ ...v, x: drag.viewX + dx, y: drag.viewY + dy }));
   }
 
   function onPointerUp() {
@@ -819,11 +1266,12 @@ function ConstellationFullscreen({
           >
             <svg
               viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-              width={WIDTH * 0.75}
-              height={HEIGHT * 0.75}
+              width={WIDTH * FULLSCREEN_SVG_SCALE}
+              height={HEIGHT * FULLSCREEN_SVG_SCALE}
               role="img"
               aria-hidden
             >
+              <RealSkyConstellations />
               {children}
             </svg>
           </div>

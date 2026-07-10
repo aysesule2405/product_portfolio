@@ -13,6 +13,7 @@ interface Tab {
 
 const baseTabs: Tab[] = [
   { label: "index.tsx", href: "/" },
+  { label: "fieldmap.md", href: "/#field-map" },
   { label: "practice.md", href: "/visual-practice" },
   { label: "about.md", href: "/about" },
 ];
@@ -60,13 +61,13 @@ export function TopBar({
 
       <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
         {tabs.map((tab) => {
-          const active = tab.href === "/" ? pathname === "/" : pathname?.startsWith(tab.href);
+          const active = tab.href.includes("#") ? false : tab.href === "/" ? pathname === "/" : pathname?.startsWith(tab.href);
           return (
             <Link
               key={tab.href}
               href={tab.href}
               className={clsx(
-                "motion-press flex h-11 shrink-0 items-center gap-2 border-b-2 px-3 font-mono text-[12.5px]",
+                "motion-press motion-tab flex h-11 shrink-0 items-center gap-2 border-b-2 px-3 font-mono text-[12.5px]",
                 active
                   ? "border-accent text-ink"
                   : "border-transparent text-ink-faint hover:text-ink-soft"

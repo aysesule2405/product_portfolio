@@ -3,56 +3,75 @@
 
 :root {
   --bg: #edf1e8;
-  --bg-raised: color-mix(in srgb, #fff8e8 82%, transparent);
-  --bg-inset: color-mix(in srgb, #dce4df 72%, transparent);
+  --bg-raised: color-mix(in srgb, #fff9ec 84%, transparent);
+  --bg-inset: color-mix(in srgb, #e2e9e8 74%, transparent);
   --ink: #101826;
   --ink-soft: #4b5664;
   --ink-faint: #73808c;
-  --line: color-mix(in srgb, #c9a84c 24%, #435064 30%);
-  --line-strong: color-mix(in srgb, #c9a84c 46%, #233145 20%);
+  --star-blue: #2e78c8;
+  --star-blue-white: #79a9e8;
+  --star-white: #fff8e8;
+  --star-yellow: #c99b2f;
+  --star-orange: #dc6f2e;
+  --star-red: #c84c42;
+  --line: color-mix(in srgb, var(--star-blue) 18%, var(--star-yellow) 18%);
+  --line-strong: color-mix(in srgb, var(--star-yellow) 42%, var(--star-blue) 20%);
 
-  --accent: #c9a84c;
-  --accent-strong: #f0d891;
+  --accent: var(--star-yellow);
+  --accent-strong: var(--star-orange);
   --accent-on: #07101f;
 
   --positive: #4c6a47;
 
-  --cat-ai-trust: #d7b85d;
-  --cat-learning-workflows: #b99a45;
-  --cat-data-clarity: #9dc8ff;
-  --cat-campus-systems: #9ac9a4;
-  --cat-emotional-ux: #d7a8d9;
-  --cat-creative-tools: #83d4cf;
-  --cat-community-learning: #d7b85d;
-  --cat-design-systems: #b7c5ff;
+  --cat-ai-trust: var(--star-yellow);
+  --cat-learning-workflows: var(--star-orange);
+  --cat-data-clarity: var(--star-blue);
+  --cat-campus-systems: var(--star-red);
+  --cat-emotional-ux: #b55aa8;
+  --cat-creative-tools: var(--star-blue-white);
+  --cat-community-learning: var(--star-orange);
+  --cat-design-systems: #8f9cff;
+
+  /* CelestialBackdrop's atmospheric "deepen toward night" gradient stop —
+     a no-op in light theme (mixes --bg with itself) so it never muddies
+     the cream background; dark theme overrides this to a real near-black. */
+  --celestial-deep: var(--bg);
 
   color-scheme: light;
 }
 
 :root[data-theme="dark"] {
   --bg: #050b17;
-  --bg-raised: color-mix(in srgb, #0d1728 86%, transparent);
-  --bg-inset: color-mix(in srgb, #091120 88%, transparent);
+  --bg-raised: color-mix(in srgb, #0d1728 88%, transparent);
+  --bg-inset: color-mix(in srgb, #081323 90%, transparent);
   --ink: #f5eddc;
   --ink-soft: #c7bdab;
   --ink-faint: #827d75;
-  --line: color-mix(in srgb, #c9a84c 20%, #263550 55%);
-  --line-strong: color-mix(in srgb, #c9a84c 46%, #52617a 28%);
+  --star-blue: #66aaff;
+  --star-blue-white: #b9d9ff;
+  --star-white: #fff8e8;
+  --star-yellow: #f0c75a;
+  --star-orange: #f08a42;
+  --star-red: #ff665c;
+  --line: color-mix(in srgb, var(--star-blue) 18%, #263550 58%);
+  --line-strong: color-mix(in srgb, var(--star-yellow) 38%, var(--star-blue) 24%);
 
-  --accent: #c9a84c;
-  --accent-strong: #f0d891;
+  --accent: var(--star-yellow);
+  --accent-strong: var(--star-orange);
   --accent-on: #050b17;
 
   --positive: #8fbf86;
 
-  --cat-ai-trust: #e6c76f;
-  --cat-learning-workflows: #cfa950;
-  --cat-data-clarity: #83baff;
-  --cat-campus-systems: #95d49d;
-  --cat-emotional-ux: #d7a8d9;
-  --cat-creative-tools: #78d8cf;
-  --cat-community-learning: #d7b85d;
+  --cat-ai-trust: var(--star-yellow);
+  --cat-learning-workflows: var(--star-orange);
+  --cat-data-clarity: var(--star-blue);
+  --cat-campus-systems: var(--star-red);
+  --cat-emotional-ux: #d99bd8;
+  --cat-creative-tools: var(--star-blue-white);
+  --cat-community-learning: var(--star-orange);
   --cat-design-systems: #aebdff;
+
+  --celestial-deep: #050b17;
 
   color-scheme: dark;
 }
@@ -60,28 +79,36 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #050b17;
-    --bg-raised: color-mix(in srgb, #0d1728 86%, transparent);
-    --bg-inset: color-mix(in srgb, #091120 88%, transparent);
+    --bg-raised: color-mix(in srgb, #0d1728 88%, transparent);
+    --bg-inset: color-mix(in srgb, #081323 90%, transparent);
     --ink: #f5eddc;
     --ink-soft: #c7bdab;
     --ink-faint: #827d75;
-    --line: color-mix(in srgb, #c9a84c 20%, #263550 55%);
-    --line-strong: color-mix(in srgb, #c9a84c 46%, #52617a 28%);
+    --star-blue: #66aaff;
+    --star-blue-white: #b9d9ff;
+    --star-white: #fff8e8;
+    --star-yellow: #f0c75a;
+    --star-orange: #f08a42;
+    --star-red: #ff665c;
+    --line: color-mix(in srgb, var(--star-blue) 18%, #263550 58%);
+    --line-strong: color-mix(in srgb, var(--star-yellow) 38%, var(--star-blue) 24%);
 
-    --accent: #c9a84c;
-    --accent-strong: #f0d891;
+    --accent: var(--star-yellow);
+    --accent-strong: var(--star-orange);
     --accent-on: #050b17;
 
     --positive: #8fbf86;
 
-    --cat-ai-trust: #e6c76f;
-    --cat-learning-workflows: #cfa950;
-    --cat-data-clarity: #83baff;
-    --cat-campus-systems: #95d49d;
-    --cat-emotional-ux: #d7a8d9;
-    --cat-creative-tools: #78d8cf;
-    --cat-community-learning: #d7b85d;
+    --cat-ai-trust: var(--star-yellow);
+    --cat-learning-workflows: var(--star-orange);
+    --cat-data-clarity: var(--star-blue);
+    --cat-campus-systems: var(--star-red);
+    --cat-emotional-ux: #d99bd8;
+    --cat-creative-tools: var(--star-blue-white);
+    --cat-community-learning: var(--star-orange);
     --cat-design-systems: #aebdff;
+
+    --celestial-deep: #050b17;
 
     color-scheme: dark;
   }
@@ -112,7 +139,9 @@ html {
 }
 
 body {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 86%, #07101f), var(--bg));
+  background:
+    radial-gradient(circle at 84% 8%, color-mix(in srgb, var(--star-blue) 9%, transparent), transparent 24rem),
+    linear-gradient(180deg, color-mix(in srgb, var(--bg) 88%, #07101f), var(--bg));
   color: var(--ink);
   font-feature-settings: "ss01" 1;
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -155,12 +184,237 @@ body {
   border-color: color-mix(in srgb, var(--cat-color, var(--accent)) 40%, transparent);
 }
 
+.project-theme-obi {
+  --project-bg: linear-gradient(135deg, color-mix(in srgb, #fffaf0 88%, var(--bg-raised)), color-mix(in srgb, #fff5dc 82%, var(--bg-raised)));
+  --project-border: rgba(240, 160, 48, 0.3);
+  --project-accent: #e8952a;
+  --project-accent-2: #ffd080;
+  --project-title: #1a2440;
+  --project-muted: #b07020;
+  --project-shadow: rgba(232, 149, 42, 0.28);
+}
+
+.project-theme-framewise {
+  --project-bg: linear-gradient(135deg, color-mix(in srgb, #fff1e4 86%, var(--bg-raised)), color-mix(in srgb, #ffe0cc 78%, var(--bg-raised)));
+  --project-border: rgba(200, 92, 58, 0.3);
+  --project-accent: #f2a27f;
+  --project-accent-2: #1b0c09;
+  --project-title: #1b0c09;
+  --project-muted: #b8563c;
+  --project-shadow: rgba(200, 92, 58, 0.24);
+}
+
+.project-theme-openstax-align {
+  --project-bg: linear-gradient(135deg, color-mix(in srgb, #f4f0ff 82%, var(--bg-raised)), color-mix(in srgb, #eef5e8 78%, var(--bg-raised)));
+  --project-border: rgba(58, 32, 128, 0.26);
+  --project-accent: #3a2080;
+  --project-accent-2: #4a8c3c;
+  --project-title: #2e1a6e;
+  --project-muted: #c85a30;
+  --project-shadow: rgba(58, 32, 128, 0.22);
+}
+
+.project-theme-nau-athletics-student-portal {
+  --project-bg: linear-gradient(135deg, color-mix(in srgb, #f0f2ff 84%, var(--bg-raised)), color-mix(in srgb, #e4e8ff 78%, var(--bg-raised)));
+  --project-border: rgba(42, 58, 176, 0.28);
+  --project-accent: #2a3ab0;
+  --project-accent-2: #9098b0;
+  --project-title: #1a2080;
+  --project-muted: #2a3ab0;
+  --project-shadow: rgba(42, 58, 176, 0.24);
+}
+
+.project-theme-reverie {
+  --project-bg: linear-gradient(135deg, color-mix(in srgb, #f0f2ff 84%, var(--bg-raised)), color-mix(in srgb, #e6e9ff 78%, var(--bg-raised)));
+  --project-border: rgba(32, 36, 160, 0.25);
+  --project-accent: #2024a0;
+  --project-accent-2: #9aa8d8;
+  --project-title: #1a1f9c;
+  --project-muted: #4050b8;
+  --project-shadow: rgba(32, 36, 160, 0.22);
+}
+
+.project-theme-whisperwind-grove {
+  --project-bg: linear-gradient(135deg, color-mix(in srgb, #f5f0e5 82%, var(--bg-raised)), color-mix(in srgb, #eaf2e2 78%, var(--bg-raised)));
+  --project-border: rgba(138, 170, 114, 0.3);
+  --project-accent: #8aaa72;
+  --project-accent-2: #c47a7a;
+  --project-title: #3d5c2e;
+  --project-muted: #7a5040;
+  --project-shadow: rgba(138, 170, 114, 0.28);
+}
+
+.project-theme-ghibli-guardians {
+  --project-bg: linear-gradient(135deg, color-mix(in srgb, #fff8e7 84%, var(--bg-raised)), color-mix(in srgb, #e8f4dc 76%, var(--bg-raised)) 52%, color-mix(in srgb, #e0f2f7 78%, var(--bg-raised)));
+  --project-border: rgba(89, 130, 73, 0.3);
+  --project-accent: #6f9a54;
+  --project-accent-2: #6fb5c7;
+  --project-title: #35572b;
+  --project-muted: #8b5a2b;
+  --project-shadow: rgba(89, 130, 73, 0.24);
+}
+
+.project-card,
+.project-hero,
+.project-case {
+  --cat-color: var(--project-accent, var(--accent));
+  border-color: var(--project-border, var(--line));
+}
+
+.project-card {
+  background: var(--project-bg, var(--bg-raised));
+}
+
+.project-card::before,
+.project-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(90deg, var(--project-accent, var(--accent)), var(--project-accent-2, var(--accent-strong)));
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.project-card:hover {
+  box-shadow: 0 18px 44px var(--project-shadow, color-mix(in srgb, var(--cat-color, var(--accent)) 13%, transparent));
+}
+
+.project-card-title,
+.project-hero-title {
+  color: var(--project-title, var(--ink));
+}
+
+.project-card-outcome,
+.project-hero-accent {
+  color: var(--project-muted, var(--project-accent, var(--accent)));
+}
+
+.project-hero {
+  position: relative;
+  background: var(--project-bg, color-mix(in srgb, var(--cat-color, var(--accent)) 16%, var(--bg-raised)));
+  overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .project-theme-obi {
+    --project-bg: linear-gradient(135deg, rgba(240, 160, 48, 0.14), rgba(255, 208, 128, 0.06));
+    --project-title: #ffd080;
+    --project-muted: #ffa040;
+    --project-shadow: rgba(232, 149, 42, 0.2);
+  }
+
+  :root:not([data-theme="light"]) .project-theme-framewise {
+    --project-bg: linear-gradient(135deg, rgba(242, 162, 127, 0.16), rgba(27, 12, 9, 0.24));
+    --project-title: #ffd8c5;
+    --project-muted: #f2a27f;
+    --project-shadow: rgba(242, 162, 127, 0.18);
+  }
+
+  :root:not([data-theme="light"]) .project-theme-openstax-align {
+    --project-bg: linear-gradient(135deg, rgba(58, 32, 128, 0.18), rgba(74, 140, 60, 0.09));
+    --project-title: #c0a8ff;
+    --project-muted: #f0a880;
+    --project-shadow: rgba(58, 32, 128, 0.25);
+  }
+
+  :root:not([data-theme="light"]) .project-theme-nau-athletics-student-portal {
+    --project-bg: linear-gradient(135deg, rgba(42, 58, 176, 0.18), rgba(144, 152, 176, 0.08));
+    --project-title: #90a8e0;
+    --project-muted: #a0b4d8;
+    --project-shadow: rgba(42, 58, 176, 0.25);
+  }
+
+  :root:not([data-theme="light"]) .project-theme-reverie {
+    --project-bg: linear-gradient(135deg, rgba(32, 36, 160, 0.18), rgba(154, 168, 216, 0.08));
+    --project-title: #9aa8e8;
+    --project-muted: #b0bcf8;
+    --project-shadow: rgba(32, 36, 160, 0.22);
+  }
+
+  :root:not([data-theme="light"]) .project-theme-whisperwind-grove {
+    --project-bg: linear-gradient(135deg, rgba(138, 170, 114, 0.14), rgba(196, 122, 122, 0.07));
+    --project-title: #b8d4a0;
+    --project-muted: #c8a090;
+    --project-shadow: rgba(138, 170, 114, 0.2);
+  }
+
+  :root:not([data-theme="light"]) .project-theme-ghibli-guardians {
+    --project-bg: linear-gradient(135deg, rgba(111, 154, 84, 0.16), rgba(111, 181, 199, 0.08));
+    --project-title: #b8dca0;
+    --project-muted: #f2c18f;
+    --project-shadow: rgba(111, 154, 84, 0.2);
+  }
+}
+
+:root[data-theme="dark"] .project-theme-obi {
+  --project-bg: linear-gradient(135deg, rgba(240, 160, 48, 0.14), rgba(255, 208, 128, 0.06));
+  --project-title: #ffd080;
+  --project-muted: #ffa040;
+  --project-shadow: rgba(232, 149, 42, 0.2);
+}
+
+:root[data-theme="dark"] .project-theme-framewise {
+  --project-bg: linear-gradient(135deg, rgba(242, 162, 127, 0.16), rgba(27, 12, 9, 0.24));
+  --project-title: #ffd8c5;
+  --project-muted: #f2a27f;
+  --project-shadow: rgba(242, 162, 127, 0.18);
+}
+
+:root[data-theme="dark"] .project-theme-openstax-align {
+  --project-bg: linear-gradient(135deg, rgba(58, 32, 128, 0.18), rgba(74, 140, 60, 0.09));
+  --project-title: #c0a8ff;
+  --project-muted: #f0a880;
+  --project-shadow: rgba(58, 32, 128, 0.25);
+}
+
+:root[data-theme="dark"] .project-theme-nau-athletics-student-portal {
+  --project-bg: linear-gradient(135deg, rgba(42, 58, 176, 0.18), rgba(144, 152, 176, 0.08));
+  --project-title: #90a8e0;
+  --project-muted: #a0b4d8;
+  --project-shadow: rgba(42, 58, 176, 0.25);
+}
+
+:root[data-theme="dark"] .project-theme-reverie {
+  --project-bg: linear-gradient(135deg, rgba(32, 36, 160, 0.18), rgba(154, 168, 216, 0.08));
+  --project-title: #9aa8e8;
+  --project-muted: #b0bcf8;
+  --project-shadow: rgba(32, 36, 160, 0.22);
+}
+
+:root[data-theme="dark"] .project-theme-whisperwind-grove {
+  --project-bg: linear-gradient(135deg, rgba(138, 170, 114, 0.14), rgba(196, 122, 122, 0.07));
+  --project-title: #b8d4a0;
+  --project-muted: #c8a090;
+  --project-shadow: rgba(138, 170, 114, 0.2);
+}
+
+:root[data-theme="dark"] .project-theme-ghibli-guardians {
+  --project-bg: linear-gradient(135deg, rgba(111, 154, 84, 0.16), rgba(111, 181, 199, 0.08));
+  --project-title: #b8dca0;
+  --project-muted: #f2c18f;
+  --project-shadow: rgba(111, 154, 84, 0.2);
+}
+
 .motion-card {
+  position: relative;
   transition:
     transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
     border-color 0.22s ease,
     box-shadow 0.22s ease,
     background-color 0.22s ease;
+}
+
+.motion-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 0%, color-mix(in srgb, var(--star-white) 16%, transparent) 46%, transparent 58%);
+  opacity: 0;
+  transform: translateX(-34%);
+  transition: opacity 0.22s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
 }
 
 .motion-card:hover {
@@ -169,11 +423,17 @@ body {
   box-shadow: 0 18px 44px color-mix(in srgb, var(--cat-color, var(--accent)) 13%, transparent);
 }
 
+.motion-card:hover::after {
+  opacity: 1;
+  transform: translateX(34%);
+}
+
 .motion-press {
   transition:
     transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
     background-color 0.18s ease,
     border-color 0.18s ease,
+    box-shadow 0.18s ease,
     color 0.18s ease;
 }
 
@@ -183,6 +443,68 @@ body {
 
 .motion-press:active {
   transform: translateY(0) scale(0.98);
+}
+
+.motion-tab {
+  position: relative;
+}
+
+.motion-tab::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--star-blue), var(--star-yellow), var(--star-red));
+  opacity: 0;
+  transform: scaleX(0.35);
+  transform-origin: center;
+  transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.motion-tab:hover::after {
+  opacity: 0.55;
+  transform: scaleX(1);
+}
+
+.motion-tag {
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.motion-tag:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--cat-color, var(--accent)) 34%, transparent);
+}
+
+.motion-tag-dot {
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.motion-tag:hover .motion-tag-dot {
+  transform: scale(1.35);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--cat-color, var(--accent)) 52%, transparent);
+}
+
+.motion-field {
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.motion-field:focus-within {
+  transform: translateY(-1px);
+}
+
+.motion-input {
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.motion-field:focus-within .motion-field-label {
+  color: var(--accent);
+}
+
+.motion-field-label {
+  transition: color 0.18s ease;
 }
 
 .texture-drift svg > * {

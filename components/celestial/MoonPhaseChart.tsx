@@ -32,6 +32,14 @@ function formatShortDate(date: Date) {
   }).format(date);
 }
 
+/** Rounds to 3 decimal places so SVG coordinate strings serialize
+ * identically between server and client — Math.cos/Math.sin can differ by
+ * a single float64 ULP across JS engines, which otherwise trips a React
+ * hydration mismatch on these purely decorative tick marks. */
+function round(n: number) {
+  return Math.round(n * 1000) / 1000;
+}
+
 function phasePoint(index: number, radius: number, center: number) {
   const angle = (index / 8) * Math.PI * 2 - Math.PI / 2;
   return {
@@ -79,9 +87,9 @@ export function MoonPhaseChart() {
         <div className="relative mx-auto aspect-square w-full max-w-[390px] p-6 sm:p-8">
           <svg viewBox="0 0 300 300" className="absolute inset-0 h-full w-full">
             <defs>
-              <linearGradient id="lunar-cycle-gold" x1="0" x2="1" y1="0" y2="1">
-                <stop offset="0" stopColor="rgba(240,216,145,0.95)" />
-                <stop offset="1" stopColor="rgba(170,128,48,0.68)" />
+              <linearGradient id="lunar-cycle-light" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0" stopColor="var(--star-yellow)" stopOpacity="0.95" />
+                <stop offset="1" stopColor="var(--star-orange)" stopOpacity="0.68" />
               </linearGradient>
             </defs>
 
@@ -93,35 +101,35 @@ export function MoonPhaseChart() {
               return (
                 <line
                   key={i}
-                  x1={150 + Math.cos(angle) * inner}
-                  y1={150 + Math.sin(angle) * inner}
-                  x2={150 + Math.cos(angle) * outer}
-                  y2={150 + Math.sin(angle) * outer}
-                  stroke="rgba(201,168,76,0.28)"
+                  x1={round(150 + Math.cos(angle) * inner)}
+                  y1={round(150 + Math.sin(angle) * inner)}
+                  x2={round(150 + Math.cos(angle) * outer)}
+                  y2={round(150 + Math.sin(angle) * outer)}
+                  stroke="color-mix(in srgb, var(--star-yellow) 28%, transparent)"
                   strokeWidth={major ? 1.2 : 0.6}
                 />
               );
             })}
 
-            <circle cx="150" cy="150" r="136" fill="none" stroke="rgba(201,168,76,0.22)" strokeWidth="1" />
-            <circle cx="150" cy="150" r="118" fill="none" stroke="rgba(201,168,76,0.24)" strokeWidth="1" />
-            <circle cx="150" cy="150" r="94" fill="none" stroke="rgba(201,168,76,0.14)" strokeDasharray="5 12" />
+            <circle cx="150" cy="150" r="136" fill="none" stroke="color-mix(in srgb, var(--star-blue) 22%, transparent)" strokeWidth="1" />
+            <circle cx="150" cy="150" r="118" fill="none" stroke="color-mix(in srgb, var(--star-yellow) 24%, transparent)" strokeWidth="1" />
+            <circle cx="150" cy="150" r="94" fill="none" stroke="color-mix(in srgb, var(--star-blue-white) 14%, transparent)" strokeDasharray="5 12" />
             <circle
               cx="150"
               cy="150"
               r="118"
               fill="none"
-              stroke="url(#lunar-cycle-gold)"
+              stroke="url(#lunar-cycle-light)"
               strokeWidth="3"
               strokeLinecap="round"
               strokeDasharray={`${circumference * cycleProgress} ${circumference}`}
               transform="rotate(-90 150 150)"
             />
 
-            <line x1="150" y1="14" x2="150" y2="42" stroke="rgba(201,168,76,0.38)" />
-            <line x1="150" y1="258" x2="150" y2="286" stroke="rgba(201,168,76,0.38)" />
-            <line x1="14" y1="150" x2="42" y2="150" stroke="rgba(201,168,76,0.38)" />
-            <line x1="258" y1="150" x2="286" y2="150" stroke="rgba(201,168,76,0.38)" />
+            <line x1="150" y1="14" x2="150" y2="42" stroke="color-mix(in srgb, var(--star-yellow) 38%, transparent)" />
+            <line x1="150" y1="258" x2="150" y2="286" stroke="color-mix(in srgb, var(--star-yellow) 38%, transparent)" />
+            <line x1="14" y1="150" x2="42" y2="150" stroke="color-mix(in srgb, var(--star-yellow) 38%, transparent)" />
+            <line x1="258" y1="150" x2="286" y2="150" stroke="color-mix(in srgb, var(--star-yellow) 38%, transparent)" />
             <text x="150" y="49" textAnchor="middle" className="fill-accent font-mono" style={{ fontSize: 10 }}>
               New
             </text>
@@ -137,11 +145,11 @@ export function MoonPhaseChart() {
 
             {phase ? (
               <g>
-                <circle cx={marker.x} cy={marker.y} r="8" fill="var(--bg)" stroke="#f0d891" strokeWidth="2" />
+                <circle cx={marker.x} cy={marker.y} r="8" fill="var(--bg)" stroke="var(--star-orange)" strokeWidth="2" />
                 <path
                   d="M0,-4 L1.2,-1.2 L4,0 L1.2,1.2 L0,4 L-1.2,1.2 L-4,0 L-1.2,-1.2 Z"
                   transform={`translate(${marker.x} ${marker.y})`}
-                  fill="#f0d891"
+                  fill="var(--star-yellow)"
                 />
               </g>
             ) : null}
@@ -153,7 +161,7 @@ export function MoonPhaseChart() {
               alt={currentImage.alt}
               fill
               sizes="(min-width: 1024px) 280px, 65vw"
-              className="object-contain drop-shadow-[0_0_28px_rgba(240,216,145,0.18)]"
+              className="object-contain drop-shadow-[0_0_28px_color-mix(in_srgb,var(--star-yellow)_18%,transparent)]"
               priority={false}
             />
           </div>

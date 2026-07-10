@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { ProblemCategory, ProjectStat } from "@/lib/types";
-import { categoryStyle } from "@/lib/category-color";
 
 /** Pulls the handful of already-substantiated facts out of the case study
  * prose (a real count, a real placement, a real award) and gives them the
@@ -10,7 +9,6 @@ import { categoryStyle } from "@/lib/category-color";
  * paragraphs — never a metric invented for the sake of having one. */
 export function CaseStudyStats({
   stats,
-  category,
 }: {
   stats: ProjectStat[];
   category: ProblemCategory;
@@ -27,7 +25,6 @@ export function CaseStudyStats({
           viewport={{ once: true, margin: "-40px" }}
           transition={{ duration: 0.4, delay: i * 0.08, ease: "easeOut" }}
           className="cat-tint-border rounded-2xl border bg-bg-raised px-6 py-5"
-          style={categoryStyle(category)}
         >
           <p className="cat-tint-text font-serif text-4xl font-semibold leading-none sm:text-5xl">
             {stat.value}

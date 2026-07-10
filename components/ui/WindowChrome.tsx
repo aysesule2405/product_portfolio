@@ -6,9 +6,7 @@ import clsx from "clsx";
  * across the site instead of drifting between hand-copied instances.
  *
  * Colors read as real close/minimize/expand buttons, pulled from the
- * existing category palette rather than new one-off hex values: red from
- * data-clarity, yellow from learning-workflows, and blue (not macOS's
- * green) from the site's own accent, since blue is the signature hue here. */
+ * shared star-temperature palette instead of one-off hex values. */
 export function WindowChrome({
   filename,
   right,
@@ -31,20 +29,21 @@ export function WindowChrome({
     >
       <span
         aria-hidden
-        title="Close"
+        title="Blue star"
         className={clsx("shrink-0 rounded-full transition-transform group-hover:scale-110", dot)}
-        style={{ background: "var(--cat-data-clarity)" }}
+        style={{ background: "var(--star-blue)" }}
       />
       <span
         aria-hidden
-        title="Minimize"
+        title="Gold star"
         className={clsx("shrink-0 rounded-full transition-transform group-hover:scale-110", dot)}
-        style={{ background: "var(--cat-learning-workflows)" }}
+        style={{ background: "var(--star-yellow)" }}
       />
       <span
         aria-hidden
-        title="Expand"
-        className={clsx("shrink-0 rounded-full bg-accent transition-transform group-hover:scale-110", dot)}
+        title="Red star"
+        className={clsx("shrink-0 rounded-full transition-transform group-hover:scale-110", dot)}
+        style={{ background: "var(--star-red)" }}
       />
       <span className="ml-2 truncate font-mono text-[11px] text-ink-faint">{filename}</span>
       {right ? <span className="ml-auto shrink-0">{right}</span> : null}

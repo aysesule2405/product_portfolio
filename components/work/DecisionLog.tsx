@@ -1,16 +1,14 @@
 import { DecisionLogEntry, ProblemCategory } from "@/lib/types";
-import { categoryStyle } from "@/lib/category-color";
 import { FieldLabel } from "@/components/ui/FieldLabel";
 
 export function DecisionLog({
   entries,
-  category,
 }: {
   entries: DecisionLogEntry[];
   category: ProblemCategory;
 }) {
   return (
-    <div className="rounded-2xl border border-line bg-bg-raised p-6 sm:p-8" style={categoryStyle(category)}>
+    <div className="rounded-2xl border border-line bg-bg-raised p-6 sm:p-8">
       <FieldLabel>Decision log</FieldLabel>
       <p className="mt-3 text-sm text-ink-soft">
         The product decisions that shaped this project, and what each one cost.

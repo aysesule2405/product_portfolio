@@ -67,8 +67,8 @@ export function ContactSection() {
                       </div>
 
                       <div className="grid gap-3 sm:grid-cols-2">
-                        <div>
-                          <label htmlFor="name" className="mb-1 block font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
+                        <div className="motion-field">
+                          <label htmlFor="name" className="motion-field-label mb-1 block font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
                             Name
                           </label>
                           <input
@@ -77,11 +77,11 @@ export function ContactSection() {
                             name="name"
                             placeholder="Your name"
                             required
-                            className="w-full rounded-lg border border-line bg-bg-inset/70 px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+                            className="motion-input w-full rounded-lg border border-line bg-bg-inset/70 px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
                           />
                         </div>
-                        <div>
-                          <label htmlFor="email" className="mb-1 block font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
+                        <div className="motion-field">
+                          <label htmlFor="email" className="motion-field-label mb-1 block font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
                             Email
                           </label>
                           <input
@@ -90,14 +90,14 @@ export function ContactSection() {
                             name="email"
                             placeholder="your@email.com"
                             required
-                            className="w-full rounded-lg border border-line bg-bg-inset/70 px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+                            className="motion-input w-full rounded-lg border border-line bg-bg-inset/70 px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
                           />
                         </div>
                       </div>
 
-                      <div>
+                      <div className="motion-field">
                         <div className="mb-1 flex items-center justify-between gap-3">
-                          <label htmlFor="message" className="block font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
+                          <label htmlFor="message" className="motion-field-label block font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
                             Message
                           </label>
                           <span className="font-mono text-[10px] text-ink-faint">max 500</span>
@@ -109,7 +109,7 @@ export function ContactSection() {
                           rows={5}
                           required
                           maxLength={500}
-                          className="w-full resize-none rounded-lg border border-line bg-bg-inset/70 px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+                          className="motion-input w-full resize-none rounded-lg border border-line bg-bg-inset/70 px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
                         />
                       </div>
 

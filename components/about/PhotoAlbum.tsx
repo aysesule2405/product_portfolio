@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import clsx from "clsx";
 import { WindowChrome } from "@/components/ui/WindowChrome";
 
 const photos = [
   {
     src: "/images/Ayse 1.jpeg",
-    alt: "Ayse Sule Ekiz standing beneath blooming trees",
+    alt: "Ayse Sule Ekiz in front of blue background",
     label: "portrait 01",
   },
   {
@@ -54,7 +55,14 @@ function wrapIndex(index: number) {
 
 export function PhotoAlbum() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [direction, setDirection] = useState(1);
+  const shouldReduceMotion = useReducedMotion();
   const activePhoto = photos[activeIndex];
+
+  function showPhoto(nextIndex: number, nextDirection: number) {
+    setDirection(nextDirection);
+    setActiveIndex(wrapIndex(nextIndex));
+  }
 
   return (
     <div className="motion-card overflow-hidden rounded-2xl border border-line bg-bg-raised/90 shadow-2xl shadow-black/20 backdrop-blur-xl">
@@ -70,21 +78,32 @@ export function PhotoAlbum() {
 
       <div className="relative border-b border-line bg-bg/60 p-4 sm:p-5">
         <div className="relative aspect-square overflow-hidden rounded-lg border border-line bg-bg-inset">
-          <Image
-            key={activePhoto.src}
-            src={activePhoto.src}
-            alt={activePhoto.alt}
-            fill
-            priority={activeIndex === 0}
-            sizes="(min-width: 1024px) 520px, 90vw"
-            className="object-cover"
-          />
+          <AnimatePresence mode="popLayout" initial={false} custom={direction}>
+            <motion.div
+              key={activePhoto.src}
+              className="absolute inset-0"
+              custom={direction}
+              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: direction * 36, scale: 1.02 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: direction * -36, scale: 0.985 }}
+              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <Image
+                src={activePhoto.src}
+                alt={activePhoto.alt}
+                fill
+                priority={activeIndex === 0}
+                sizes="(min-width: 1024px) 520px, 90vw"
+                className="object-cover"
+              />
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         <div className="absolute inset-x-6 top-1/2 flex -translate-y-1/2 justify-between">
           <button
             type="button"
-            onClick={() => setActiveIndex((index) => wrapIndex(index - 1))}
+            onClick={() => showPhoto(activeIndex - 1, -1)}
             aria-label="Show previous photo"
             className="motion-press flex h-9 w-9 items-center justify-center rounded-full border border-line bg-bg-raised/85 text-ink shadow-lg backdrop-blur hover:border-line-strong"
           >
@@ -94,7 +113,7 @@ export function PhotoAlbum() {
           </button>
           <button
             type="button"
-            onClick={() => setActiveIndex((index) => wrapIndex(index + 1))}
+            onClick={() => showPhoto(activeIndex + 1, 1)}
             aria-label="Show next photo"
             className="motion-press flex h-9 w-9 items-center justify-center rounded-full border border-line bg-bg-raised/85 text-ink shadow-lg backdrop-blur hover:border-line-strong"
           >
@@ -112,15 +131,16 @@ export function PhotoAlbum() {
             <button
               key={photo.src}
               type="button"
-              onClick={() => setActiveIndex(index)}
+              onClick={() => showPhoto(index, index >= activeIndex ? 1 : -1)}
               aria-label={`Show ${photo.label}`}
               aria-current={active ? "true" : undefined}
               className={clsx(
-                "relative h-16 w-16 shrink-0 overflow-hidden rounded-md border transition",
+                "motion-press relative h-16 w-16 shrink-0 overflow-hidden rounded-md border transition",
                 active ? "border-accent ring-2 ring-accent/45" : "border-line opacity-70 hover:opacity-100"
               )}
             >
               <Image src={photo.src} alt="" fill sizes="64px" className="object-cover" />
+              {active ? <span className="absolute inset-x-2 bottom-1 h-0.5 rounded-full bg-accent" /> : null}
             </button>
           );
         })}

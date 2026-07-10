@@ -15,11 +15,11 @@ export function Tag({
     <span
       style={categoryStyle(category)}
       className={clsx(
-        "cat-tint-bg cat-tint-text inline-flex items-center gap-1.5 rounded-full border border-transparent px-3 py-1 text-xs font-medium",
+        "motion-tag cat-tint-bg cat-tint-text inline-flex items-center gap-1.5 rounded-full border border-transparent px-3 py-1 text-xs font-medium",
         className
       )}
     >
-      <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--cat-color)" }} />
+      <span aria-hidden className="motion-tag-dot h-1.5 w-1.5 rounded-full" style={{ background: "var(--cat-color)" }} />
       {children}
     </span>
   );

@@ -25,22 +25,22 @@ interface ShootingStar {
 }
 
 const STAR_COLORS = [
-  { color: "#76adff", glow: "rgba(81,148,255,0.45)", weight: 0.14 },
-  { color: "#b9d6ff", glow: "rgba(159,200,255,0.38)", weight: 0.18 },
-  { color: "#fff7e3", glow: "rgba(255,247,227,0.34)", weight: 0.28 },
-  { color: "#f5ddb0", glow: "rgba(245,221,176,0.26)", weight: 0.2 },
-  { color: "#d4ad54", glow: "rgba(212,173,84,0.24)", weight: 0.14 },
-  { color: "#e1905b", glow: "rgba(225,144,91,0.2)", weight: 0.06 },
+  { color: "var(--star-blue)", glow: "color-mix(in srgb, var(--star-blue) 45%, transparent)", weight: 0.16 },
+  { color: "var(--star-blue-white)", glow: "color-mix(in srgb, var(--star-blue-white) 38%, transparent)", weight: 0.2 },
+  { color: "var(--star-white)", glow: "color-mix(in srgb, var(--star-white) 32%, transparent)", weight: 0.26 },
+  { color: "var(--star-yellow)", glow: "color-mix(in srgb, var(--star-yellow) 28%, transparent)", weight: 0.2 },
+  { color: "var(--star-orange)", glow: "color-mix(in srgb, var(--star-orange) 22%, transparent)", weight: 0.12 },
+  { color: "var(--star-red)", glow: "color-mix(in srgb, var(--star-red) 18%, transparent)", weight: 0.06 },
 ];
 
 const backdropStyle = {
   background:
-    "radial-gradient(circle at 80% 22%, rgba(63,105,172,0.16), transparent 28rem), radial-gradient(circle at 12% 82%, rgba(185,214,255,0.08), transparent 24rem), linear-gradient(180deg, color-mix(in srgb, var(--bg) 76%, transparent), color-mix(in srgb, var(--bg) 88%, #050b17))",
+    "radial-gradient(circle at 80% 22%, color-mix(in srgb, var(--star-blue) 15%, transparent), transparent 28rem), radial-gradient(circle at 16% 82%, color-mix(in srgb, var(--star-orange) 7%, transparent), transparent 24rem), radial-gradient(circle at 94% 72%, color-mix(in srgb, var(--star-red) 5%, transparent), transparent 22rem), linear-gradient(180deg, color-mix(in srgb, var(--bg) 76%, transparent), color-mix(in srgb, var(--bg) 88%, var(--celestial-deep)))",
 };
 
 const gridStyle = {
   backgroundImage:
-    "linear-gradient(color-mix(in srgb, var(--accent) 10%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--cat-data-clarity) 10%, transparent) 1px, transparent 1px)",
+    "linear-gradient(color-mix(in srgb, var(--star-yellow) 9%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--star-blue) 10%, transparent) 1px, transparent 1px)",
   backgroundSize: "96px 96px",
 };
 
@@ -270,9 +270,9 @@ export function CelestialBackdrop() {
       <svg className="absolute inset-0 h-full w-full opacity-50" viewBox="0 0 100 100" preserveAspectRatio="none">
         <defs>
           <linearGradient id="constellation-line" x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0" stopColor="rgba(185,214,255,0.1)" />
-            <stop offset="0.5" stopColor="rgba(201,168,76,0.2)" />
-            <stop offset="1" stopColor="rgba(118,173,255,0.08)" />
+            <stop offset="0" stopColor="var(--star-blue-white)" stopOpacity="0.1" />
+            <stop offset="0.5" stopColor="var(--star-yellow)" stopOpacity="0.2" />
+            <stop offset="1" stopColor="var(--star-blue)" stopOpacity="0.08" />
           </linearGradient>
         </defs>
 

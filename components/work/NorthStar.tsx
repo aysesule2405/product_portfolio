@@ -1,5 +1,4 @@
 import { ProblemCategory } from "@/lib/types";
-import { categoryStyle } from "@/lib/category-color";
 
 /** A single guiding question, called out as its own structural beat in the
  * narrative — the thing every decision in the case study was measured
@@ -8,7 +7,6 @@ import { categoryStyle } from "@/lib/category-color";
 export function NorthStar({
   id,
   question,
-  category,
 }: {
   id?: string;
   question: string;
@@ -18,7 +16,6 @@ export function NorthStar({
     <div
       id={id}
       className="cat-tint-bg cat-tint-border scroll-mt-20 my-7 rounded-xl border px-5 py-5 sm:px-6"
-      style={categoryStyle(category)}
     >
       <p className="cat-tint-text flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em]">
         <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden className="shrink-0">
