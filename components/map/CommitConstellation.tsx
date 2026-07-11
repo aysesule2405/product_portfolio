@@ -459,7 +459,7 @@ function realConstellationPath(constellation: (typeof SKY_CONSTELLATIONS)[number
 
 function RealSkyConstellations() {
   return (
-    <g opacity="0.62" aria-hidden>
+    <g className="field-map-night-layer" opacity="0.62" aria-hidden>
       {SKY_CONSTELLATIONS.map((constellation, index) => (
         <motion.g
           key={constellation.id}
@@ -607,6 +607,59 @@ function Sparkle({ scale = 1 }: { scale?: number }) {
   );
 }
 
+function shellVariant(category: ProblemCategory) {
+  const index = categories.findIndex((cat) => cat.id === category);
+  return Math.max(index, 0) % 4;
+}
+
+function ShellIcon({ variant, scale = 1 }: { variant: number; scale?: number }) {
+  const s = scale;
+  if (variant === 0) {
+    return (
+      <g transform={`scale(${s})`}>
+        <path
+          d="M-11 5 C-8 -8 -2 -13 0 -14 C2 -13 8 -8 11 5 C7 10 -7 10 -11 5 Z"
+          fill="currentColor"
+        />
+        <path d="M0 -12 L0 7M-5 -8 C-2 -3 -1 2 -1 7M5 -8 C2 -3 1 2 1 7M-9 1 C-4 3 4 3 9 1" stroke="var(--bg)" strokeWidth="1.3" strokeLinecap="round" fill="none" opacity="0.62" />
+      </g>
+    );
+  }
+  if (variant === 1) {
+    return (
+      <g transform={`scale(${s})`}>
+        <path
+          d="M-12 1 C-6 -10 8 -10 12 1 C10 10 -10 10 -12 1 Z"
+          fill="currentColor"
+        />
+        <path d="M-8 3 C-4 -1 4 -1 8 3M-4 -5 C-2 -1 -1 3 -1 8M4 -5 C2 -1 1 3 1 8" stroke="var(--bg)" strokeWidth="1.25" strokeLinecap="round" fill="none" opacity="0.58" />
+      </g>
+    );
+  }
+  if (variant === 2) {
+    return (
+      <g transform={`scale(${s})`}>
+        <path
+          d="M-9 8 C-15 -1 -8 -12 3 -12 C13 -12 16 -2 9 6 C4 12 -5 13 -9 8 Z"
+          fill="currentColor"
+        />
+        <path d="M2 -6 C8 -5 9 2 4 5 C0 8 -6 6 -6 1 C-6 -3 -2 -5 2 -3 C5 -1 3 3 0 3" stroke="var(--bg)" strokeWidth="1.3" strokeLinecap="round" fill="none" opacity="0.6" />
+      </g>
+    );
+  }
+  return (
+    <g transform={`scale(${s})`}>
+      <path
+        d="M-13 4 C-8 -7 -1 -11 0 -12 C1 -11 8 -7 13 4 C8 10 -8 10 -13 4 Z"
+        fill="currentColor"
+      />
+      <path d="M0 -10 L0 7M-7 -4 C-4 -1 -3 3 -3 7M7 -4 C4 -1 3 3 3 7M-11 3 C-5 6 5 6 11 3" stroke="var(--bg)" strokeWidth="1.2" strokeLinecap="round" fill="none" opacity="0.56" />
+      <circle cx="-5.5" cy="3" r="1.1" fill="var(--bg)" opacity="0.48" />
+      <circle cx="5.5" cy="3" r="1.1" fill="var(--bg)" opacity="0.48" />
+    </g>
+  );
+}
+
 /** A single star: reveals in on first scroll into view, twinkles gently at
  * rest, then hands over to the hover/select spin+glow treatment. */
 function Star({
@@ -628,10 +681,14 @@ function Star({
   const idleDuration = 2.6 + mulberry32(seed)() * 2.2;
   const idleDelay = mulberry32(seed + 17)() * 2.5;
   const starColor = `color-mix(in srgb, ${categoryColorVar(node.category)} 54%, var(--star-yellow) 46%)`;
+  const shellColor = categoryColorVar(node.category);
+  const shellScale = Math.max(0.68, node.r / 9);
+  const shellIdleRotate = (seed % 13) - 6;
 
   return (
     <g opacity={isDimmed ? 0.24 : 1} style={{ transition: "opacity 0.2s ease" }}>
       <motion.circle
+        className="field-map-star-layer"
         style={{ x: node.x, y: node.y, color: starColor }}
         fill="currentColor"
         filter="url(#star-glow)"
@@ -651,6 +708,7 @@ function Star({
       />
 
       <motion.g
+        className="field-map-star-layer"
         style={{ x: node.x, y: node.y, color: starColor }}
         initial={{ opacity: 0, scale: 0 }}
         animate={
@@ -685,6 +743,66 @@ function Star({
         }
       >
         <Sparkle />
+      </motion.g>
+
+      <motion.circle
+        className="field-map-shell-layer"
+        cx={node.x}
+        cy={node.y}
+        fill="none"
+        stroke={shellColor}
+        strokeWidth={1.2}
+        initial={false}
+        animate={
+          isActive && !shouldReduceMotion
+            ? { opacity: [0.1, 0.36, 0.1], r: [node.r + 11, node.r + 21, node.r + 11] }
+            : { opacity: isActive ? 0.2 : 0.07, r: node.r + 12 }
+        }
+        transition={isActive && !shouldReduceMotion ? { duration: 1.9, repeat: Infinity, ease: "easeInOut" } : { duration: 0.25 }}
+      />
+
+      <motion.g
+        className="field-map-shell-layer"
+        style={{ x: node.x, y: node.y, color: shellColor }}
+        initial={{ opacity: 0, scale: 0, rotate: shellIdleRotate }}
+        animate={
+          !revealed
+            ? { opacity: 0, scale: 0, rotate: shellIdleRotate }
+            : isActive
+              ? {
+                  opacity: 1,
+                  scale: shellScale * 1.22,
+                  rotate: shouldReduceMotion ? shellIdleRotate : [shellIdleRotate - 2, shellIdleRotate + 5, shellIdleRotate - 2],
+                }
+              : {
+                  opacity: shouldReduceMotion ? 0.94 : [0.78, 0.96, 0.78],
+                  scale: shellScale,
+                  rotate: shellIdleRotate,
+                }
+        }
+        transition={
+          !revealed
+            ? { duration: 0.3 }
+            : isActive
+              ? {
+                  scale: { duration: 0.28, ease: "easeOut" },
+                  opacity: { duration: 0.2 },
+                  rotate: shouldReduceMotion ? { duration: 0.2 } : { duration: 2.8, repeat: Infinity, ease: "easeInOut" },
+                }
+              : {
+                  scale: { duration: 0.4, delay: revealDelay, ease: "easeOut" },
+                  opacity: shouldReduceMotion
+                    ? { duration: 0.4, delay: revealDelay }
+                    : {
+                        duration: idleDuration + 1.8,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: revealDelay + idleDelay,
+                      },
+                }
+        }
+      >
+        <ShellIcon variant={shellVariant(node.category)} scale={1} />
       </motion.g>
 
       <motion.text
@@ -793,7 +911,7 @@ export function CommitConstellation({
       </defs>
 
       {backgroundStars.map((s, i) => (
-        <circle key={`bg-${i}`} cx={s.x} cy={s.y} r={s.r} fill="var(--ink-faint)" opacity={s.o} />
+        <circle className="field-map-night-layer" key={`bg-${i}`} cx={s.x} cy={s.y} r={s.r} fill="var(--ink-faint)" opacity={s.o} />
       ))}
 
       <ShootingStar shouldReduceMotion={!!shouldReduceMotion} />
@@ -816,6 +934,7 @@ export function CommitConstellation({
           key={thread.key}
           d={thread.d}
           fill="none"
+          className="field-map-thread"
           stroke={`color-mix(in srgb, ${categoryColorVar(thread.category)} 26%, var(--star-yellow) 74%)`}
           strokeWidth={0.9}
           strokeDasharray={thread.dash}
@@ -830,6 +949,7 @@ export function CommitConstellation({
           key={cluster.id}
           d={cluster.d}
           fill="none"
+          className="field-map-cluster-line"
           stroke="color-mix(in srgb, var(--star-yellow) 72%, var(--star-blue-white) 28%)"
           strokeWidth={1.1}
           strokeDasharray={cluster.dash}
@@ -940,24 +1060,24 @@ export function CommitConstellation({
 
   return (
     <div ref={containerRef}>
-      <div className="relative overflow-hidden rounded-2xl border border-line bg-bg-raised">
+      <div className="field-map-card relative overflow-hidden rounded-2xl border border-line bg-bg-raised">
         <svg
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-          className="block w-full"
+          className="field-map-svg block w-full"
           role="img"
           aria-label="A constellation connecting product projects, work experience, visual practice, and community roles, grouped into four star clusters and threaded together by shared themes. Hover or focus a star to preview it; select it to open details."
         >
           {svgBody}
         </svg>
 
-        <div className="absolute right-3 top-3 flex items-center gap-2">
+        <div className="absolute right-3 top-3 z-20 flex items-center gap-2">
           <button
             type="button"
             onClick={() => {
               setAutoStartTour(true);
               setFullscreen(true);
             }}
-            className="hidden items-center gap-1.5 rounded-full border border-line bg-bg/85 px-3 py-1.5 font-mono text-[11px] text-ink-soft backdrop-blur-sm hover:border-line-strong hover:text-ink sm:flex"
+            className="field-map-action hidden items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono text-[11px] backdrop-blur-sm sm:flex"
           >
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden>
               <path d="M8 1v14M1 8h14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
@@ -971,7 +1091,7 @@ export function CommitConstellation({
               setAutoStartTour(false);
               setFullscreen(true);
             }}
-            className="flex items-center gap-1.5 rounded-full border border-line bg-bg/85 px-3 py-1.5 font-mono text-[11px] text-ink-soft backdrop-blur-sm hover:border-line-strong hover:text-ink"
+            className="field-map-action flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono text-[11px] backdrop-blur-sm"
           >
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden>
               <path
@@ -1071,6 +1191,7 @@ function ShootingStar({ shouldReduceMotion }: { shouldReduceMotion: boolean }) {
     <AnimatePresence>
       {star ? (
         <motion.line
+          className="field-map-night-layer"
           key={star.key}
           stroke="var(--ink-faint)"
           strokeWidth={1.5}
@@ -1196,7 +1317,7 @@ function ConstellationFullscreen({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-bg" role="dialog" aria-modal="true" aria-label="Field map, expanded">
+    <div className="field-map-fullscreen fixed inset-0 z-50 bg-bg" role="dialog" aria-modal="true" aria-label="Field map, expanded">
       <div className="flex h-12 items-center justify-between border-b border-line px-4">
         <p className="hidden font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint sm:block">
           Field map — drag to explore, scroll to zoom
@@ -1268,6 +1389,7 @@ function ConstellationFullscreen({
               viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
               width={WIDTH * FULLSCREEN_SVG_SCALE}
               height={HEIGHT * FULLSCREEN_SVG_SCALE}
+              className="field-map-svg"
               role="img"
               aria-hidden
             >

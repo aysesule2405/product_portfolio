@@ -95,6 +95,7 @@ export interface Project {
   /** ISO "YYYY-MM" used for timeline placement */
   date: string;
   dateLabel: string;
+  icon?: ProjectImage;
   images: ProjectImage[];
   decisionLog: DecisionLogEntry[];
   evidenceRail: EvidenceRailData;

@@ -7,6 +7,8 @@ import { MoonPhaseChart } from "@/components/celestial/MoonPhaseChart";
 import { socialLinks } from "@/lib/data/nav";
 
 const topics = ["Collaboration", "Job / Internship", "Feedback", "Just saying hi"];
+const lunarPoem =
+  "The moon phase is a small live signal for timing and tone: some nights are for starting, some for refining, some for reflecting. Wherever you are in the cycle, a message is a way to find the same sky for a moment.";
 
 export function ContactSection() {
   return (
@@ -15,7 +17,7 @@ export function ContactSection() {
         <Reveal>
           <div className="relative overflow-hidden">
             <BrandGlow className="-left-20 -bottom-24 h-96 w-96 -rotate-12" />
-            <div className="motion-card relative overflow-hidden rounded-2xl border border-line bg-bg-raised/90 shadow-2xl shadow-black/20 backdrop-blur-xl">
+            <div className="motion-card motion-card-static relative overflow-hidden rounded-2xl border border-line bg-bg-raised/90 shadow-2xl shadow-black/20 backdrop-blur-xl">
               <WindowChrome
                 filename="contact.md"
                 right={
@@ -34,6 +36,30 @@ export function ContactSection() {
                   <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-soft">
                     Open to product design, design engineering, and AI product roles. Send
                     a note through the form, or use one of the direct links.
+                  </p>
+                  <p
+                    className="lunar-poem mt-4 max-w-xl border-l-2 border-accent pl-4 text-sm leading-relaxed text-ink-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                    tabIndex={0}
+                    aria-label={lunarPoem}
+                  >
+                    {lunarPoem.split(" ").map((word, wordIndex) => (
+                      <span key={`${word}-${wordIndex}`} aria-hidden>
+                        <span className="lunar-poem-word">
+                          {word.split("").map((letter, letterIndex) => {
+                            const index = wordIndex * 8 + letterIndex;
+                            return (
+                              <span
+                                key={`${letter}-${wordIndex}-${letterIndex}`}
+                                className="lunar-poem-letter"
+                                style={{ ["--letter-index" as string]: index }}
+                              >
+                                {letter}
+                              </span>
+                            );
+                          })}
+                        </span>{" "}
+                      </span>
+                    ))}
                   </p>
 
                   <div className="mt-8">

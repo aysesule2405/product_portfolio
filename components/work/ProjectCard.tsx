@@ -10,6 +10,7 @@ import { projectFileName } from "@/lib/data/file-tree";
 
 export function ProjectCard({ project }: { project: Project }) {
   const cover = project.images[0];
+  const icon = project.icon;
 
   return (
     <motion.article
@@ -43,9 +44,21 @@ export function ProjectCard({ project }: { project: Project }) {
               sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
               className="object-cover opacity-90 transition-[transform,opacity] duration-500 ease-out group-hover:scale-105 group-hover:opacity-100"
             />
-          ) : (
-            <EvidenceGlyph glyph={project.glyph} category={project.primaryCategory} className="h-24 w-32" />
-          )}
+          ) : null}
+          <div className="absolute inset-0 bg-gradient-to-t from-bg/85 via-bg/25 to-transparent" aria-hidden />
+          <div className="project-icon-badge absolute bottom-4 right-5 z-10 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border shadow-xl backdrop-blur transition-transform duration-500 ease-out group-hover:scale-105">
+            {icon ? (
+              <Image
+                src={icon.src}
+                alt=""
+                fill
+                sizes="56px"
+                className="project-icon-img object-contain p-2.5"
+              />
+            ) : (
+              <EvidenceGlyph glyph={project.glyph} category={project.primaryCategory} className="h-11 w-12" />
+            )}
+          </div>
         </div>
 
         <div className="flex flex-1 flex-col gap-3 p-6">

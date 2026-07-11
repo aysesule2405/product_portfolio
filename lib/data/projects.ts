@@ -41,6 +41,7 @@ export const projects: Project[] = [
     fieldNumber: "FS-01",
     date: "2026-04",
     dateLabel: "Apr 2026",
+    icon: { src: "/images/project-icons/obi.png", alt: "Obi project icon" },
     images: [
       { src: `${GH_PAGES}/projects/Obi/homepage.png`, alt: "Obi desktop app homepage" },
       { src: `${GH_PAGES}/projects/Obi/chat_search.png`, alt: "Obi chat and search interface" },
@@ -152,6 +153,7 @@ export const projects: Project[] = [
     fieldNumber: "FS-02",
     date: "2026-05",
     dateLabel: "May 2026",
+    icon: { src: "/images/project-icons/framewise.png", alt: "Framewise project icon" },
     images: [
       { src: `${GH_PAGES}/projects/Framewise/framewise%20photos.001.jpeg`, alt: "Framewise workspace overview" },
       { src: `${GH_PAGES}/projects/Framewise/framewise%20photos.005.jpeg`, alt: "Framewise timestamped chat and notes" },
@@ -261,6 +263,7 @@ export const projects: Project[] = [
     fieldNumber: "FS-03",
     date: "2026-01",
     dateLabel: "Jan 2026",
+    icon: { src: "/images/project-icons/openstax-align.png", alt: "OpenStaxAlign project icon" },
     images: [
       { src: `${GH_PAGES}/projects/OpenStaxAlign/bg.png`, alt: "OpenStaxAlign presentation background graphic" },
       { src: `${GH_PAGES}/projects/OpenStaxAlign/logo.png`, alt: "OpenStaxAlign project logo" },
@@ -366,6 +369,7 @@ export const projects: Project[] = [
     fieldNumber: "FS-04",
     date: "2024-09",
     dateLabel: "Live since Sep 2024",
+    icon: { src: "/images/project-icons/nau-portal.png", alt: "NAU Portal project icon" },
     images: [
       { src: `${GH_PAGES}/projects/NAU%20Portal/Dashboard.png`, alt: "NAU Portal dashboard view" },
       { src: `${GH_PAGES}/projects/NAU%20Portal/Statistics.png`, alt: "NAU Portal statistics/analytics view" },
@@ -464,6 +468,7 @@ export const projects: Project[] = [
     fieldNumber: "FS-05",
     date: "2025-12",
     dateLabel: "Dec 2025",
+    icon: { src: "/images/project-icons/reverie.png", alt: "Reverie project icon" },
     images: [
       { src: `${GH_PAGES}/projects/Reverie/Screenshot%201%20-%20Home%20Screen%201%20copy.png`, alt: "Reverie home screen" },
       { src: `${GH_PAGES}/projects/Reverie/Screenshot%205%20-%20My%20Spaces%20copy.png`, alt: "Reverie named emotional spaces" },
@@ -578,6 +583,7 @@ export const projects: Project[] = [
     fieldNumber: "FS-06",
     date: "2026-04",
     dateLabel: "Spring 2026",
+    icon: { src: "/images/project-icons/whisperwind-grove.png", alt: "Whisperwind Grove project icon" },
     images: [
       { src: `${GH_PAGES}/projects/Whisperwind%20Grove/whisperwind-grove.copy.jpg`, alt: "Whisperwind Grove key art" },
       { src: `${GH_PAGES}/projects/Whisperwind%20Grove/spirit-drift%20copy.png`, alt: "Spirit Drift wind arcade scene" },
@@ -679,6 +685,7 @@ export const projects: Project[] = [
     fieldNumber: "FS-07",
     date: "2026-02",
     dateLabel: "Feb 2026",
+    icon: { src: "/images/project-icons/ghibli-guardians.png", alt: "Ghibli Guardians project icon" },
     images: [
       { src: `${GH_PAGES}/projects/Ghibli%20Guardians/dashboard.png`, alt: "Ghibli Guardians dashboard interface" },
       { src: `${GH_PAGES}/projects/Ghibli%20Guardians/mobile.png`, alt: "Ghibli Guardians mobile view" },

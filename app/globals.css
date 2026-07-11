@@ -14,6 +14,11 @@
   --star-yellow: #c99b2f;
   --star-orange: #dc6f2e;
   --star-red: #c84c42;
+  --morning-sky: #eaf3f6;
+  --morning-cloud: color-mix(in srgb, #fffaf0 84%, #dcebf0);
+  --morning-cloud-lit: color-mix(in srgb, #fffef8 86%, #ffdca1);
+  --morning-cloud-shadow: color-mix(in srgb, #9ab6c8 18%, transparent);
+  --morning-ray: color-mix(in srgb, var(--star-yellow) 16%, transparent);
   --line: color-mix(in srgb, var(--star-blue) 18%, var(--star-yellow) 18%);
   --line-strong: color-mix(in srgb, var(--star-yellow) 42%, var(--star-blue) 20%);
 
@@ -53,6 +58,11 @@
   --star-yellow: #f0c75a;
   --star-orange: #f08a42;
   --star-red: #ff665c;
+  --morning-sky: transparent;
+  --morning-cloud: transparent;
+  --morning-cloud-lit: transparent;
+  --morning-cloud-shadow: transparent;
+  --morning-ray: transparent;
   --line: color-mix(in srgb, var(--star-blue) 18%, #263550 58%);
   --line-strong: color-mix(in srgb, var(--star-yellow) 38%, var(--star-blue) 24%);
 
@@ -90,6 +100,11 @@
     --star-yellow: #f0c75a;
     --star-orange: #f08a42;
     --star-red: #ff665c;
+    --morning-sky: transparent;
+    --morning-cloud: transparent;
+    --morning-cloud-lit: transparent;
+    --morning-cloud-shadow: transparent;
+    --morning-ray: transparent;
     --line: color-mix(in srgb, var(--star-blue) 18%, #263550 58%);
     --line-strong: color-mix(in srgb, var(--star-yellow) 38%, var(--star-blue) 24%);
 
@@ -140,11 +155,160 @@ html {
 
 body {
   background:
-    radial-gradient(circle at 84% 8%, color-mix(in srgb, var(--star-blue) 9%, transparent), transparent 24rem),
+    radial-gradient(circle at 84% 8%, color-mix(in srgb, var(--star-blue) 7%, transparent), transparent 24rem),
     linear-gradient(180deg, color-mix(in srgb, var(--bg) 88%, #07101f), var(--bg));
   color: var(--ink);
   font-feature-settings: "ss01" 1;
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.celestial-morning-layer,
+.celestial-night-layer {
+  transition: opacity 0.45s ease;
+}
+
+.celestial-morning-layer {
+  opacity: 1;
+  background:
+    radial-gradient(circle at 80% 8%, color-mix(in srgb, var(--star-yellow) 18%, transparent), transparent 22rem),
+    radial-gradient(circle at 22% 20%, color-mix(in srgb, var(--star-blue-white) 17%, transparent), transparent 28rem),
+    linear-gradient(180deg, color-mix(in srgb, var(--morning-sky) 80%, var(--bg)), var(--bg));
+}
+
+.celestial-night-layer {
+  opacity: 0;
+}
+
+:root[data-theme="dark"] .celestial-morning-layer {
+  opacity: 0;
+}
+
+:root[data-theme="dark"] .celestial-night-layer {
+  opacity: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .celestial-morning-layer {
+    opacity: 0;
+  }
+
+  :root:not([data-theme="light"]) .celestial-night-layer {
+    opacity: 1;
+  }
+}
+
+.morning-sun-rays {
+  background:
+    conic-gradient(from 214deg at 86% 4%, transparent 0deg, var(--morning-ray) 8deg, transparent 17deg, transparent 26deg, color-mix(in srgb, var(--star-blue-white) 10%, transparent) 35deg, transparent 48deg, transparent 66deg),
+    radial-gradient(circle at 86% 5%, color-mix(in srgb, var(--star-yellow) 18%, transparent), transparent 19rem);
+  opacity: 0.72;
+  mask-image: linear-gradient(to bottom, black 0%, black 62%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 62%, transparent 100%);
+  animation: morning-ray-breathe 18s ease-in-out infinite;
+}
+
+.morning-haze {
+  background:
+    linear-gradient(115deg, transparent 0%, color-mix(in srgb, white 20%, transparent) 48%, transparent 62%),
+    radial-gradient(ellipse at 50% 90%, color-mix(in srgb, var(--star-blue) 7%, transparent), transparent 44rem);
+  opacity: 0.42;
+}
+
+.morning-cloud {
+  left: var(--cloud-x);
+  top: var(--cloud-y);
+  width: min(68vw, 58rem);
+  height: min(38vw, 32rem);
+  opacity: var(--cloud-opacity);
+  background-image: var(--cloud-image);
+  background-position: var(--cloud-position);
+  background-repeat: no-repeat;
+  background-size: contain;
+  filter:
+    saturate(0.96)
+    contrast(1.04)
+    brightness(1.02)
+    drop-shadow(0 18px 34px color-mix(in srgb, #7fa7c0 22%, transparent));
+  transform-origin: center;
+  translate:
+    -4vw
+    calc(var(--morning-scroll) * var(--cloud-depth) * -0.035px);
+  scale: calc(var(--cloud-scale) * var(--cloud-flip)) var(--cloud-scale);
+  animation: morning-cloud-drift var(--cloud-duration) linear infinite;
+  animation-delay: var(--cloud-delay);
+  will-change: translate, scale, filter;
+}
+
+.morning-cloud::before,
+.morning-cloud::after {
+  content: "";
+  position: absolute;
+  inset: 12% 8%;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.morning-cloud::before {
+  background: radial-gradient(ellipse at 38% 34%, color-mix(in srgb, var(--morning-cloud-lit) 38%, transparent), transparent 62%);
+  mix-blend-mode: screen;
+}
+
+.morning-cloud::after {
+  background: radial-gradient(ellipse at 58% 70%, color-mix(in srgb, var(--morning-cloud-shadow) 58%, transparent), transparent 66%);
+  filter: blur(12px);
+  opacity: 0.72;
+  mix-blend-mode: multiply;
+}
+
+.morning-speck {
+  opacity: 0.34;
+  box-shadow: 0 0 10px currentColor;
+  animation: morning-speck-shimmer 5.8s ease-in-out infinite;
+}
+
+@keyframes morning-cloud-drift {
+  0% {
+    margin-left: -1.6vw;
+    margin-top: 0;
+  }
+  50% {
+    margin-left: 2vw;
+    margin-top: -0.8vh;
+  }
+  100% {
+    margin-left: -1.6vw;
+    margin-top: 0;
+  }
+}
+
+@keyframes morning-ray-breathe {
+  0%,
+  100% {
+    opacity: 0.52;
+  }
+  50% {
+    opacity: 0.82;
+  }
+}
+
+@keyframes morning-speck-shimmer {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: scale(0.82);
+  }
+  46% {
+    opacity: 0.44;
+    transform: scale(1.18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .morning-cloud,
+  .morning-sun-rays,
+  .morning-speck {
+    animation: none;
+  }
 }
 
 ::selection {
@@ -281,6 +445,23 @@ body {
   box-shadow: 0 18px 44px var(--project-shadow, color-mix(in srgb, var(--cat-color, var(--accent)) 13%, transparent));
 }
 
+.project-icon-badge,
+.project-hero-icon {
+  background: color-mix(in srgb, var(--star-white) 76%, var(--bg-raised));
+  border-color: color-mix(in srgb, var(--project-accent, var(--accent)) 38%, var(--line));
+  box-shadow:
+    0 18px 40px color-mix(in srgb, var(--project-shadow, var(--project-accent, var(--accent))) 45%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 58%, transparent);
+}
+
+.project-icon-img {
+  filter:
+    sepia(0.2)
+    saturate(1.22)
+    hue-rotate(var(--project-icon-hue, 0deg))
+    drop-shadow(0 8px 16px color-mix(in srgb, var(--project-accent, var(--accent)) 24%, transparent));
+}
+
 .project-card-title,
 .project-hero-title {
   color: var(--project-title, var(--ink));
@@ -295,6 +476,199 @@ body {
   position: relative;
   background: var(--project-bg, color-mix(in srgb, var(--cat-color, var(--accent)) 16%, var(--bg-raised)));
   overflow: hidden;
+}
+
+.north-star-quote {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.28s ease,
+    box-shadow 0.28s ease,
+    background-color 0.28s ease;
+}
+
+/* Light mode turns the field map into the same constellation structure seen
+   through shallow water. The original star chart remains the base/default so
+   dark mode is visually unchanged. */
+.field-map-card,
+.field-map-fullscreen {
+  --field-water: color-mix(in srgb, var(--star-blue-white) 26%, var(--bg-raised));
+  --field-water-deep: color-mix(in srgb, var(--star-blue) 11%, transparent);
+}
+
+.field-map-card::before,
+.field-map-fullscreen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 20% 18%, color-mix(in srgb, white 36%, transparent), transparent 24rem),
+    radial-gradient(ellipse at 82% 74%, var(--field-water-deep), transparent 28rem),
+    repeating-radial-gradient(ellipse at 58% 52%, transparent 0 42px, color-mix(in srgb, var(--star-blue) 8%, transparent) 43px 44px);
+  opacity: 0;
+}
+
+.field-map-fullscreen::before {
+  position: fixed;
+}
+
+.field-map-svg {
+  position: relative;
+  z-index: 1;
+}
+
+.field-map-action {
+  border-color: var(--line);
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  color: var(--ink-soft);
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.18s ease;
+}
+
+.field-map-action:hover,
+.field-map-action:focus-visible {
+  transform: translateY(-1px);
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.field-map-shell-layer {
+  display: none;
+  filter:
+    drop-shadow(0 7px 11px color-mix(in srgb, currentColor 18%, transparent))
+    drop-shadow(0 0 12px color-mix(in srgb, currentColor 20%, transparent));
+}
+
+.field-map-star-layer,
+.field-map-night-layer {
+  display: inline;
+}
+
+:root[data-theme="light"] .field-map-card::before,
+:root[data-theme="light"] .field-map-fullscreen::before {
+  opacity: 0.52;
+}
+
+:root[data-theme="light"] .field-map-action {
+  border-color: color-mix(in srgb, var(--star-blue) 28%, var(--star-yellow) 24%);
+  background: color-mix(in srgb, white 78%, var(--morning-sky));
+  color: color-mix(in srgb, var(--ink) 78%, var(--star-blue));
+  box-shadow:
+    0 8px 22px color-mix(in srgb, var(--star-blue) 10%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 68%, transparent);
+}
+
+:root[data-theme="light"] .field-map-action:hover,
+:root[data-theme="light"] .field-map-action:focus-visible {
+  border-color: color-mix(in srgb, var(--star-blue) 44%, var(--star-yellow) 32%);
+  background: color-mix(in srgb, white 88%, var(--star-blue-white));
+  color: var(--ink);
+  box-shadow:
+    0 10px 26px color-mix(in srgb, var(--star-blue) 15%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--star-blue-white) 22%, transparent);
+}
+
+:root[data-theme="light"] .field-map-shell-layer {
+  display: inline;
+}
+
+:root[data-theme="light"] .field-map-star-layer,
+:root[data-theme="light"] .field-map-night-layer {
+  display: none;
+}
+
+:root[data-theme="light"] .field-map-thread {
+  stroke-width: 1.05;
+  stroke-opacity: 0.75;
+}
+
+:root[data-theme="light"] .field-map-cluster-line {
+  stroke: color-mix(in srgb, var(--star-blue) 38%, var(--star-yellow) 42%);
+  stroke-width: 1.15;
+  stroke-opacity: 0.74;
+}
+
+.north-star-quote::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    112deg,
+    transparent 0%,
+    color-mix(in srgb, var(--project-accent, var(--accent)) 0%, transparent) 32%,
+    color-mix(in srgb, var(--project-accent, var(--accent)) 22%, transparent) 46%,
+    color-mix(in srgb, var(--project-accent-2, var(--accent-strong)) 16%, transparent) 54%,
+    transparent 68%
+  );
+  opacity: 0;
+  transform: translateX(-42%);
+  transition:
+    opacity 0.24s ease,
+    transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.north-star-quote:hover,
+.north-star-quote:focus-within {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--project-accent, var(--accent)) 46%, var(--line));
+  box-shadow:
+    0 18px 44px color-mix(in srgb, var(--project-accent, var(--accent)) 16%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--star-white) 22%, transparent);
+}
+
+.north-star-quote:hover::after,
+.north-star-quote:focus-within::after {
+  opacity: 1;
+  transform: translateX(42%);
+}
+
+.north-star-quote-icon {
+  transform-origin: center;
+  transition:
+    filter 0.24s ease,
+    transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.north-star-quote:hover .north-star-quote-icon,
+.north-star-quote:focus-within .north-star-quote-icon {
+  transform: rotate(18deg) scale(1.25);
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--project-accent, var(--accent)) 62%, transparent));
+  animation: north-star-pulse 1.6s ease-in-out infinite;
+}
+
+.north-star-quote-text {
+  position: relative;
+  z-index: 1;
+  transition:
+    color 0.24s ease,
+    text-shadow 0.24s ease,
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.north-star-quote:hover .north-star-quote-text,
+.north-star-quote:focus-within .north-star-quote-text {
+  color: color-mix(in srgb, var(--project-title, var(--ink)) 78%, var(--project-accent, var(--accent)));
+  text-shadow:
+    0 0 14px color-mix(in srgb, var(--project-accent, var(--accent)) 24%, transparent),
+    0 0 26px color-mix(in srgb, var(--project-accent-2, var(--accent-strong)) 14%, transparent);
+  transform: translateX(3px);
+}
+
+@keyframes north-star-pulse {
+  0%,
+  100% {
+    opacity: 0.86;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -345,6 +719,24 @@ body {
     --project-title: #b8dca0;
     --project-muted: #f2c18f;
     --project-shadow: rgba(111, 154, 84, 0.2);
+  }
+
+  :root:not([data-theme="light"]) .project-icon-badge,
+  :root:not([data-theme="light"]) .project-hero-icon {
+    background: #0d1728;
+    border-color: color-mix(in srgb, var(--project-accent, var(--accent)) 48%, #263550);
+    box-shadow:
+      0 22px 48px color-mix(in srgb, var(--project-accent, var(--accent)) 22%, transparent),
+      inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
+  }
+
+  :root:not([data-theme="light"]) .project-icon-img {
+    opacity: 0.96;
+    filter:
+      brightness(0)
+      invert(1)
+      drop-shadow(0 0 16px color-mix(in srgb, var(--star-white) 42%, transparent))
+      drop-shadow(0 10px 18px color-mix(in srgb, #000 30%, transparent));
   }
 }
 
@@ -397,6 +789,24 @@ body {
   --project-shadow: rgba(111, 154, 84, 0.2);
 }
 
+:root[data-theme="dark"] .project-icon-badge,
+:root[data-theme="dark"] .project-hero-icon {
+  background: #0d1728;
+  border-color: color-mix(in srgb, var(--project-accent, var(--accent)) 48%, #263550);
+  box-shadow:
+    0 22px 48px color-mix(in srgb, var(--project-accent, var(--accent)) 22%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
+}
+
+:root[data-theme="dark"] .project-icon-img {
+  opacity: 0.96;
+  filter:
+    brightness(0)
+    invert(1)
+    drop-shadow(0 0 16px color-mix(in srgb, var(--star-white) 42%, transparent))
+    drop-shadow(0 10px 18px color-mix(in srgb, #000 30%, transparent));
+}
+
 .motion-card {
   position: relative;
   transition:
@@ -426,6 +836,19 @@ body {
 .motion-card:hover::after {
   opacity: 1;
   transform: translateX(34%);
+}
+
+.motion-card.motion-card-static:hover {
+  transform: none;
+  border-color: var(--line);
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+
+.motion-card.motion-card-static::after,
+.motion-card.motion-card-static:hover::after {
+  content: none;
+  opacity: 0;
+  transform: none;
 }
 
 .motion-press {
@@ -505,6 +928,49 @@ body {
 
 .motion-field-label {
   transition: color 0.18s ease;
+}
+
+.lunar-poem {
+  cursor: default;
+  overflow-wrap: normal;
+}
+
+.lunar-poem-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.lunar-poem-letter {
+  display: inline-block;
+  transform-origin: center 80%;
+  transition: color 0.25s ease, text-shadow 0.25s ease;
+}
+
+.lunar-poem:hover .lunar-poem-letter,
+.lunar-poem:focus-visible .lunar-poem-letter {
+  animation: lunar-letter-shimmer 1.85s ease-in-out infinite;
+  animation-delay: calc(var(--letter-index) * 28ms);
+}
+
+@keyframes lunar-letter-shimmer {
+  0%,
+  100% {
+    color: var(--ink-soft);
+    text-shadow: none;
+    transform: translateY(0) rotate(0deg);
+  }
+  38% {
+    color: var(--star-white);
+    text-shadow:
+      0 0 8px color-mix(in srgb, var(--star-yellow) 42%, transparent),
+      0 0 18px color-mix(in srgb, var(--star-blue-white) 20%, transparent);
+    transform: translateY(-1.5px) rotate(-0.8deg);
+  }
+  62% {
+    color: var(--accent);
+    text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 36%, transparent);
+    transform: translateY(1px) rotate(0.8deg);
+  }
 }
 
 .texture-drift svg > * {

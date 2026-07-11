@@ -10,5 +10,4 @@ export const socialLinks: NavItem[] = [
   { label: "Devpost", href: "https://devpost.com/ase2327ekiz" },
 ];
 
-export const resumeHref =
-  "https://aysesule2405.github.io/ayse-sule-ekiz-portfolio/Ayse_Sule_Ekiz_Resume.pdf";
+export const resumeHref = "/Ayse%20Sule%20Ekiz%20Resume.pdf";

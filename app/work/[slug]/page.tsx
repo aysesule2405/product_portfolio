@@ -121,7 +121,19 @@ export default async function CaseStudyPage({
               ) : null}
             </div>
 
-            <EvidenceGlyph glyph={project.glyph} category={project.primaryCategory} className="h-28 w-40 shrink-0" />
+            <div className="project-hero-icon relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-full border shadow-xl backdrop-blur">
+              {project.icon ? (
+                <Image
+                  src={project.icon.src}
+                  alt=""
+                  fill
+                  sizes="112px"
+                  className="project-icon-img object-contain p-5"
+                />
+              ) : (
+                <EvidenceGlyph glyph={project.glyph} category={project.primaryCategory} className="h-20 w-24" />
+              )}
+            </div>
           </div>
         </Container>
       </header>

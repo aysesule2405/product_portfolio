@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
@@ -22,6 +23,12 @@ interface ShootingStar {
   star: Star;
   dx: number;
   dy: number;
+}
+
+interface MorningMotion {
+  scroll: number;
+  pointerX: number;
+  pointerY: number;
 }
 
 const STAR_COLORS = [
@@ -112,6 +119,76 @@ function starClipPath(points: number) {
   return `polygon(${coords.join(", ")})`;
 }
 
+const CLOUDS = [
+  { id: 0, image: "/images/clouds/cloud-1.png", x: "36vw", y: "5vh", scale: 1.58, opacity: 0.82, duration: "146s", delay: "-22s", depth: 0.78, hover: 8, position: "right center", flip: 1 },
+  { id: 1, image: "/images/clouds/cloud-2.png", x: "-5vw", y: "8vh", scale: 1.5, opacity: 0.72, duration: "164s", delay: "-58s", depth: 0.62, hover: -8, position: "left center", flip: 1 },
+  { id: 2, image: "/images/clouds/cloud-3.png", x: "16vw", y: "31vh", scale: 1.04, opacity: 0.42, duration: "118s", delay: "-16s", depth: 0.44, hover: 12, position: "center", flip: 1 },
+] as const;
+
+const DAY_SPECKS = [
+  { x: "14%", y: "18%", color: "var(--star-yellow)", size: 2 },
+  { x: "39%", y: "10%", color: "var(--star-blue)", size: 1.5 },
+  { x: "87%", y: "20%", color: "var(--star-orange)", size: 1.75 },
+  { x: "22%", y: "64%", color: "var(--star-blue-white)", size: 1.5 },
+  { x: "69%", y: "73%", color: "var(--star-yellow)", size: 2 },
+  { x: "91%", y: "82%", color: "var(--star-blue)", size: 1.25 },
+] as const;
+
+function MorningBackdrop({ motionState }: { motionState: MorningMotion }) {
+  return (
+    <div
+      className="celestial-morning-layer absolute inset-0 overflow-hidden"
+      style={
+        {
+          "--morning-scroll": motionState.scroll,
+          "--morning-pointer-x": motionState.pointerX,
+          "--morning-pointer-y": motionState.pointerY,
+        } as CSSProperties
+      }
+    >
+      <div className="morning-sun-rays absolute inset-0" />
+      <div className="morning-haze absolute inset-0" />
+
+      {CLOUDS.map((cloud) => (
+        <div
+          key={cloud.id}
+          className="morning-cloud absolute"
+          style={
+            {
+              "--cloud-x": cloud.x,
+              "--cloud-y": cloud.y,
+              "--cloud-scale": cloud.scale,
+              "--cloud-opacity": cloud.opacity,
+              "--cloud-duration": cloud.duration,
+              "--cloud-delay": cloud.delay,
+              "--cloud-image": `url(${cloud.image})`,
+              "--cloud-depth": cloud.depth,
+              "--cloud-hover": cloud.hover,
+              "--cloud-position": cloud.position,
+              "--cloud-flip": cloud.flip,
+            } as CSSProperties
+          }
+        />
+      ))}
+
+      {DAY_SPECKS.map((speck, index) => (
+        <span
+          key={`${speck.x}-${speck.y}`}
+          className="morning-speck absolute rounded-full"
+          style={{
+            left: speck.x,
+            top: speck.y,
+            width: speck.size,
+            height: speck.size,
+            backgroundColor: speck.color,
+            animationDelay: `${index * -0.7}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function CelestialBackdrop() {
   const shouldReduceMotion = useReducedMotion();
   const [mounted, setMounted] = useState(false);
@@ -119,6 +196,7 @@ export function CelestialBackdrop() {
   const brightStars = useMemo(() => stars.filter((star) => star.r > 1), [stars]);
   const [hoveredStar, setHoveredStar] = useState<Star | null>(null);
   const [shootingStars, setShootingStars] = useState<ShootingStar[]>([]);
+  const [morningMotion, setMorningMotion] = useState<MorningMotion>({ scroll: 0, pointerX: 0, pointerY: 0 });
   const lastScrollY = useRef(0);
   const shotId = useRef(0);
 
@@ -133,11 +211,38 @@ export function CelestialBackdrop() {
       const x = (event.clientX / window.innerWidth) * 100;
       const y = (event.clientY / window.innerHeight) * 100;
       setHoveredStar(findNearestStar(stars, x, y));
+      setMorningMotion((state) => ({
+        ...state,
+        pointerX: event.clientX / window.innerWidth - 0.5,
+        pointerY: event.clientY / window.innerHeight - 0.5,
+      }));
     }
 
     window.addEventListener("pointermove", handlePointerMove, { passive: true });
     return () => window.removeEventListener("pointermove", handlePointerMove);
   }, [mounted, shouldReduceMotion, stars]);
+
+  useEffect(() => {
+    if (!mounted || shouldReduceMotion) return;
+    let frame = 0;
+
+    function updateMorningScroll() {
+      frame = 0;
+      setMorningMotion((state) => ({ ...state, scroll: Math.min(window.scrollY, 900) }));
+    }
+
+    function handleScrollParallax() {
+      if (frame) return;
+      frame = window.requestAnimationFrame(updateMorningScroll);
+    }
+
+    updateMorningScroll();
+    window.addEventListener("scroll", handleScrollParallax, { passive: true });
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", handleScrollParallax);
+    };
+  }, [mounted, shouldReduceMotion]);
 
   useEffect(() => {
     if (!mounted || shouldReduceMotion) return;
@@ -171,14 +276,19 @@ export function CelestialBackdrop() {
   if (!mounted) {
     return (
       <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute inset-0" style={backdropStyle} />
-        <div className="absolute inset-0 opacity-28" style={gridStyle} />
+        <MorningBackdrop motionState={morningMotion} />
+        <div className="celestial-night-layer absolute inset-0">
+          <div className="absolute inset-0" style={backdropStyle} />
+          <div className="absolute inset-0 opacity-28" style={gridStyle} />
+        </div>
       </div>
     );
   }
 
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+      <MorningBackdrop motionState={morningMotion} />
+      <div className="celestial-night-layer absolute inset-0">
       <div className="absolute inset-0" style={backdropStyle} />
       <div className="absolute inset-0 opacity-28" style={gridStyle} />
 
@@ -283,6 +393,7 @@ export function CelestialBackdrop() {
           <path d="M58 86 L66 78 L76 82 L88 72" />
         </g>
       </svg>
+      </div>
     </div>
   );
 }

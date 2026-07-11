@@ -11,7 +11,6 @@ import { ProblemCategory } from "@/lib/types";
 const heroTags: { label: string; category: ProblemCategory }[] = [
   { label: "AI tools", category: "ai-trust" },
   { label: "Product design", category: "design-systems" },
-  { label: "Design systems", category: "design-systems" },
   { label: "Frontend", category: "creative-tools" },
   { label: "Education", category: "learning-workflows" },
   { label: "Data clarity", category: "data-clarity" },

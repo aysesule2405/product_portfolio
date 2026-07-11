@@ -15,15 +15,15 @@ export function NorthStar({
   return (
     <div
       id={id}
-      className="cat-tint-bg cat-tint-border scroll-mt-20 my-7 rounded-xl border px-5 py-5 sm:px-6"
+      className="north-star-quote cat-tint-bg cat-tint-border scroll-mt-20 my-7 rounded-xl border px-5 py-5 sm:px-6"
     >
       <p className="cat-tint-text flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em]">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden className="shrink-0">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden className="north-star-quote-icon shrink-0">
           <path d="M8,1 C8.6,4.4 9.6,5.4 13,6 C9.6,6.6 8.6,7.6 8,11 C7.4,7.6 6.4,6.6 3,6 C6.4,5.4 7.4,4.4 8,1 Z" />
         </svg>
         North star
       </p>
-      <p className="mt-2 max-w-2xl font-serif text-lg italic leading-snug text-ink sm:text-xl">
+      <p className="north-star-quote-text mt-2 max-w-2xl font-serif text-lg italic leading-snug text-ink sm:text-xl">
         {question}
       </p>
     </div>
