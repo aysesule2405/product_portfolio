@@ -7,10 +7,9 @@ import { FieldLabel } from "@/components/ui/FieldLabel";
 import { Tag } from "@/components/ui/Tag";
 import { EvidenceGlyph } from "@/components/ui/EvidenceGlyph";
 import { DecisionLog } from "@/components/work/DecisionLog";
-import { EvidenceRail } from "@/components/work/EvidenceRail";
-import { CaseStudyEntry } from "@/components/work/CaseStudyEntry";
+import { CaseStudySnapshot } from "@/components/work/CaseStudySnapshot";
+import { Disclosure } from "@/components/work/Disclosure";
 import { NorthStar } from "@/components/work/NorthStar";
-import { CaseStudyStats } from "@/components/work/CaseStudyStats";
 import { CaseStudyOutlineRegistrar } from "@/components/work/CaseStudyOutlineRegistrar";
 import { projects, getProjectBySlug } from "@/lib/data/projects";
 import { categories } from "@/lib/data/categories";
@@ -44,27 +43,20 @@ export default async function CaseStudyPage({
   if (!project) notFound();
 
   const { caseStudy } = project;
+  // Product decisions: keep no more than three in the scannable template — the rest of
+  // the authored decision log stays in the data, available if a future pass wants it.
+  const decisions = project.decisionLog.slice(0, 3);
 
   const currentIndex = projects.findIndex((p) => p.slug === project.slug);
   const next = projects[(currentIndex + 1) % projects.length];
 
   const sections: OutlineSection[] = [
-    { id: "messy-problem", label: "The messy problem" },
-    { id: "why-it-mattered", label: "Why it mattered" },
-    { id: "north-star", label: "North star" },
-    { id: "who-designed-for", label: "Who I designed for" },
-    { id: "constraints", label: "Constraints" },
-    { id: "my-role", label: "My role" },
-    { id: "research", label: "Research & discovery" },
-    { id: "product-decisions", label: "Product decisions" },
-    { id: "decision-log", label: "Decision log" },
-    { id: "design-explorations", label: "Design explorations" },
-    ...(caseStudy.systemOverview ? [{ id: "system-overview", label: "System overview" }] : []),
+    { id: "snapshot", label: "Snapshot" },
+    { id: "challenge", label: "Challenge" },
+    { id: "key-insight", label: "Key insight" },
+    { id: "decisions", label: "Product decisions" },
     { id: "final-experience", label: "Final experience" },
-    { id: "what-shipped", label: "What shipped" },
-    { id: "outcome", label: "Outcome" },
-    { id: "what-learned", label: "What I learned" },
-    { id: "improve-next", label: "What I'd improve next" },
+    { id: "outcome-reflection", label: "Outcome & reflection" },
   ];
 
   return (
@@ -138,91 +130,100 @@ export default async function CaseStudyPage({
         </Container>
       </header>
 
-      {project.images.length > 0 ? (
-        <Container className="py-10">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {project.images.map((image) => (
-              <div
-                key={image.src}
-                className="group relative aspect-[4/3] overflow-hidden rounded-xl border border-line bg-bg-raised"
-              >
-                <Image
-                  src={image.src}
-                  alt={image.alt}
-                  fill
-                  sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-                />
+      <Container className="py-14 sm:py-20">
+        <div className="mx-auto max-w-3xl space-y-14">
+          <CaseStudySnapshot
+            id="snapshot"
+            data={project.evidenceRail}
+            stats={project.stats}
+            category={project.primaryCategory}
+          />
+
+          <section id="challenge" className="scroll-mt-20">
+            <FieldLabel>Challenge</FieldLabel>
+            <p className="mt-4 text-base leading-relaxed text-ink-soft">{caseStudy.challengeSummary}</p>
+            <Disclosure label="Full context — problem, audience, constraints">
+              <p><span className="font-medium text-ink">The messy problem. </span>{caseStudy.messyProblem}</p>
+              <p><span className="font-medium text-ink">Why it mattered. </span>{caseStudy.whyItMattered}</p>
+              <p><span className="font-medium text-ink">Who I designed for. </span>{caseStudy.whoIDesignedFor}</p>
+              <p><span className="font-medium text-ink">Constraints. </span>{caseStudy.constraints}</p>
+              <p><span className="font-medium text-ink">Research. </span>{caseStudy.research}</p>
+            </Disclosure>
+          </section>
+
+          <NorthStar
+            id="key-insight"
+            question={caseStudy.northStar}
+            realization={caseStudy.keyInsightRealization}
+            category={project.primaryCategory}
+          />
+
+          <section id="decisions" className="scroll-mt-20">
+            <FieldLabel>Product decisions</FieldLabel>
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-soft">
+              {caseStudy.productDecisionsIntro}
+            </p>
+            <div className="mt-6">
+              <DecisionLog entries={decisions} category={project.primaryCategory} />
+            </div>
+            <Disclosure label="Design explorations">
+              <p>{caseStudy.designExplorations}</p>
+            </Disclosure>
+          </section>
+
+          <section id="final-experience" className="scroll-mt-20">
+            <FieldLabel>Final experience</FieldLabel>
+
+            {project.video ? (
+              <div className="mt-5 overflow-hidden rounded-xl border border-line bg-bg-raised">
+                {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                <video controls poster={project.video.poster} aria-label={project.video.alt} className="aspect-video w-full">
+                  <source src={project.video.src} type="video/mp4" />
+                  {project.video.webmSrc ? <source src={project.video.webmSrc} type="video/webm" /> : null}
+                </video>
+                {project.video.caption ? (
+                  <p className="px-4 py-3 text-xs text-ink-faint">{project.video.caption}</p>
+                ) : null}
               </div>
-            ))}
-          </div>
-        </Container>
-      ) : null}
+            ) : project.images.length > 0 ? (
+              <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {project.images.map((image) => (
+                  <div
+                    key={image.src}
+                    className="group relative aspect-[4/3] overflow-hidden rounded-xl border border-line bg-bg-raised"
+                  >
+                    <Image
+                      src={image.src}
+                      alt={image.alt}
+                      fill
+                      sizes="(min-width: 640px) 50vw, 100vw"
+                      className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : null}
 
-      {project.stats.length > 0 ? (
-        <Container className="pb-10">
-          <CaseStudyStats stats={project.stats} category={project.primaryCategory} />
-        </Container>
-      ) : null}
+            <p className="mt-5 text-base leading-relaxed text-ink-soft">{caseStudy.finalExperience}</p>
 
-      <Container className="grid grid-cols-1 gap-12 py-14 sm:py-20 lg:grid-cols-[1fr_320px]">
-        <div className="lg:pt-6">
-          <CaseStudyEntry id="messy-problem" label="The messy problem">
-            <p>{caseStudy.messyProblem}</p>
-          </CaseStudyEntry>
-          <CaseStudyEntry id="why-it-mattered" label="Why it mattered">
-            <p>{caseStudy.whyItMattered}</p>
-          </CaseStudyEntry>
+            {caseStudy.systemOverview ? (
+              <Disclosure label="How it works — system overview">
+                <p>{caseStudy.systemOverview}</p>
+              </Disclosure>
+            ) : null}
+          </section>
 
-          <NorthStar id="north-star" question={caseStudy.northStar} category={project.primaryCategory} />
-
-          <CaseStudyEntry id="who-designed-for" label="Who I designed for">
-            <p>{caseStudy.whoIDesignedFor}</p>
-          </CaseStudyEntry>
-          <CaseStudyEntry id="constraints" label="Constraints">
-            <p>{caseStudy.constraints}</p>
-          </CaseStudyEntry>
-          <CaseStudyEntry id="my-role" label="My role">
-            <p>{caseStudy.role}</p>
-          </CaseStudyEntry>
-          <CaseStudyEntry id="research" label="Research & discovery">
-            <p>{caseStudy.research}</p>
-          </CaseStudyEntry>
-
-          <CaseStudyEntry id="product-decisions" label="Product decisions">
-            <p>{caseStudy.productDecisionsIntro}</p>
-          </CaseStudyEntry>
-
-          <div id="decision-log" className="scroll-mt-20 border-t border-line py-7">
-            <DecisionLog entries={project.decisionLog} category={project.primaryCategory} />
-          </div>
-
-          <CaseStudyEntry id="design-explorations" label="Design explorations">
-            <p>{caseStudy.designExplorations}</p>
-          </CaseStudyEntry>
-          {caseStudy.systemOverview ? (
-            <CaseStudyEntry id="system-overview" label="System overview">
-              <p>{caseStudy.systemOverview}</p>
-            </CaseStudyEntry>
-          ) : null}
-          <CaseStudyEntry id="final-experience" label="Final experience">
-            <p>{caseStudy.finalExperience}</p>
-          </CaseStudyEntry>
-          <CaseStudyEntry id="what-shipped" label="What shipped">
-            <p>{caseStudy.whatShipped}</p>
-          </CaseStudyEntry>
-          <CaseStudyEntry id="outcome" label="Outcome">
-            <p className="project-hero-accent font-medium">{caseStudy.outcome}</p>
-          </CaseStudyEntry>
-          <CaseStudyEntry id="what-learned" label="What I learned">
-            <p>{caseStudy.whatILearned}</p>
-          </CaseStudyEntry>
-          <CaseStudyEntry id="improve-next" label="What I'd improve next">
-            <p>{caseStudy.whatIdImproveNext}</p>
-          </CaseStudyEntry>
+          <section id="outcome-reflection" className="scroll-mt-20">
+            <FieldLabel>Outcome &amp; reflection</FieldLabel>
+            <p className="mt-4 text-base leading-relaxed text-ink-soft">{caseStudy.whatShipped}</p>
+            <p className="project-hero-accent mt-3 font-medium">{caseStudy.outcome}</p>
+            <p className="mt-4 text-base leading-relaxed text-ink-soft">{caseStudy.reflectionSummary}</p>
+            <Disclosure label="Full reflection">
+              <p><span className="font-medium text-ink">What I learned. </span>{caseStudy.whatILearned}</p>
+              <p><span className="font-medium text-ink">What I&rsquo;d improve next. </span>{caseStudy.whatIdImproveNext}</p>
+            </Disclosure>
+          </section>
         </div>
-
-        <EvidenceRail data={project.evidenceRail} category={project.primaryCategory} />
       </Container>
 
       <Container className="border-t border-line py-10">

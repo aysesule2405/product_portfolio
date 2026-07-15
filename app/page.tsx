@@ -1,7 +1,7 @@
 import { Hero } from "@/components/home/Hero";
+import { SelectedWork } from "@/components/home/SelectedWork";
 import { FieldMapSection } from "@/components/home/FieldMapSection";
-import { ProcessSection } from "@/components/home/ProcessSection";
-import { AICraftSection } from "@/components/home/AICraftSection";
+import { VisualPracticeBridge } from "@/components/home/VisualPracticeBridge";
 import { CommunitySection } from "@/components/home/CommunitySection";
 import { ContactSection } from "@/components/home/ContactSection";
 
@@ -15,9 +15,9 @@ export default async function Home({
   return (
     <>
       <Hero />
+      <SelectedWork hiringId={hiring} />
       <FieldMapSection initialHiring={hiring} />
-      <ProcessSection />
-      <AICraftSection />
+      <VisualPracticeBridge />
       <CommunitySection />
       <ContactSection />
     </>

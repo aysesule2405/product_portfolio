@@ -75,6 +75,7 @@ export const projects: Project[] = [
     evidenceRail: {
       users: "Individuals with large, disorganized personal file libraries — notes, PDFs, screenshots, project folders.",
       timeline: "Built for LA Hacks 2026 in 36 hours.",
+      team: "LA Hacks 2026 hackathon team.",
       role: "Product design, AI prototyping, frontend implementation.",
       tools: ["Figma", "Electron", "React", "TypeScript", "Vite", "SQLite", "sqlite-vec", "Gemma", "llama.cpp"],
       constraints: "On-device only, modest consumer hardware, a 36-hour build window, no cloud inference fallback.",
@@ -111,6 +112,12 @@ export const projects: Project[] = [
         "Trust in AI products isn't a single feature — it's the sum of dozens of small legibility decisions, and the ones that matter most are usually the least flashy. A visible source chip did more for user confidence than any amount of model tuning.",
       whatIdImproveNext:
         "I'd design a lightweight way for users to correct or flag a bad retrieval, so the system could learn from real usage instead of relying entirely on the initial ranking logic — right now, if the hybrid search ranks the wrong passage first, there's no path for the user to teach it otherwise.",
+      challengeSummary:
+        "Most people don't have a filing system — they have a vague memory and a search bar that can't parse it. Cloud AI assistants can answer fuzzy queries, but only by uploading your entire personal archive first. Obi had to answer that same query entirely on-device, in a 36-hour hackathon build, for people who wanted AI convenience without surrendering their files to a third party — proving the tension between capability and trust could be resolved locally instead of ignored.",
+      keyInsightRealization:
+        "The realization: trust in a local AI tool isn't a privacy-policy claim, it's an architectural property — and the fastest way to earn it was making the assistant show its sources instead of asking anyone to take an answer on faith.",
+      reflectionSummary:
+        "Trust in an AI product is the sum of small legibility decisions, not one feature — a visible source chip did more for confidence than any model tuning. Next, I'd design a way for users to flag a bad retrieval directly, so the ranking logic could learn from real usage instead of staying fixed at its initial state.",
     },
     stats: [
       { value: "36 hrs", label: "Hackathon build, start to ship" },
@@ -188,6 +195,7 @@ export const projects: Project[] = [
     evidenceRail: {
       users: "Students, self-directed learners, and practice-based learners like dancers reviewing form.",
       timeline: "Built for HackHCC: Code Runners over one hackathon weekend.",
+      team: "HackHCC: Code Runners hackathon team.",
       role: "Interaction design, full-stack development, Chrome extension design.",
       tools: ["React", "Node.js", "Express", "Chrome MV3", "Gemini 2.5", "MongoDB Atlas", "TensorFlow.js", "MoveNet"],
       constraints: "Hackathon timeline, MV3 extension sandboxing, needed to work on video platforms we don't control.",
@@ -224,6 +232,12 @@ export const projects: Project[] = [
         "The unit of design for AI-assisted learning isn't the whole video — it's the moment. Every feature that got anchored to a specific timestamp felt trustworthy and useful; every feature that operated on \"the video\" as a whole felt vague, no matter how good the underlying model was.",
       whatIdImproveNext:
         "I'd extend the pose-tracking pipeline into systematically labeled movement-sequence datasets and temporal features, so recurring movement patterns could be classified more precisely than the current single-session feedback loop allows.",
+      challengeSummary:
+        "Video is one of the richest ways to learn, and one of the worst formats to study from — you can't search it, quiz yourself on it, or find \"the part where they explained it\" without scrubbing by memory. Students reviewing lectures and dancers practicing against reference footage needed the same missing layer: retrieval and practice built on top of video, not another video player. Building it meant working within a single hackathon weekend and Chrome's Manifest V3 sandboxing rules.",
+      keyInsightRealization:
+        "The unit of design for AI-assisted learning isn't the whole video, it's the moment. Every feature anchored to a specific timestamp felt trustworthy and useful; every feature that operated on the video as a whole felt vague, no matter how good the model was.",
+      reflectionSummary:
+        "Every feature anchored to a specific timestamp felt trustworthy; features that operated on the whole video felt vague no matter the model quality. Next, I'd extend the pose-tracking pipeline into systematically labeled movement-sequence datasets, so recurring patterns could be classified more precisely than today's single-session feedback allows.",
     },
     stats: [
       { value: "6", label: "Video platforms supported" },
@@ -297,6 +311,7 @@ export const projects: Project[] = [
     evidenceRail: {
       users: "Educators, curriculum reviewers, and datathon judges evaluating the submission.",
       timeline: "Built in a single day at Rice Datathon 2026, as part of a team.",
+      team: "Team project — Rice Datathon 2026.",
       role: "Data visualization, ML diagnostics, product storytelling.",
       tools: ["Python", "scikit-learn", "TF-IDF", "Logistic Regression", "Linear SVM", "MongoDB"],
       constraints: "One-day datathon limit, API rate limits, real OpenStax curriculum data, severe class imbalance.",
@@ -333,6 +348,12 @@ export const projects: Project[] = [
         "In an ML product, the interpretation layer is not a nice-to-have wrapped around \"the real work\" — for a non-technical stakeholder, the interpretation layer is the actual product. The model can be excellent and still fail if nobody can act on what it says.",
       whatIdImproveNext:
         "I'd build a feedback loop where curriculum reviewers could flag a diagnostic finding as right or wrong, so the ambiguous-zone clustering could improve from real reviewer judgment instead of staying fixed at datathon-day accuracy.",
+      challengeSummary:
+        "Curriculum alignment — deciding whether content actually matches the standard it's tagged against — is hours of ambiguous manual work per document. OpenStax's real need wasn't an accurate classifier in isolation; it was a way for curriculum reviewers to trust and act on that classifier's output at scale, inside a single hackathon day, real class imbalance, and API rate limits. As a team, we had to make the interpretation layer matter as much as the model's accuracy itself.",
+      keyInsightRealization:
+        "For a non-technical stakeholder, the interpretation layer is the actual product, not a wrapper around the real model. A model can be excellent and still fail if nobody can act on what it says — so the diagnostic view had to tell a story, not report a score.",
+      reflectionSummary:
+        "The interpretation layer isn't a wrapper around the real work — for a non-technical stakeholder, it is the product. Next, I'd build a feedback loop where curriculum reviewers could flag a diagnostic finding as right or wrong, so the ambiguous-zone clustering could improve from real judgment instead of staying fixed at datathon-day accuracy.",
     },
     stats: [
       { value: "75%", label: "Multi-class validation accuracy" },
@@ -403,6 +424,7 @@ export const projects: Project[] = [
     evidenceRail: {
       users: "1,000+ daily users across students, staff, administrators, coaches, and visitors.",
       timeline: "Live and in continuous use since September 2024.",
+      team: "Solo design lead; developer handoff team at NAU IT.",
       role: "UX research, product design, accessibility, design systems, developer handoff.",
       tools: ["Figma", "WordPress", "WCAG 2.1 AA", "Component Library", "Usability Testing", "A/B Testing"],
       constraints: "Multiple user groups, one shared navigation surface, an existing WordPress implementation, eight sports programs' worth of content.",
@@ -439,6 +461,12 @@ export const projects: Project[] = [
         "Documentation is a design deliverable, not an afterthought — the component library did more to keep the platform coherent as ownership and content shifted over time than any individual screen design did.",
       whatIdImproveNext:
         "I'd push for an even tighter feedback loop between the ongoing A/B and usability testing and the component library itself, so testing findings turn into documented pattern updates faster than they do today.",
+      challengeSummary:
+        "A university athletics and student portal has to serve a prospective student, a current student, staff, coaches, and visitors — often on the same page, across eight sports programs, from day one at scale. Getting the shared navigation wrong meant every group paying the cost daily on a public platform with 1,000+ daily users. The build had to sit on an existing WordPress implementation, meet WCAG 2.1 AA standards, and satisfy institutional stakeholders with conflicting priorities.",
+      keyInsightRealization:
+        "One well-documented shared system would outperform five bespoke ones over the platform's real lifespan — the structural bet the whole project rested on. Every future content addition only has to reason about one navigation model, not several, because that system was designed and tested first.",
+      reflectionSummary:
+        "Documentation is a design deliverable, not an afterthought — the component library kept the platform coherent as ownership and content shifted far more than any single screen design did. Next, I'd push for a tighter feedback loop between ongoing A/B and usability testing and the component library, so findings turn into documented pattern updates faster.",
     },
     stats: [
       { value: "1,000+", label: "Daily users, live since Sep 2024" },
@@ -504,6 +532,7 @@ export const projects: Project[] = [
     evidenceRail: {
       users: "People using journaling as a tool for creative self-expression and emotional reflection.",
       timeline: "Independent full-stack build, December 2025.",
+      team: "Solo.",
       role: "Product design, emotional UX, full-stack development.",
       tools: ["Figma", "React", "TypeScript", "Node.js", "Express", "MongoDB Atlas", "JWT auth", "bcryptjs"],
       constraints: "Needed to feel private and safe by default, and to avoid the clinical tone of a typical mood-tracker.",
@@ -540,6 +569,12 @@ export const projects: Project[] = [
         "Designing for emotion means resisting the instinct to make everything measurable. The features that made Reverie feel human were exactly the ones that refused to reduce a feeling to a chartable value.",
       whatIdImproveNext:
         "I'd design a gentler way to resurface old entries over time on the timeline — a resurfacing pattern, not a feed — so the atmosphere someone built around a past feeling could meet them again later, rather than the archive being something you only visit by scrolling back manually.",
+      challengeSummary:
+        "Most mood tracking is a spreadsheet or an emoji on a scale — fast to log, but it throws away almost everything that made a feeling worth writing down. If journaling is meant for genuine reflection, the entry's format matters as much as the fact you wrote one. Reverie had to feel private and emotionally safe by default, avoid the sterile tone of typical mood trackers, and support genuinely multi-sensory entries without becoming overwhelming to create.",
+      keyInsightRealization:
+        "A mood score has no texture, so there's nothing to feel nostalgic about when you look back at it. Treating an entry as a small creative artifact — built from music, image, and words — made it something worth rereading, not just something worth logging.",
+      reflectionSummary:
+        "Designing for emotion means resisting the instinct to make everything measurable — the features that made Reverie feel human were exactly the ones that refused to reduce a feeling to a chartable value. Next, I'd design a gentler way to resurface old entries over time, a resurfacing pattern rather than a feed.",
     },
     stats: [
       { value: "5", label: "Content types per space — text, image, video, music, AI mood" },
@@ -620,6 +655,7 @@ export const projects: Project[] = [
     evidenceRail: {
       users: "Casual players and users interested in interactive, AI-driven storytelling.",
       timeline: "Built Spring 2026 as a CS senior capstone at North American University.",
+      team: "Solo (CS senior capstone).",
       role: "Game UX, product design, full-stack development, AI implementation.",
       tools: ["TypeScript", "React 19", "Vite", "Node.js", "Express", "Phaser 3", "MongoDB", "Mongoose", "Gemini AI", "ElevenLabs"],
       constraints: "Academic capstone deadline, needed one cohesive identity/achievement system across four distinct game modes.",
@@ -656,6 +692,12 @@ export const projects: Project[] = [
         "The feature that makes a multi-part product feel whole is rarely the flashiest individual piece — it's the connective system underneath that most players never consciously notice, but would immediately feel the absence of.",
       whatIdImproveNext:
         "I'd expand Spirit Sapling's memory model so it could reference a player's history across sessions and across worlds, rather than generating fresh, contextless dialogue each time — right now the AI conversation is dynamic, but it doesn't yet remember the player.",
+      challengeSummary:
+        "It's easy to build one fun mini-game. It's much harder to make four different modes — a wind arcade, a delivery run, an AI-responsive sapling, a strategy card game — feel like one world instead of four class projects under a shared menu. The real capstone challenge wasn't any single mechanic; it was the shared architecture and identity system, built against a fixed academic deadline, that had to make the whole platform feel coherent rather than a portfolio of demos.",
+      keyInsightRealization:
+        "The connective tissue between four worlds was the actual thesis of the project, not an afterthought to polish once one world shone. A player's identity had to mean something no matter which world they were standing in, or the platform was just four demos sharing a menu.",
+      reflectionSummary:
+        "The feature that makes a multi-part product feel whole is rarely the flashiest single piece — it's the connective system underneath most players never consciously notice, but would immediately feel the absence of. Next, I'd expand Spirit Sapling's memory model so it could reference a player's history across sessions and worlds, not generate fresh dialogue each time.",
     },
     stats: [
       { value: "4", label: "Playable game modes, one shared profile" },
@@ -720,6 +762,7 @@ export const projects: Project[] = [
     evidenceRail: {
       users: "Anyone who feels unsafe in the moment and needs both guidance and calm.",
       timeline: "Built in a single sprint at Rutgers University's HackHERS hackathon.",
+      team: "HackHERS hackathon team.",
       role: "Product design, full-stack development, emotional UX.",
       tools: ["React", "Vite", "Node.js", "Express", "ElevenLabs", "Google Maps API"],
       constraints: "Hackathon sprint timeline; needed a working fallback when third-party AI integrations failed mid-event.",
@@ -756,6 +799,12 @@ export const projects: Project[] = [
         "Reliability beats sophistication in safety-critical software. The moment the AI integration failed mid-hackathon was the most important design decision of the whole project, and it wasn't a design decision made in Figma — it was made under pressure, in code.",
       whatIdImproveNext:
         "I'd build an offline mode for the core risk-assessment and message-generation flow, since a safety app is least reliable exactly when connectivity is most likely to be poor.",
+      challengeSummary:
+        "Safety apps tend to feel like emergency buttons — cold, alarming, built around the assumption a crisis is already fully underway, exactly the wrong tone for someone scared but still trying to think clearly. That tone changes whether someone actually opens the app in the moment they need it. Built in a single HackHERS hackathon sprint, the app had a hard requirement: the safety-critical path had to keep working even if a third-party AI integration failed mid-event.",
+      keyInsightRealization:
+        "Reliability beats sophistication in safety-critical software. The moment a primary AI integration failed mid-hackathon and the team rebuilt it as deterministic rules, instead of cutting the feature, turned out to be the most important design decision of the whole project — made under pressure, in code.",
+      reflectionSummary:
+        "Reliability beats sophistication in safety-critical software — the mid-hackathon AI failure, and the decision to rebuild as deterministic rules instead of cutting the feature, was the project's most important design decision, made under pressure in code. Next, I'd build an offline mode for the core risk flow, since a safety app is least reliable exactly when connectivity is worst.",
     },
     stats: [
       { value: "4", label: "Risk factors read in real time" },
@@ -766,4 +815,20 @@ export const projects: Project[] = [
 
 export function getProjectBySlug(slug: string): Project | undefined {
   return projects.find((project) => project.slug === slug);
+}
+
+/**
+ * The three projects surfaced before the field map on the homepage and at the top of
+ * /work. Defaults to the flagship set from the redesign brief; swaps in OpenStaxAlign for
+ * NAU Portal when the visitor is browsing under the "AI & ML" hiring lens, since
+ * OpenStaxAlign's primary category (data-clarity) matches that lens more directly.
+ */
+const defaultFlagshipSlugs = ["obi", "framewise", "nau-athletics-student-portal"];
+const aiMlFlagshipSlugs = ["obi", "framewise", "openstax-align"];
+
+export function getFlagshipProjects(hiringId?: string | null): Project[] {
+  const slugs = hiringId === "ai-ml" ? aiMlFlagshipSlugs : defaultFlagshipSlugs;
+  return slugs
+    .map((slug) => getProjectBySlug(slug))
+    .filter((project): project is Project => Boolean(project));
 }

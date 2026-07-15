@@ -3,19 +3,17 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
-import { Tag } from "@/components/ui/Tag";
 import { WindowChrome } from "@/components/ui/WindowChrome";
 import { BrandGlow } from "@/components/ui/BrandGlow";
-import { ProblemCategory } from "@/lib/types";
 
-const heroTags: { label: string; category: ProblemCategory }[] = [
-  { label: "AI tools", category: "ai-trust" },
-  { label: "Product design", category: "design-systems" },
-  { label: "Frontend", category: "creative-tools" },
-  { label: "Education", category: "learning-workflows" },
-  { label: "Data clarity", category: "data-clarity" },
-  { label: "Emotional UX", category: "emotional-ux" },
-  { label: "Accessibility", category: "campus-systems" },
+const focusAreas = [
+  "AI tools",
+  "Product design",
+  "Frontend",
+  "Education",
+  "Data clarity",
+  "Emotional UX",
+  "Accessibility",
 ];
 
 const codeLines = [
@@ -83,57 +81,41 @@ export function Hero() {
 
             <p className="mt-6 max-w-2xl border-l-2 border-line-strong pl-4 text-sm leading-relaxed text-ink-soft sm:text-base">
               Product designer and design-minded engineer building AI tools, learning
-              systems, dashboards, and digital experiences that make complex workflows
-              feel clear, trustworthy, and human.{" "}
-              <em className="not-italic text-ink">I build with code. I think with art.</em>
+              platforms, and data-heavy products that make complex systems feel clear
+              and trustworthy.
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3">
               <Link
-                href="#field-map"
+                href="#selected-work"
                 className="motion-press rounded-md bg-ink px-5 py-2.5 text-sm font-medium text-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               >
-                View product work
+                View selected work
               </Link>
               <Link
-                href="/visual-practice"
+                href="#field-map"
                 className="motion-press rounded-md border border-line-strong px-5 py-2.5 text-sm font-medium text-ink hover:bg-bg-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               >
-                Explore visual work
-              </Link>
-              <Link
-                href="/#contact"
-                className="motion-press rounded-md px-5 py-2.5 text-sm font-medium text-ink-soft underline decoration-line-strong decoration-2 underline-offset-4 hover:text-ink"
-              >
-                Contact me
+                Explore the field map
               </Link>
             </div>
+
+            <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.1em] text-ink-faint">
+              Currently a CS student · open to product design, design engineering &amp;
+              AI product roles
+            </p>
           </div>
         </motion.div>
 
-        <motion.ul
+        <motion.p
           aria-label="Areas of focus"
-          className="mt-8 flex flex-wrap gap-2"
-          initial="hidden"
-          animate="show"
-          variants={{
-            hidden: {},
-            show: { transition: { staggerChildren: 0.06, delayChildren: 0.3 } },
-          }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.3, ease: "easeOut" }}
+          className="mt-8 font-mono text-xs text-ink-faint"
         >
-          {heroTags.map((tag) => (
-            <motion.li
-              key={tag.label}
-              variants={{
-                hidden: { opacity: 0, y: 8, scale: 0.94 },
-                show: { opacity: 1, y: 0, scale: 1 },
-              }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-            >
-              <Tag category={tag.category}>{tag.label}</Tag>
-            </motion.li>
-          ))}
-        </motion.ul>
+          {focusAreas.join(" · ")}
+        </motion.p>
       </Container>
     </section>
   );

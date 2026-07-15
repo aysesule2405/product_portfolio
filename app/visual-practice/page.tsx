@@ -34,8 +34,8 @@ export default function VisualPracticePage() {
       </header>
 
       <Container className="py-14 sm:py-20">
-        <Stagger className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          {visualWork.map((work) => (
+        <Stagger className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {visualWork.filter((work) => work.id !== "playground").map((work) => (
             <StaggerItem key={work.id}>
               <VisualCard work={work} />
             </StaggerItem>

@@ -386,8 +386,9 @@ function constellationScatter(cluster: (typeof CLUSTERS)[number], members: Timel
     if (cluster.id === "projects") {
       const wave = Math.sin(t * Math.PI * 2.2) * 82;
       const step = i % 3 === 0 ? -34 : i % 3 === 1 ? 18 : 52;
+      const horizontalSpread = cluster.spread * 2;
       return {
-        x: round(cluster.cx - cluster.spread * 1.05 + t * cluster.spread * 2.1 + jitter(seed, 28)),
+        x: round(cluster.cx - horizontalSpread + t * horizontalSpread * 2 + jitter(seed, 28)),
         y: round(cluster.cy + wave + step + jitter(seed + 1, 22)),
       };
     }
@@ -607,56 +608,43 @@ function Sparkle({ scale = 1 }: { scale?: number }) {
   );
 }
 
+const SHELL_ASSETS = [
+  { src: "/images/sea_shells/sea-shell-1.png", color: "#efb2a8" },
+  { src: "/images/sea_shells/sea-shell-2.png", color: "#f8caac" },
+  { src: "/images/sea_shells/sea-shell-3.png", color: "#f58581" },
+  { src: "/images/sea_shells/sea-shell-4.png", color: "#fcc9ca" },
+  { src: "/images/sea_shells/sea-shell-5.png", color: "#e8c9bc" },
+] as const;
+
+const CATEGORY_SHELL_INDEX: Record<ProblemCategory, number> = {
+  "ai-trust": 0,
+  "learning-workflows": 1,
+  "data-clarity": 2,
+  "campus-systems": 3,
+  "emotional-ux": 4,
+  "creative-tools": 0,
+  "community-learning": 1,
+  "design-systems": 2,
+};
+
 function shellVariant(category: ProblemCategory) {
-  const index = categories.findIndex((cat) => cat.id === category);
-  return Math.max(index, 0) % 4;
+  return CATEGORY_SHELL_INDEX[category];
 }
 
 function ShellIcon({ variant, scale = 1 }: { variant: number; scale?: number }) {
-  const s = scale;
-  if (variant === 0) {
-    return (
-      <g transform={`scale(${s})`}>
-        <path
-          d="M-11 5 C-8 -8 -2 -13 0 -14 C2 -13 8 -8 11 5 C7 10 -7 10 -11 5 Z"
-          fill="currentColor"
-        />
-        <path d="M0 -12 L0 7M-5 -8 C-2 -3 -1 2 -1 7M5 -8 C2 -3 1 2 1 7M-9 1 C-4 3 4 3 9 1" stroke="var(--bg)" strokeWidth="1.3" strokeLinecap="round" fill="none" opacity="0.62" />
-      </g>
-    );
-  }
-  if (variant === 1) {
-    return (
-      <g transform={`scale(${s})`}>
-        <path
-          d="M-12 1 C-6 -10 8 -10 12 1 C10 10 -10 10 -12 1 Z"
-          fill="currentColor"
-        />
-        <path d="M-8 3 C-4 -1 4 -1 8 3M-4 -5 C-2 -1 -1 3 -1 8M4 -5 C2 -1 1 3 1 8" stroke="var(--bg)" strokeWidth="1.25" strokeLinecap="round" fill="none" opacity="0.58" />
-      </g>
-    );
-  }
-  if (variant === 2) {
-    return (
-      <g transform={`scale(${s})`}>
-        <path
-          d="M-9 8 C-15 -1 -8 -12 3 -12 C13 -12 16 -2 9 6 C4 12 -5 13 -9 8 Z"
-          fill="currentColor"
-        />
-        <path d="M2 -6 C8 -5 9 2 4 5 C0 8 -6 6 -6 1 C-6 -3 -2 -5 2 -3 C5 -1 3 3 0 3" stroke="var(--bg)" strokeWidth="1.3" strokeLinecap="round" fill="none" opacity="0.6" />
-      </g>
-    );
-  }
+  const shell = SHELL_ASSETS[variant % SHELL_ASSETS.length];
+  const size = 32 * scale;
+
   return (
-    <g transform={`scale(${s})`}>
-      <path
-        d="M-13 4 C-8 -7 -1 -11 0 -12 C1 -11 8 -7 13 4 C8 10 -8 10 -13 4 Z"
-        fill="currentColor"
-      />
-      <path d="M0 -10 L0 7M-7 -4 C-4 -1 -3 3 -3 7M7 -4 C4 -1 3 3 3 7M-11 3 C-5 6 5 6 11 3" stroke="var(--bg)" strokeWidth="1.2" strokeLinecap="round" fill="none" opacity="0.56" />
-      <circle cx="-5.5" cy="3" r="1.1" fill="var(--bg)" opacity="0.48" />
-      <circle cx="5.5" cy="3" r="1.1" fill="var(--bg)" opacity="0.48" />
-    </g>
+    <image
+      href={shell.src}
+      x={-size / 2}
+      y={-size / 2}
+      width={size}
+      height={size}
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden
+    />
   );
 }
 
@@ -681,7 +669,9 @@ function Star({
   const idleDuration = 2.6 + mulberry32(seed)() * 2.2;
   const idleDelay = mulberry32(seed + 17)() * 2.5;
   const starColor = `color-mix(in srgb, ${categoryColorVar(node.category)} 54%, var(--star-yellow) 46%)`;
+  const shellIndex = shellVariant(node.category);
   const shellColor = categoryColorVar(node.category);
+  const shellAssetColor = SHELL_ASSETS[shellIndex].color;
   const shellScale = Math.max(0.68, node.r / 9);
   const shellIdleRotate = (seed % 13) - 6;
 
@@ -763,7 +753,7 @@ function Star({
 
       <motion.g
         className="field-map-shell-layer"
-        style={{ x: node.x, y: node.y, color: shellColor }}
+        style={{ x: node.x, y: node.y, color: shellAssetColor }}
         initial={{ opacity: 0, scale: 0, rotate: shellIdleRotate }}
         animate={
           !revealed
@@ -802,7 +792,7 @@ function Star({
                 }
         }
       >
-        <ShellIcon variant={shellVariant(node.category)} scale={1} />
+        <ShellIcon variant={shellIndex} scale={1} />
       </motion.g>
 
       <motion.text
@@ -1059,7 +1049,7 @@ export function CommitConstellation({
   );
 
   return (
-    <div ref={containerRef}>
+    <div ref={containerRef} className="field-map">
       <div className="field-map-card relative overflow-hidden rounded-2xl border border-line bg-bg-raised">
         <svg
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -1124,7 +1114,7 @@ export function CommitConstellation({
               <span
                 aria-hidden
                 className="h-1.5 w-1.5 rounded-full"
-                style={{ background: `color-mix(in srgb, ${categoryColorVar(cat.id)} 38%, var(--star-yellow) 62%)` }}
+                style={{ background: categoryColorVar(cat.id) }}
               />
               {cat.shortLabel}
             </button>
@@ -1318,7 +1308,7 @@ function ConstellationFullscreen({
 
   return (
     <div className="field-map-fullscreen fixed inset-0 z-50 bg-bg" role="dialog" aria-modal="true" aria-label="Field map, expanded">
-      <div className="flex h-12 items-center justify-between border-b border-line px-4">
+      <div className="field-map-fullscreen-toolbar flex h-12 items-center justify-between border-b border-line px-4">
         <p className="hidden font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint sm:block">
           Field map — drag to explore, scroll to zoom
         </p>

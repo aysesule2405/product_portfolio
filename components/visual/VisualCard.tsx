@@ -1,11 +1,13 @@
+import Image from "next/image";
 import { VisualWork } from "@/lib/data/visual-work";
 import { categoryStyle } from "@/lib/category-color";
-import { VisualTexture } from "@/components/visual/VisualTexture";
 import { FieldLabel } from "@/components/ui/FieldLabel";
 import { WindowChrome } from "@/components/ui/WindowChrome";
 import { visualWorkFileName } from "@/lib/data/file-tree";
 
 export function VisualCard({ work }: { work: VisualWork }) {
+  const isPlayground = work.id === "playground";
+
   return (
     <article
       id={work.id}
@@ -21,9 +23,17 @@ export function VisualCard({ work }: { work: VisualWork }) {
           </span>
         }
       />
-      <div className="cat-tint-bg relative flex h-40 items-center justify-center overflow-hidden border-b border-line">
-        <VisualTexture texture={work.texture} category={work.category} className="h-28 w-40" />
-        <span className="cat-tint-text absolute bottom-2 right-2 rounded-full bg-bg/85 px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-[0.08em] backdrop-blur-sm">
+      <div className="cat-tint-bg relative aspect-[4/5] overflow-hidden border-b border-line">
+        {work.image ? (
+          <Image
+            src={work.image.src}
+            alt={work.image.alt}
+            fill
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            className={isPlayground ? "object-cover object-top" : "object-cover object-center"}
+          />
+        ) : null}
+        <span className="cat-tint-text absolute bottom-2 right-2 z-10 rounded-full bg-bg/85 px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-[0.08em] backdrop-blur-sm">
           {work.medium.split(" & ")[0]}
         </span>
       </div>

@@ -7,9 +7,13 @@ import { ProblemCategory } from "@/lib/types";
 export function NorthStar({
   id,
   question,
+  realization,
 }: {
   id?: string;
   question: string;
+  /** The central realization the decisions below trace back to — the "key insight"
+   *  beat of the six-section case-study template, paired with the guiding question. */
+  realization?: string;
   category: ProblemCategory;
 }) {
   return (
@@ -21,11 +25,14 @@ export function NorthStar({
         <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden className="north-star-quote-icon shrink-0">
           <path d="M8,1 C8.6,4.4 9.6,5.4 13,6 C9.6,6.6 8.6,7.6 8,11 C7.4,7.6 6.4,6.6 3,6 C6.4,5.4 7.4,4.4 8,1 Z" />
         </svg>
-        North star
+        Key insight
       </p>
       <p className="north-star-quote-text mt-2 max-w-2xl font-serif text-lg italic leading-snug text-ink sm:text-xl">
         {question}
       </p>
+      {realization ? (
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink-soft">{realization}</p>
+      ) : null}
     </div>
   );
 }

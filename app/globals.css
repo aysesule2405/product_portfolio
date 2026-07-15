@@ -146,6 +146,7 @@
 
   --font-sans: var(--font-plex-sans);
   --font-mono: var(--font-plex-mono);
+  --font-serif: var(--font-fraunces);
 }
 
 html {
@@ -497,6 +498,17 @@ body {
   --field-water-deep: color-mix(in srgb, var(--star-blue) 11%, transparent);
 }
 
+:root[data-theme="light"] .field-map {
+  --cat-ai-trust: #efb2a8;
+  --cat-learning-workflows: #f8caac;
+  --cat-data-clarity: #f58581;
+  --cat-campus-systems: #fcc9ca;
+  --cat-emotional-ux: #e8c9bc;
+  --cat-creative-tools: #efb2a8;
+  --cat-community-learning: #f8caac;
+  --cat-design-systems: #f58581;
+}
+
 .field-map-card::before,
 .field-map-fullscreen::before {
   content: "";
@@ -512,6 +524,16 @@ body {
 
 .field-map-fullscreen::before {
   position: fixed;
+  z-index: 0;
+}
+
+.field-map-fullscreen {
+  isolation: isolate;
+}
+
+.field-map-fullscreen > * {
+  position: relative;
+  z-index: 1;
 }
 
 .field-map-svg {
@@ -552,7 +574,10 @@ body {
 
 :root[data-theme="light"] .field-map-card::before,
 :root[data-theme="light"] .field-map-fullscreen::before {
-  opacity: 0.52;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, white 8%, transparent), color-mix(in srgb, var(--morning-sky) 14%, transparent)),
+    url("/images/waves.gif") center / cover no-repeat;
+  opacity: 0.88;
 }
 
 :root[data-theme="light"] .field-map-action {
@@ -562,6 +587,12 @@ body {
   box-shadow:
     0 8px 22px color-mix(in srgb, var(--star-blue) 10%, transparent),
     inset 0 1px 0 color-mix(in srgb, white 68%, transparent);
+}
+
+:root[data-theme="light"] .field-map-fullscreen-toolbar {
+  background: color-mix(in srgb, white 84%, var(--morning-sky));
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--star-blue) 10%, transparent);
+  backdrop-filter: blur(12px);
 }
 
 :root[data-theme="light"] .field-map-action:hover,
@@ -576,6 +607,10 @@ body {
 
 :root[data-theme="light"] .field-map-shell-layer {
   display: inline;
+  filter:
+    drop-shadow(0 1px 1px color-mix(in srgb, white 88%, transparent))
+    drop-shadow(0 7px 11px color-mix(in srgb, currentColor 22%, transparent))
+    drop-shadow(0 0 12px color-mix(in srgb, currentColor 24%, transparent));
 }
 
 :root[data-theme="light"] .field-map-star-layer,

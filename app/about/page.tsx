@@ -6,6 +6,7 @@ import { Tag } from "@/components/ui/Tag";
 import { BrandGlow } from "@/components/ui/BrandGlow";
 import { PhotoAlbum } from "@/components/about/PhotoAlbum";
 import { resumeHref } from "@/lib/data/nav";
+import { processSteps } from "@/lib/data/process";
 
 export const metadata: Metadata = {
   title: "About — The Clarity Lab",
@@ -123,6 +124,21 @@ export default function AboutPage() {
                 <p className="mt-2.5 text-sm leading-relaxed text-ink-soft">{value.body}</p>
               </div>
             ))}
+          </div>
+
+          <div id="how-i-work" className="scroll-mt-20 pt-2">
+            <FieldLabel>How I work</FieldLabel>
+            <ol className="mt-4 space-y-4">
+              {processSteps.map((step) => (
+                <li key={step.id} className="flex gap-4">
+                  <span className="font-mono text-xs text-ink-faint">{step.letter}</span>
+                  <div>
+                    <p className="font-sans text-base font-semibold text-ink">{step.title}</p>
+                    <p className="mt-1 text-sm leading-relaxed text-ink-soft">{step.summary}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
           </div>
 
           <p className="pt-2">

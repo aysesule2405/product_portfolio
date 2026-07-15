@@ -44,7 +44,7 @@ export const visualWork: VisualWork[] = [
     fieldNumber: "VP-01",
     galleryUrl: `${GH_PAGES}/graphicdesign.html`,
     image: {
-      src: `${GH_PAGES}/images/dijital_art/Lilith%20-%20Symetrical%20Balance%20Poster.jpg`,
+      src: "/images/Lilith - Symetrical Balance Poster.jpg",
       alt: "Lilith — Symmetrical Balance Poster, stained-glass inspired central figure",
     },
     pieces: [
@@ -90,7 +90,7 @@ export const visualWork: VisualWork[] = [
     id: "ceramics",
     medium: "Sculpting & Ceramics",
     title: "Working the wheel",
-    featuredPiece: "Giant Woman Figure, glazed",
+    featuredPiece: "Head Figure, metallic glaze",
     principle: "Material, patience, form, iteration.",
     lesson:
       "Clay is the slowest, most honest medium I know — it cannot be rushed and shows every hesitation. The Giant Woman figure, built at roughly 50cm and inspired by Chiparus's Cleopatra, needed real structural planning to stay upright before it ever got a glaze. It's the most direct feedback loop I've worked in, and it's made me more patient with the slower parts of product iteration.",
@@ -101,8 +101,8 @@ export const visualWork: VisualWork[] = [
     fieldNumber: "VP-02",
     galleryUrl: `${GH_PAGES}/ceramics.html`,
     image: {
-      src: `${GH_PAGES}/images/ceramics/giant_woman_figure_2.jpg`,
-      alt: "Giant Woman ceramic figure with ivy-inspired glaze",
+      src: "/images/head_figure_0.jpg",
+      alt: "Ceramic head figure with a reflective metallic glaze",
     },
     pieces: [
       {
@@ -158,7 +158,7 @@ export const visualWork: VisualWork[] = [
     fieldNumber: "VP-03",
     galleryUrl: `${GH_PAGES}/painting.html`,
     image: {
-      src: `${GH_PAGES}/images/paintings/girl%26moon.jpg`,
+      src: "/images/girl&moon.jpg",
       alt: "Girl & Moon, oil on canvas",
     },
     pieces: [
@@ -216,8 +216,8 @@ export const visualWork: VisualWork[] = [
     galleryUrl: `${GH_PAGES}/playground.html`,
     pieceAspect: "landscape",
     image: {
-      src: "/images/playground/half-moon.png",
-      alt: "Half Moon, a moon-phase card game",
+      src: "/images/playground.png",
+      alt: "Half Moon interactive moon-phase card game",
     },
     pieces: [
       {

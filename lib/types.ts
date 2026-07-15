@@ -25,6 +25,7 @@ export interface DecisionLogEntry {
 export interface EvidenceRailData {
   users: string;
   timeline: string;
+  team: string;
   role: string;
   tools: string[];
   constraints: string;
@@ -47,6 +48,24 @@ export interface CaseStudyContent {
   outcome: string;
   whatILearned: string;
   whatIdImproveNext: string;
+  /** Snapshot's condensed problem/stakes/audience/constraints — ≤80 words, for the
+   *  six-section case-study template. Full detail stays in the fields above, available
+   *  on demand. */
+  challengeSummary: string;
+  /** The central realization the decisions below all trace back to — 30–50 words,
+   *  paired with `northStar`'s guiding question. */
+  keyInsightRealization: string;
+  /** A 40–60 word reflection pairing what was learned with what's next, for the
+   *  Outcome & reflection section — full detail stays in whatILearned/whatIdImproveNext. */
+  reflectionSummary: string;
+}
+
+export interface ProjectVideo {
+  src: string;
+  webmSrc?: string;
+  poster: string;
+  alt: string;
+  caption?: string;
 }
 
 export type EvidenceGlyph =
@@ -97,6 +116,7 @@ export interface Project {
   dateLabel: string;
   icon?: ProjectImage;
   images: ProjectImage[];
+  video?: ProjectVideo;
   decisionLog: DecisionLogEntry[];
   evidenceRail: EvidenceRailData;
   caseStudy: CaseStudyContent;

@@ -19,8 +19,9 @@ interface Command {
 function buildCommands(): Command[] {
   const nav: Command[] = [
     { id: "home", group: "Navigate", label: "Home", href: "/" },
-    { id: "work", group: "Navigate", label: "Field map (work + practice)", href: "/#field-map" },
-    { id: "process", group: "Navigate", label: "Process", href: "/#process" },
+    { id: "work", group: "Navigate", label: "All work", href: "/work" },
+    { id: "field-map", group: "Navigate", label: "Field map", href: "/#field-map" },
+    { id: "process", group: "Navigate", label: "How I work", href: "/about#how-i-work" },
     { id: "practice", group: "Navigate", label: "Visual Practice", href: "/visual-practice" },
     { id: "community", group: "Navigate", label: "Community", href: "/#community" },
     { id: "about", group: "Navigate", label: "About", href: "/about" },
