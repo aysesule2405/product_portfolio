@@ -574,10 +574,28 @@ body {
 
 :root[data-theme="light"] .field-map-card::before,
 :root[data-theme="light"] .field-map-fullscreen::before {
-  background:
-    linear-gradient(180deg, color-mix(in srgb, white 8%, transparent), color-mix(in srgb, var(--morning-sky) 14%, transparent)),
-    url("/images/waves.gif") center / cover no-repeat;
+  background: linear-gradient(180deg, color-mix(in srgb, white 8%, transparent), color-mix(in srgb, var(--morning-sky) 14%, transparent));
   opacity: 0.88;
+}
+
+.field-map-video-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.field-map-video-layer button {
+  pointer-events: auto;
+}
+
+:root[data-theme="light"] .field-map-video-layer {
+  opacity: 0.88;
+}
+
+.field-map-fullscreen > .field-map-video-layer {
+  position: absolute;
 }
 
 :root[data-theme="light"] .field-map-action {

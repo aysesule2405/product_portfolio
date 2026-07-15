@@ -27,8 +27,7 @@ export const rootFiles: FileTreeEntry[] = [
   { label: "index.tsx", href: "/" },
   { label: "work.tsx", href: "/work" },
   { label: "fieldmap.md", href: "/#field-map" },
-  { label: "process.md", href: "/about#how-i-work" },
-  { label: "community.md", href: "/#community" },
+  { label: "community.md", href: "/about#community" },
   { label: "about.md", href: "/about" },
   { label: "contact.md", href: "/#contact" },
 ];

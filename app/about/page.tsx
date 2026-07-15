@@ -5,8 +5,8 @@ import { FieldLabel } from "@/components/ui/FieldLabel";
 import { Tag } from "@/components/ui/Tag";
 import { BrandGlow } from "@/components/ui/BrandGlow";
 import { PhotoAlbum } from "@/components/about/PhotoAlbum";
+import { CommunityTimeline } from "@/components/about/CommunityTimeline";
 import { resumeHref } from "@/lib/data/nav";
-import { processSteps } from "@/lib/data/process";
 
 export const metadata: Metadata = {
   title: "About — The Clarity Lab",
@@ -96,17 +96,12 @@ export default function AboutPage() {
       <Container className="grid grid-cols-1 gap-12 py-14 sm:py-20 lg:grid-cols-[1fr_280px]">
         <div className="max-w-2xl space-y-6 text-base leading-relaxed text-ink-soft lg:pt-6">
           <p>
-            I grew up making things with my hands before I ever wrote a line of code:
-            ceramics, charcoal drawings, posters, and visual experiments. That practice
-            trained my eye for composition, hierarchy, texture, and emotional weight.
-            Computer science gave me another kind of material to work with: systems,
-            data, logic, and software that people can actually use.
-          </p>
-          <p>
-            Product design became the bridge between those worlds. I like taking
-            something structurally complex, such as a local AI assistant, a curriculum
-            classification model, or a campus platform with several audiences, and making
-            it feel legible enough that someone can act with confidence.
+            I grew up making things with my hands before I ever wrote a line of code —
+            ceramics, charcoal, posters — which trained my eye for composition,
+            hierarchy, and emotional weight. Computer science gave me another material to
+            work with: systems, data, and logic. Product design became the bridge between
+            them — taking something structurally complex, like a local AI assistant or a
+            campus platform, and making it legible enough to act on with confidence.
           </p>
 
           <blockquote className="border-l-2 border-accent py-1 pl-5 font-serif text-xl italic leading-snug text-ink sm:text-2xl">
@@ -126,34 +121,19 @@ export default function AboutPage() {
             ))}
           </div>
 
-          <div id="how-i-work" className="scroll-mt-20 pt-2">
-            <FieldLabel>How I work</FieldLabel>
-            <ol className="mt-4 space-y-4">
-              {processSteps.map((step) => (
-                <li key={step.id} className="flex gap-4">
-                  <span className="font-mono text-xs text-ink-faint">{step.letter}</span>
-                  <div>
-                    <p className="font-sans text-base font-semibold text-ink">{step.title}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-ink-soft">{step.summary}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
+          <CommunityTimeline />
 
           <p className="pt-2">
             This portfolio is a map of that practice: shipped product work, design
-            systems thinking, AI product experiments, visual art, and community
-            leadership. I want recruiters, hiring managers, mentors, and collaborators
-            to see both the work and the person behind it: someone who can reason through
-            technical constraints, care about the details, and advocate for the humans on
-            the other side of the screen.
+            systems thinking, AI experiments, and visual art. I want anyone reading it to
+            see both the work and the person behind it — someone who reasons through
+            constraints, cares about the details, and advocates for whoever&rsquo;s on the
+            other side of the screen.
           </p>
           <p>
-            I&rsquo;m especially interested in product design, design engineering, AI
-            tools, education technology, accessibility, and systems where clarity is not
-            decoration but a core requirement. I build with code. I think with art. I
-            care about making useful things feel understandable, trustworthy, and alive.
+            I build with code. I think with art. Clarity isn&rsquo;t decoration to me
+            — it&rsquo;s the requirement that tells you whether a system actually
+            understands the person using it.
           </p>
 
           <div className="flex flex-wrap gap-3 pt-4">

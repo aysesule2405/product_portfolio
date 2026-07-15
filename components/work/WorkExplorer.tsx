@@ -1,12 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
 import clsx from "clsx";
 import Link from "next/link";
 import { Reveal } from "@/components/motion/Reveal";
 import { ProjectCard } from "@/components/work/ProjectCard";
-import { CommitConstellation } from "@/components/map/CommitConstellation";
 import { categories } from "@/lib/data/categories";
 import { projects, getFlagshipProjects } from "@/lib/data/projects";
 import { buildTimelineNodes } from "@/lib/data/timeline";
@@ -15,6 +15,20 @@ import { categoryColorVar } from "@/lib/category-color";
 import { ProblemCategory, Project } from "@/lib/types";
 
 export type WorkView = "map" | "grid" | "list";
+
+// The constellation is a large, animation-heavy client component only ever needed when
+// someone actually opens map view — lazy-load it instead of shipping it to every visitor.
+const CommitConstellation = dynamic(
+  () => import("@/components/map/CommitConstellation").then((mod) => mod.CommitConstellation),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex aspect-[16/10] w-full items-center justify-center rounded-2xl border border-line bg-bg-raised">
+        <span className="font-mono text-xs text-ink-faint">Loading field map…</span>
+      </div>
+    ),
+  }
+);
 
 /**
  * Shared explorer used both by the homepage's compact field-map section and the full

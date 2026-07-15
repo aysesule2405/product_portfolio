@@ -13,7 +13,8 @@ interface Command {
   group: string;
   label: string;
   hint?: string;
-  href: string;
+  href?: string;
+  action?: "motion-lab";
 }
 
 function buildCommands(): Command[] {
@@ -21,11 +22,17 @@ function buildCommands(): Command[] {
     { id: "home", group: "Navigate", label: "Home", href: "/" },
     { id: "work", group: "Navigate", label: "All work", href: "/work" },
     { id: "field-map", group: "Navigate", label: "Field map", href: "/#field-map" },
-    { id: "process", group: "Navigate", label: "How I work", href: "/about#how-i-work" },
     { id: "practice", group: "Navigate", label: "Visual Practice", href: "/visual-practice" },
-    { id: "community", group: "Navigate", label: "Community", href: "/#community" },
+    { id: "community", group: "Navigate", label: "Community", href: "/about#community" },
     { id: "about", group: "Navigate", label: "About", href: "/about" },
     { id: "contact", group: "Navigate", label: "Contact", href: "/#contact" },
+    {
+      id: "motion-lab",
+      group: "Craft",
+      label: "Motion Lab",
+      hint: "Duration tokens, easing, springs, shared elements, reduced motion",
+      action: "motion-lab",
+    },
   ];
 
   const hiring: Command[] = hiringLenses.map((lens) => ({
@@ -55,7 +62,7 @@ function buildCommands(): Command[] {
   return [...nav, ...hiring, ...work, ...practice];
 }
 
-export function CommandPalette({ onClose }: { onClose: () => void }) {
+export function CommandPalette({ onClose, onOpenMotionLab }: { onClose: () => void; onOpenMotionLab: () => void }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -81,7 +88,11 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
   }
 
   function select(command: Command) {
-    router.push(command.href);
+    if (command.action === "motion-lab") {
+      onOpenMotionLab();
+      return;
+    }
+    if (command.href) router.push(command.href);
     onClose();
   }
 

@@ -7,6 +7,7 @@ import clsx from "clsx";
 import { TimelineLane, TimelineNode, TimelineNodeKind, ProblemCategory } from "@/lib/types";
 import { categoryColorVar } from "@/lib/category-color";
 import { categories } from "@/lib/data/categories";
+import { WavesBackground } from "@/components/celestial/WavesBackground";
 
 const WIDTH = 1600;
 const HEIGHT = 1000;
@@ -1051,6 +1052,7 @@ export function CommitConstellation({
   return (
     <div ref={containerRef} className="field-map">
       <div className="field-map-card relative overflow-hidden rounded-2xl border border-line bg-bg-raised">
+        <WavesBackground />
         <svg
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           className="field-map-svg block w-full"
@@ -1235,6 +1237,16 @@ function ConstellationFullscreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // This dialog captures wheel events for zoom, so it needs its own Escape
+  // handler rather than relying on a listener further up the tree.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   function clampScale(scale: number) {
     return Math.min(Math.max(scale, 0.6), 3);
   }
@@ -1308,6 +1320,7 @@ function ConstellationFullscreen({
 
   return (
     <div className="field-map-fullscreen fixed inset-0 z-50 bg-bg" role="dialog" aria-modal="true" aria-label="Field map, expanded">
+      <WavesBackground />
       <div className="field-map-fullscreen-toolbar flex h-12 items-center justify-between border-b border-line px-4">
         <p className="hidden font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint sm:block">
           Field map — drag to explore, scroll to zoom

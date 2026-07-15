@@ -15,6 +15,9 @@ export interface VisualWork {
   title: string;
   featuredPiece: string;
   principle: string;
+  /** The one product-design skill this medium trains — the explicit bridge back to
+   *  product work, shown as its own callout rather than left implicit in `principle`. */
+  skill: string;
   lesson: string;
   category: ProblemCategory;
   texture: "paper" | "clay" | "charcoal" | "playground";
@@ -35,6 +38,7 @@ export const visualWork: VisualWork[] = [
     title: "Typography and poster design",
     featuredPiece: "Lilith — Symmetrical Balance Poster",
     principle: "Hierarchy, rhythm, visual storytelling.",
+    skill: "Hierarchy",
     lesson:
       "Posters have one shot to tell you what matters first. That's the same job as a dashboard's header, or an onboarding screen's first sentence — designing a poster is practice for designing attention. The AP portfolio series on Turkish food traditions (yaprak sarması, made stage by stage) was the first time I translated a lived, cultural process into deliberate composition and color.",
     category: "creative-tools",
@@ -92,6 +96,7 @@ export const visualWork: VisualWork[] = [
     title: "Working the wheel",
     featuredPiece: "Head Figure, metallic glaze",
     principle: "Material, patience, form, iteration.",
+    skill: "Material feedback & iteration",
     lesson:
       "Clay is the slowest, most honest medium I know — it cannot be rushed and shows every hesitation. The Giant Woman figure, built at roughly 50cm and inspired by Chiparus's Cleopatra, needed real structural planning to stay upright before it ever got a glaze. It's the most direct feedback loop I've worked in, and it's made me more patient with the slower parts of product iteration.",
     category: "community-learning",
@@ -149,6 +154,7 @@ export const visualWork: VisualWork[] = [
     title: "Light, contrast, and atmosphere",
     featuredPiece: "Girl & Moon (oil on canvas)",
     principle: "Light, contrast, emotional atmosphere.",
+    skill: "Atmosphere & focal control",
     lesson:
       "Girl & Moon was painted in one sitting on an actual full-moon night in 2023, after watching The Tale of Princess Kaguya — cool lunar light against warm skin, a girl and the moon mirroring each other's lonely glow. Charcoal work later stripped that same instinct down further: think in light and shadow before you decide what anything looks like in detail. I use that instinct when deciding what an interface should emphasize before I decide what it should contain.",
     category: "emotional-ux",
@@ -206,6 +212,7 @@ export const visualWork: VisualWork[] = [
     title: "Small, unpolished, curious things",
     featuredPiece: "Half Moon, Palette Oracle, Palette Studio, Sand Canvas",
     principle: "Curiosity, interaction, creative coding.",
+    skill: "Curiosity & interaction prototyping",
     lesson:
       "A moon-phase card game, a natural-mood palette matching game, a paint-color remix studio, a sand-physics canvas — not everything needs to ship as a product. Some of these exist purely because I wanted to see what would happen, and that instinct to just try the interaction is where most of my better product ideas actually start.",
     category: "learning-workflows",
@@ -224,37 +231,21 @@ export const visualWork: VisualWork[] = [
         title: "Half Moon",
         caption: "A card game about the quiet drama of moonlight shifting phase by phase.",
         pillLabel: "Interactive · Game",
-        image: {
-          src: "/images/playground/half-moon.png",
-          alt: "Half Moon card game, ordering moon phases from darkest to brightest",
-        },
       },
       {
         title: "Palette Oracle",
         caption: "Draw a natural mood palette, then find the one swatch that's missing.",
         pillLabel: "Interactive · Color",
-        image: {
-          src: "/images/playground/palette-oracle.png",
-          alt: "Palette Oracle, matching the missing swatch on a painter's palette",
-        },
       },
       {
         title: "Palette Studio",
         caption: "Squeeze out five paint colors, lock favorites, shuffle the rest, and copy the hex set.",
         pillLabel: "Interactive · Color",
-        image: {
-          src: "/images/playground/palette-studio.png",
-          alt: "Palette Studio, generating and remixing five-color palettes",
-        },
       },
       {
         title: "Sand Canvas",
         caption: "Pour colored sand with a physics simulation and blend your own gradients.",
         pillLabel: "Interactive · Color",
-        image: {
-          src: "/images/playground/sand-canvas-2.png",
-          alt: "Sand Canvas, layering falling colored pigment into a gradient",
-        },
       },
     ],
   },

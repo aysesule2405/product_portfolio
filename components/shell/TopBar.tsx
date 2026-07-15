@@ -52,7 +52,7 @@ export function TopBar({
         type="button"
         onClick={onOpenSidebar}
         aria-label="Open navigation"
-        className="motion-press flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-soft hover:bg-bg-inset hover:text-ink md:hidden"
+        className="motion-press flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-soft hover:bg-bg-inset hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent md:hidden"
       >
         <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden>
           <path d="M2 5H16M2 9H16M2 13H10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -67,7 +67,7 @@ export function TopBar({
               key={tab.href}
               href={tab.href}
               className={clsx(
-                "motion-press motion-tab flex h-11 shrink-0 items-center gap-2 border-b-2 px-3 font-mono text-[12.5px]",
+                "motion-press motion-tab flex h-11 shrink-0 items-center gap-2 border-b-2 px-3 font-mono text-[12.5px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset",
                 active
                   ? "border-accent text-ink"
                   : "border-transparent text-ink-faint hover:text-ink-soft"
@@ -82,7 +82,7 @@ export function TopBar({
       <button
         type="button"
         onClick={onOpenPalette}
-        className="motion-press hidden shrink-0 items-center gap-2 rounded-md border border-line px-2.5 py-1 font-mono text-[11px] text-ink-faint hover:border-line-strong hover:text-ink-soft sm:flex"
+        className="motion-press hidden shrink-0 items-center gap-2 rounded-md border border-line px-2.5 py-1 font-mono text-[11px] text-ink-faint hover:border-line-strong hover:text-ink-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:flex"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
           <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
@@ -94,7 +94,7 @@ export function TopBar({
         type="button"
         onClick={onOpenPalette}
         aria-label="Open command palette"
-        className="motion-press flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-soft hover:bg-bg-inset hover:text-ink sm:hidden"
+        className="motion-press flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-soft hover:bg-bg-inset hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:hidden"
       >
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
           <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />

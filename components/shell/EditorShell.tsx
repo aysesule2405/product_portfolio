@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/shell/Sidebar";
 import { TopBar } from "@/components/shell/TopBar";
 import { StatusBar } from "@/components/shell/StatusBar";
 import { CommandPalette } from "@/components/shell/CommandPalette";
+import { MotionLab } from "@/components/shell/MotionLab";
 import { CelestialBackdrop } from "@/components/celestial/CelestialBackdrop";
 import { OutlineProvider } from "@/lib/outline-context";
 
@@ -13,6 +14,7 @@ export function EditorShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [motionLabOpen, setMotionLabOpen] = useState(false);
   const sidebarPreferenceLoaded = useRef(false);
 
   useEffect(() => {
@@ -43,6 +45,7 @@ export function EditorShell({ children }: { children: React.ReactNode }) {
       }
       if (e.key === "Escape") {
         setPaletteOpen(false);
+        setMotionLabOpen(false);
         setSidebarOpen(false);
       }
     }
@@ -68,7 +71,18 @@ export function EditorShell({ children }: { children: React.ReactNode }) {
           <StatusBar />
         </div>
         <AnimatePresence>
-          {paletteOpen ? <CommandPalette onClose={() => setPaletteOpen(false)} /> : null}
+          {paletteOpen ? (
+            <CommandPalette
+              onClose={() => setPaletteOpen(false)}
+              onOpenMotionLab={() => {
+                setPaletteOpen(false);
+                setMotionLabOpen(true);
+              }}
+            />
+          ) : null}
+        </AnimatePresence>
+        <AnimatePresence>
+          {motionLabOpen ? <MotionLab onClose={() => setMotionLabOpen(false)} /> : null}
         </AnimatePresence>
       </div>
     </OutlineProvider>

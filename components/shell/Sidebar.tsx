@@ -26,7 +26,7 @@ function SidebarToggle({
       aria-pressed={collapsed}
       title={collapsed ? "Expand navigation (Cmd+B)" : "Collapse navigation (Cmd+B)"}
       className={clsx(
-        "motion-press flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-soft hover:bg-bg-inset hover:text-ink",
+        "motion-press flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-soft hover:bg-bg-inset hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
         className
       )}
     >
@@ -62,7 +62,7 @@ function FileRow({
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={clsx(
-        "motion-press flex items-center gap-2 rounded px-2 py-1 font-mono text-[13px]",
+        "motion-press flex items-center gap-2 rounded px-2 py-1 font-mono text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
         active ? "bg-bg-inset text-accent" : "text-ink-soft hover:bg-bg-inset hover:text-ink"
       )}
     >
@@ -126,7 +126,7 @@ export function Sidebar({
       <button
         type="button"
         onClick={() => setRootOpen((v) => !v)}
-        className="motion-press flex items-center gap-1.5 rounded px-1 py-1 font-mono text-[12px] font-semibold uppercase tracking-[0.04em] text-ink hover:bg-bg-inset"
+        className="motion-press flex items-center gap-1.5 rounded px-1 py-1 font-mono text-[12px] font-semibold uppercase tracking-[0.04em] text-ink hover:bg-bg-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         <Chevron open={rootOpen} className="shrink-0 text-ink-faint" />
         <Image src="/images/logos/logo.png" alt="" width={16} height={16} className="shrink-0" aria-hidden />
@@ -149,7 +149,7 @@ export function Sidebar({
                   type="button"
                   onClick={() => toggleGroup(group.label)}
                   aria-expanded={isOpen}
-                  className="motion-press flex items-center gap-1.5 rounded px-1 py-1 font-mono text-[12px] text-ink-soft hover:bg-bg-inset hover:text-ink"
+                  className="motion-press flex items-center gap-1.5 rounded px-1 py-1 font-mono text-[12px] text-ink-soft hover:bg-bg-inset hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   <Chevron open={isOpen} className="shrink-0 text-ink-faint" />
                   <FolderIcon open={isOpen} className="shrink-0 text-ink-faint" />
@@ -175,7 +175,7 @@ export function Sidebar({
             type="button"
             onClick={() => setOutlineOpen((v) => !v)}
             aria-expanded={outlineOpen}
-            className="motion-press flex w-full items-center gap-1.5 rounded px-1 py-1 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-faint hover:bg-bg-inset"
+            className="motion-press flex w-full items-center gap-1.5 rounded px-1 py-1 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-faint hover:bg-bg-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <Chevron open={outlineOpen} className="shrink-0" />
             Outline
@@ -192,7 +192,7 @@ export function Sidebar({
                     onClick={() => jumpToSection(section.id)}
                     aria-current={active ? "location" : undefined}
                     className={clsx(
-                      "motion-press flex items-center gap-2 rounded px-2 py-1 text-left font-mono text-[12px]",
+                      "motion-press flex items-center gap-2 rounded px-2 py-1 text-left font-mono text-[12px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
                       active ? "bg-bg-inset text-accent" : "text-ink-soft hover:bg-bg-inset hover:text-ink"
                     )}
                   >
@@ -227,7 +227,7 @@ export function Sidebar({
               aria-current={active ? "page" : undefined}
               title={file.label}
               className={clsx(
-                "motion-press flex h-8 w-8 items-center justify-center rounded-md",
+                "motion-press flex h-8 w-8 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
                 active ? "bg-bg-inset text-accent" : "text-ink-soft hover:bg-bg-inset hover:text-ink"
               )}
             >
@@ -264,7 +264,7 @@ export function Sidebar({
                 type="button"
                 onClick={onCloseMobile}
                 aria-label="Close navigation"
-                className="motion-press flex h-8 w-8 items-center justify-center rounded-md text-ink-soft hover:bg-bg-inset hover:text-ink"
+                className="motion-press flex h-8 w-8 items-center justify-center rounded-md text-ink-soft hover:bg-bg-inset hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden>
                   <path d="M3 3L15 15M15 3L3 15" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
