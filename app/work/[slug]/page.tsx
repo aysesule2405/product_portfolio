@@ -56,7 +56,7 @@ export default async function CaseStudyPage({
   const next = projects[(currentIndex + 1) % projects.length];
 
   const sections: OutlineSection[] = [
-    { id: "snapshot", label: "Snapshot" },
+    { id: "snapshot", label: "60-second brief" },
     { id: "challenge", label: "Challenge" },
     { id: "key-insight", label: "Key insight" },
     { id: "decisions", label: "Product decisions" },
@@ -120,21 +120,27 @@ export default async function CaseStudyPage({
                 </div>
               ) : null}
 
-              {project.links.length > 0 ? (
-                <div className="mt-5 flex flex-wrap gap-4">
-                  {project.links.map((link) => (
-                    <a
-                      key={link.href}
-                      href={link.href}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex min-h-11 items-center text-sm font-medium text-ink underline decoration-line-strong decoration-2 underline-offset-4 hover:text-ink-soft"
-                    >
-                      {link.label} ↗
-                    </a>
-                  ))}
-                </div>
-              ) : null}
+              <div className="mt-5 flex flex-wrap gap-4">
+                <Link
+                  href="#snapshot"
+                  className="inline-flex min-h-11 items-center text-sm font-medium text-ink underline decoration-line-strong decoration-2 underline-offset-4 hover:text-ink-soft"
+                >
+                  Read the 60-second brief ↓
+                </Link>
+                {project.links.length > 0
+                  ? project.links.map((link) => (
+                      <a
+                        key={link.href}
+                        href={link.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex min-h-11 items-center text-sm font-medium text-ink underline decoration-line-strong decoration-2 underline-offset-4 hover:text-ink-soft"
+                      >
+                        {link.label} ↗
+                      </a>
+                    ))
+                  : null}
+              </div>
             </div>
 
             <div className="project-hero-icon relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-full border shadow-xl backdrop-blur">
@@ -161,6 +167,9 @@ export default async function CaseStudyPage({
             data={project.evidenceRail}
             stats={project.stats}
             category={project.primaryCategory}
+            challenge={project.description}
+            ownership={caseStudy.role}
+            decision={project.keyDecision}
           />
 
           <section id="challenge" className="scroll-mt-20">
@@ -200,7 +209,14 @@ export default async function CaseStudyPage({
 
             {project.video ? (
               <div className="mt-5 overflow-hidden rounded-xl border border-line bg-bg-raised">
-                <video controls poster={project.video.poster} aria-label={project.video.alt} className="aspect-video w-full">
+                <video
+                  controls
+                  preload="metadata"
+                  playsInline
+                  poster={project.video.poster}
+                  aria-label={project.video.alt}
+                  className="aspect-video w-full"
+                >
                   <source src={project.video.src} type="video/mp4" />
                   {project.video.webmSrc ? <source src={project.video.webmSrc} type="video/webm" /> : null}
                 </video>
@@ -210,20 +226,30 @@ export default async function CaseStudyPage({
               </div>
             ) : project.images.length > 0 ? (
               <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {project.images.map((image) => (
-                  <div
+                {project.images.map((image, index) => {
+                  const featured = project.images.length >= 3 && index === 0;
+                  return (
+                  <figure
                     key={image.src}
-                    className="group relative aspect-video overflow-hidden rounded-xl border border-line bg-bg-raised"
+                    className={`group overflow-hidden rounded-xl border border-line bg-bg-raised ${
+                      featured ? "sm:col-span-2" : ""
+                    }`}
                   >
-                    <Image
-                      src={image.src}
-                      alt={image.alt}
-                      fill
-                      sizes="(min-width: 640px) 50vw, 100vw"
-                      className="object-contain transition-transform duration-500 ease-out group-hover:scale-105"
-                    />
-                  </div>
-                ))}
+                    <div className="relative aspect-video overflow-hidden">
+                      <Image
+                        src={image.src}
+                        alt={image.alt}
+                        fill
+                        sizes={featured ? "100vw" : "(min-width: 640px) 50vw, 100vw"}
+                        className="object-contain transition-transform duration-500 ease-out group-hover:scale-[1.025]"
+                      />
+                    </div>
+                    <figcaption className="border-t border-line px-3 py-2 font-mono text-[10px] leading-relaxed text-ink-faint">
+                      {image.alt}
+                    </figcaption>
+                  </figure>
+                  );
+                })}
               </div>
             ) : null}
 

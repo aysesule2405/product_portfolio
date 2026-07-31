@@ -7,11 +7,12 @@ import { BrandGlow } from "@/components/ui/BrandGlow";
 import { PhotoAlbum } from "@/components/about/PhotoAlbum";
 import { CommunityTimeline } from "@/components/about/CommunityTimeline";
 import { resumeHref } from "@/lib/data/nav";
+import { capabilityGroups, positioning } from "@/lib/data/positioning";
 
 export const metadata: Metadata = {
   title: "About — The Clarity Lab",
   description:
-    "Ayse Sule Ekiz on how art, computer science, and product design became one practice.",
+    "How Ayse Sule Ekiz brings engineering, design, data, and visual craft into one product-building practice.",
 };
 
 const values: { title: string; body: string; icon: React.ReactNode }[] = [
@@ -79,12 +80,11 @@ export default function AboutPage() {
             <div>
               <FieldLabel>About</FieldLabel>
               <h1 className="mt-5 max-w-3xl font-sans text-4xl font-semibold leading-tight text-ink sm:text-5xl">
-                I design the human layer of complex systems.
+                {positioning.headline}
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-relaxed text-ink-soft sm:text-lg">
-                I&rsquo;m Ayse Sule Ekiz, a computer science student, product designer,
-                and design-minded engineer building AI tools, learning platforms,
-                campus systems, and emotionally intelligent digital experiences.
+                I&rsquo;m Ayse Sule Ekiz. {positioning.story} I&rsquo;m currently studying
+                computer science and expect to graduate in {positioning.graduation}.
               </p>
             </div>
 
@@ -125,10 +125,10 @@ export default function AboutPage() {
 
           <p className="pt-2">
             This portfolio is a map of that practice: shipped product work, design
-            systems thinking, AI experiments, and visual art. I want anyone reading it to
-            see both the work and the person behind it — someone who reasons through
-            constraints, cares about the details, and advocates for whoever&rsquo;s on the
-            other side of the screen.
+            systems thinking, software engineering, AI experiments, brand work, and
+            visual art. The disciplines support one another: design sets the direction,
+            engineering makes it real, data keeps the decisions grounded, and visual
+            craft gives the experience a point of view.
           </p>
           <p>
             I build with code. I think with art. Clarity isn&rsquo;t decoration to me
@@ -161,13 +161,46 @@ export default function AboutPage() {
               <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
                 Currently
               </dt>
-              <dd className="mt-1 text-ink">Computer Science student</dd>
+              <dd className="mt-1 text-ink">
+                Computer Science student · graduating {positioning.graduation}
+              </dd>
             </div>
             <div>
               <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
-                Looking for
+                Core practice
               </dt>
-              <dd className="mt-1 text-ink">Product design, design engineering, and AI product roles</dd>
+              <dd className="mt-1 text-ink">Designing and engineering complete product experiences</dd>
+            </div>
+            <div>
+              <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
+                Opportunities
+              </dt>
+              <dd className="mt-2 space-y-2 text-ink">
+                {capabilityGroups.map((group) => (
+                  <div key={group.label}>
+                    <span className="font-medium">{group.label}</span>
+                    <span className="block text-xs leading-relaxed text-ink-soft">
+                      {group.roles.join(" · ")}
+                    </span>
+                  </div>
+                ))}
+              </dd>
+            </div>
+            <div>
+              <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
+                Work style
+              </dt>
+              <dd className="mt-1 text-ink">
+                {positioning.workModes.join(" · ")} · open to US relocation
+              </dd>
+            </div>
+            <div>
+              <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
+                Preferred hubs
+              </dt>
+              <dd className="mt-1 text-xs leading-relaxed text-ink-soft">
+                {positioning.preferredLocations.join(" · ")}
+              </dd>
             </div>
             <div>
               <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">

@@ -1112,17 +1112,15 @@ export function getProjectBySlug(slug: string): Project | undefined {
   return projects.find((project) => project.slug === slug);
 }
 
-/**
- * The three projects surfaced before the field map on the homepage and at the top of
- * /work. Defaults to the flagship set from the redesign brief; swaps in OpenStaxAlign for
- * NAU Portal when the visitor is browsing under the "AI & ML" hiring lens, since
- * OpenStaxAlign's primary category (data-clarity) matches that lens more directly.
- */
 const defaultFlagshipSlugs = ["obi", "framewise", "nau-athletics-student-portal"];
-const aiMlFlagshipSlugs = ["obi", "framewise", "openstax-align"];
+const flagshipSlugsByHiringLens: Record<string, string[]> = {
+  "product-design": ["nau-athletics-student-portal", "obi", "reverie"],
+  "full-stack": ["framewise", "atelier", "openstax-align"],
+  "creative-technology": ["reverie", "whisperwind-grove", "aperture"],
+};
 
 export function getFlagshipProjects(hiringId?: string | null): Project[] {
-  const slugs = hiringId === "ai-ml" ? aiMlFlagshipSlugs : defaultFlagshipSlugs;
+  const slugs = (hiringId && flagshipSlugsByHiringLens[hiringId]) || defaultFlagshipSlugs;
   return slugs
     .map((slug) => getProjectBySlug(slug))
     .filter((project): project is Project => Boolean(project));

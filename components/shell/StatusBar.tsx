@@ -1,4 +1,5 @@
 import { socialLinks, resumeHref } from "@/lib/data/nav";
+import { positioning } from "@/lib/data/positioning";
 
 export function StatusBar() {
   return (
@@ -6,9 +7,9 @@ export function StatusBar() {
       <span className="shrink-0 text-accent">●</span>
       <span className="shrink-0">Ayse Sule Ekiz</span>
       <span className="hidden shrink-0 sm:inline">·</span>
-      <span className="hidden shrink-0 sm:inline">Product designer &amp; design-minded engineer</span>
+      <span className="hidden shrink-0 sm:inline">{positioning.role}</span>
       <span className="hidden shrink-0 sm:inline">·</span>
-      <span className="hidden shrink-0 sm:inline">Houston, TX</span>
+      <span className="hidden shrink-0 sm:inline">Graduating {positioning.graduation}</span>
       <span className="ml-auto flex shrink-0 items-center gap-3 sm:gap-4">
         {socialLinks.map((link) => (
           <a

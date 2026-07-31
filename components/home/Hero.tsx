@@ -5,15 +5,14 @@ import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { WindowChrome } from "@/components/ui/WindowChrome";
 import { BrandGlow } from "@/components/ui/BrandGlow";
+import { positioning } from "@/lib/data/positioning";
 
 const focusAreas = [
-  "AI tools",
-  "Product design",
-  "Frontend",
-  "Education",
-  "Data clarity",
-  "Emotional UX",
-  "Accessibility",
+  "Product building",
+  "Software engineering",
+  "Product & UX design",
+  "Creative technology",
+  "Visual craft",
 ];
 
 const codeLines = [
@@ -39,7 +38,7 @@ const codeLines = [
     content: (
       <>
         &nbsp;&nbsp;headline:{" "}
-        <span className="text-ink">&quot;I design the human layer of complex systems.&quot;</span>,
+        <span className="text-ink">&quot;{positioning.headline}&quot;</span>,
       </>
     ),
   },
@@ -47,7 +46,7 @@ const codeLines = [
     n: 5,
     content: (
       <>
-        &nbsp;&nbsp;role: <span className="text-ink-soft">&quot;Product designer &amp; design-minded engineer&quot;</span>,
+        &nbsp;&nbsp;role: <span className="text-ink-soft">&quot;{positioning.role}&quot;</span>,
       </>
     ),
   },
@@ -70,19 +69,27 @@ export function Hero() {
           <WindowChrome filename="index.tsx" />
 
           <div className="px-5 py-6 sm:px-8 sm:py-9">
-            <pre className="font-mono text-[13px] leading-7 sm:text-[15px]">
+            <div className="font-mono text-[13px] leading-7 sm:text-[15px]">
               {codeLines.map((line) => (
                 <div key={line.n} className="flex gap-4">
                   <span className="w-5 shrink-0 select-none text-right text-ink-faint">{line.n}</span>
-                  <span className="min-w-0 flex-1 whitespace-pre-wrap break-words">{line.content}</span>
+                  {line.n === 4 ? (
+                    <div className="min-w-0 flex-1 whitespace-pre-wrap break-words">
+                      &nbsp;&nbsp;headline: <span className="text-ink">&quot;</span>
+                      <h1 className="inline font-mono text-[inherit] font-normal text-ink">
+                        {positioning.headline}
+                      </h1>
+                      <span className="text-ink">&quot;</span>,
+                    </div>
+                  ) : (
+                    <div className="min-w-0 flex-1 whitespace-pre-wrap break-words">{line.content}</div>
+                  )}
                 </div>
               ))}
-            </pre>
+            </div>
 
             <p className="mt-6 max-w-2xl border-l-2 border-line-strong pl-4 text-sm leading-relaxed text-ink-soft sm:text-base">
-              Product designer and design-minded engineer building AI tools, learning
-              platforms, and data-heavy products that make complex systems feel clear
-              and trustworthy.
+              {positioning.story}
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3">
@@ -101,8 +108,8 @@ export function Hero() {
             </div>
 
             <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.1em] text-ink-faint">
-              Currently a CS student · open to product design, design engineering &amp;
-              AI product roles
+              Computer Science · graduating {positioning.graduation} · remote, hybrid, or
+              onsite · open to US relocation
             </p>
           </div>
         </motion.div>

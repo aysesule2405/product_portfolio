@@ -10,21 +10,30 @@ export interface HiringLens {
 export const hiringLenses: HiringLens[] = [
   {
     id: "product-design",
-    label: "Product Design",
-    description: "Campus systems, design systems, emotional UX — end-to-end product ownership.",
-    categories: ["design-systems", "campus-systems", "emotional-ux"],
-  },
-  {
-    id: "ai-ml",
-    label: "AI & ML",
-    description: "AI trust and data clarity — retrieval, classification, model behavior made legible.",
-    categories: ["ai-trust", "data-clarity"],
+    label: "Product & UX Design",
+    description:
+      "Product strategy, interface design, systems thinking, and emotionally aware experiences.",
+    categories: ["design-systems", "campus-systems", "emotional-ux", "ai-trust"],
   },
   {
     id: "full-stack",
-    label: "Full-Stack Engineering",
-    description: "Learning workflows and creative tools — shipped, full-stack, production code.",
-    categories: ["learning-workflows", "creative-tools"],
+    label: "Software & Full-Stack",
+    description:
+      "Frontend craft, full-stack implementation, data clarity, and production-minded engineering.",
+    categories: [
+      "learning-workflows",
+      "data-clarity",
+      "campus-systems",
+      "creative-tools",
+      "ai-trust",
+    ],
+  },
+  {
+    id: "creative-technology",
+    label: "Creative Technology & Brand",
+    description:
+      "Visual craft, interactive storytelling, creative tools, and cohesive brand experiences.",
+    categories: ["creative-tools", "emotional-ux", "design-systems"],
   },
 ];
 

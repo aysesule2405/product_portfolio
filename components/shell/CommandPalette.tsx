@@ -7,6 +7,7 @@ import clsx from "clsx";
 import { projects } from "@/lib/data/projects";
 import { visualWork } from "@/lib/data/visual-work";
 import { hiringLenses } from "@/lib/data/hiring";
+import { useSound } from "@/components/sound/SoundProvider";
 
 interface Command {
   id: string;
@@ -64,6 +65,7 @@ function buildCommands(): Command[] {
 
 export function CommandPalette({ onClose, onOpenMotionLab }: { onClose: () => void; onOpenMotionLab: () => void }) {
   const router = useRouter();
+  const { play } = useSound();
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -95,6 +97,7 @@ export function CommandPalette({ onClose, onOpenMotionLab }: { onClose: () => vo
   }
 
   function select(command: Command) {
+    play("navigation");
     if (command.action === "motion-lab") {
       onOpenMotionLab();
       return;

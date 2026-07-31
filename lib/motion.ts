@@ -30,12 +30,11 @@ export function useReducedMotion(): boolean {
 }
 
 export const revealVariants: Variants = {
-  hidden: { opacity: 0, y: 18, filter: "blur(6px)" },
+  hidden: { opacity: 0, y: 14 },
   show: {
     opacity: 1,
     y: 0,
-    filter: "blur(0px)",
-    transition: { duration: motionTimings.slow, ease: motionEasing },
+    transition: { duration: 0.44, ease: motionEasing },
   },
 };
 
@@ -44,7 +43,7 @@ export const softRevealVariants: Variants = {
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: motionTimings.base, ease: motionEasing },
+    transition: { duration: 0.3, ease: motionEasing },
   },
 };
 
@@ -52,8 +51,8 @@ export const staggerContainerVariants: Variants = {
   hidden: {},
   show: {
     transition: {
-      staggerChildren: 0.07,
-      delayChildren: 0.08,
+      staggerChildren: 0.05,
+      delayChildren: 0.04,
     },
   },
 };

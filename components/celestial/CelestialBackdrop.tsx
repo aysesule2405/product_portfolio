@@ -14,8 +14,6 @@ interface Star {
   opacity: number;
   points: number;
   rotation: number;
-  spin: boolean;
-  spinDuration: number;
 }
 
 interface ShootingStar {
@@ -23,12 +21,6 @@ interface ShootingStar {
   star: Star;
   dx: number;
   dy: number;
-}
-
-interface MorningMotion {
-  scroll: number;
-  pointerX: number;
-  pointerY: number;
 }
 
 const STAR_COLORS = [
@@ -85,8 +77,6 @@ function buildStars(count: number): Star[] {
       opacity: 0.14 + random() * 0.58,
       points: random() > 0.78 ? 6 : 4,
       rotation: random() * 90,
-      spin: r > 0.9 && random() > 0.62,
-      spinDuration: 8 + random() * 16,
     };
   });
 }
@@ -134,18 +124,9 @@ const DAY_SPECKS = [
   { x: "91%", y: "82%", color: "var(--star-blue)", size: 1.25 },
 ] as const;
 
-function MorningBackdrop({ motionState }: { motionState: MorningMotion }) {
+function MorningBackdrop() {
   return (
-    <div
-      className="celestial-morning-layer absolute inset-0 overflow-hidden"
-      style={
-        {
-          "--morning-scroll": motionState.scroll,
-          "--morning-pointer-x": motionState.pointerX,
-          "--morning-pointer-y": motionState.pointerY,
-        } as CSSProperties
-      }
-    >
+    <div className="celestial-morning-layer absolute inset-0 overflow-hidden">
       <div className="morning-sun-rays absolute inset-0" />
       <div className="morning-haze absolute inset-0" />
 
@@ -196,7 +177,7 @@ export function CelestialBackdrop() {
   const brightStars = useMemo(() => stars.filter((star) => star.r > 1), [stars]);
   const [hoveredStar, setHoveredStar] = useState<Star | null>(null);
   const [shootingStars, setShootingStars] = useState<ShootingStar[]>([]);
-  const [morningMotion, setMorningMotion] = useState<MorningMotion>({ scroll: 0, pointerX: 0, pointerY: 0 });
+  const backdropRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
   const shotId = useRef(0);
 
@@ -207,19 +188,28 @@ export function CelestialBackdrop() {
 
   useEffect(() => {
     if (!mounted || shouldReduceMotion) return;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    let frame = 0;
+    let pointerX = 0;
+    let pointerY = 0;
+
+    function updateHoveredStar() {
+      frame = 0;
+      const nearest = findNearestStar(stars, pointerX, pointerY);
+      setHoveredStar((current) => (current?.id === nearest?.id ? current : nearest));
+    }
+
     function handlePointerMove(event: PointerEvent) {
-      const x = (event.clientX / window.innerWidth) * 100;
-      const y = (event.clientY / window.innerHeight) * 100;
-      setHoveredStar(findNearestStar(stars, x, y));
-      setMorningMotion((state) => ({
-        ...state,
-        pointerX: event.clientX / window.innerWidth - 0.5,
-        pointerY: event.clientY / window.innerHeight - 0.5,
-      }));
+      pointerX = (event.clientX / window.innerWidth) * 100;
+      pointerY = (event.clientY / window.innerHeight) * 100;
+      if (!frame) frame = window.requestAnimationFrame(updateHoveredStar);
     }
 
     window.addEventListener("pointermove", handlePointerMove, { passive: true });
-    return () => window.removeEventListener("pointermove", handlePointerMove);
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("pointermove", handlePointerMove);
+    };
   }, [mounted, shouldReduceMotion, stars]);
 
   useEffect(() => {
@@ -228,7 +218,7 @@ export function CelestialBackdrop() {
 
     function updateMorningScroll() {
       frame = 0;
-      setMorningMotion((state) => ({ ...state, scroll: Math.min(window.scrollY, 900) }));
+      backdropRef.current?.style.setProperty("--morning-scroll", String(Math.min(window.scrollY, 900)));
     }
 
     function handleScrollParallax() {
@@ -243,6 +233,18 @@ export function CelestialBackdrop() {
       window.removeEventListener("scroll", handleScrollParallax);
     };
   }, [mounted, shouldReduceMotion]);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    function updateVisibility() {
+      backdropRef.current?.setAttribute("data-animations-paused", String(document.hidden));
+    }
+
+    updateVisibility();
+    document.addEventListener("visibilitychange", updateVisibility);
+    return () => document.removeEventListener("visibilitychange", updateVisibility);
+  }, [mounted]);
 
   useEffect(() => {
     if (!mounted || shouldReduceMotion) return;
@@ -275,8 +277,8 @@ export function CelestialBackdrop() {
 
   if (!mounted) {
     return (
-      <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <MorningBackdrop motionState={morningMotion} />
+      <div ref={backdropRef} aria-hidden className="celestial-backdrop pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <MorningBackdrop />
         <div className="celestial-night-layer absolute inset-0">
           <div className="absolute inset-0" style={backdropStyle} />
           <div className="absolute inset-0 opacity-28" style={gridStyle} />
@@ -286,8 +288,8 @@ export function CelestialBackdrop() {
   }
 
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-      <MorningBackdrop motionState={morningMotion} />
+    <div ref={backdropRef} aria-hidden className="celestial-backdrop pointer-events-none fixed inset-0 z-0 overflow-hidden">
+      <MorningBackdrop />
       <div className="celestial-night-layer absolute inset-0">
       <div className="absolute inset-0" style={backdropStyle} />
       <div className="absolute inset-0 opacity-28" style={gridStyle} />
@@ -295,34 +297,25 @@ export function CelestialBackdrop() {
       {stars.map((star) => {
         const size = star.r * 8;
         return (
-          <motion.span
+          <span
             key={star.id}
-            className="absolute block"
-            style={{
-              left: `${star.x}%`,
-              top: `${star.y}%`,
-              width: size,
-              height: size,
-              opacity: star.opacity,
-              backgroundColor: star.color,
-              clipPath: starClipPath(star.points),
-              filter: star.r > 0.9 ? `drop-shadow(0 0 ${star.r * 5}px ${star.glow})` : undefined,
-              x: "-50%",
-              y: "-50%",
-              rotate: star.rotation,
-            }}
-            animate={
-              shouldReduceMotion
-                ? undefined
-                : {
-                    opacity: [star.opacity * 0.58, star.opacity, star.opacity * 0.7],
-                    rotate: star.spin ? [star.rotation, star.rotation + 360] : star.rotation,
-                  }
+            className={star.r > 0.9 && !shouldReduceMotion ? "celestial-star celestial-star-twinkle absolute block" : "celestial-star absolute block"}
+            style={
+              {
+                left: `${star.x}%`,
+                top: `${star.y}%`,
+                width: size,
+                height: size,
+                opacity: star.opacity,
+                backgroundColor: star.color,
+                clipPath: starClipPath(star.points),
+                filter: star.r > 0.9 ? `drop-shadow(0 0 ${star.r * 5}px ${star.glow})` : undefined,
+                transform: `translate3d(-50%, -50%, 0) rotate(${star.rotation}deg)`,
+                "--star-opacity": star.opacity,
+                "--star-duration": `${3.2 + (star.id % 9) * 0.42}s`,
+                "--star-delay": `${-(star.id % 13) * 0.37}s`,
+              } as CSSProperties
             }
-            transition={{
-              opacity: { duration: 3.2 + (star.id % 9) * 0.42, repeat: Infinity, ease: "easeInOut" },
-              rotate: { duration: star.spinDuration, repeat: Infinity, ease: "linear" },
-            }}
           />
         );
       })}

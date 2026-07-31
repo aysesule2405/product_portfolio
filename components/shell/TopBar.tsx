@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
+import { SoundToggle } from "@/components/sound/SoundToggle";
 import { getProjectBySlug } from "@/lib/data/projects";
 import { useLocationHash } from "@/lib/use-location-hash";
 
@@ -112,6 +113,7 @@ export function TopBar({
           <path d="M20 20L16.5 16.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
       </button>
+      <SoundToggle />
       <ThemeToggle />
     </div>
   );

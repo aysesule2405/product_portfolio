@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
 import clsx from "clsx";
@@ -12,9 +12,21 @@ import { projects } from "@/lib/data/projects";
 import { buildTimelineNodes } from "@/lib/data/timeline";
 import { hiringLenses, getHiringLens } from "@/lib/data/hiring";
 import { categoryColorVar } from "@/lib/category-color";
-import { ProblemCategory, Project } from "@/lib/types";
+import { ProblemCategory, Project, TimelineNode } from "@/lib/types";
 
 export type WorkView = "map" | "grid" | "list";
+
+function FieldMapPlaceholder() {
+  return (
+    <div
+      className="flex aspect-[16/10] w-full items-center justify-center rounded-2xl border border-line bg-bg-raised"
+      aria-busy="true"
+      aria-label="Loading field map"
+    >
+      <span className="font-mono text-xs text-ink-faint">Loading field map…</span>
+    </div>
+  );
+}
 
 // The constellation is a large, animation-heavy client component only ever needed when
 // someone actually opens map view — lazy-load it instead of shipping it to every visitor.
@@ -22,13 +34,39 @@ const CommitConstellation = dynamic(
   () => import("@/components/map/CommitConstellation").then((mod) => mod.CommitConstellation),
   {
     ssr: false,
-    loading: () => (
-      <div className="flex aspect-[16/10] w-full items-center justify-center rounded-2xl border border-line bg-bg-raised">
-        <span className="font-mono text-xs text-ink-faint">Loading field map…</span>
-      </div>
-    ),
+    loading: FieldMapPlaceholder,
   }
 );
+
+function DeferredConstellation({
+  nodes,
+  highlightCategories,
+}: {
+  nodes: TimelineNode[];
+  highlightCategories?: ProblemCategory[];
+}) {
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setReady(true);
+        observer.disconnect();
+      },
+      { rootMargin: "600px 0px" }
+    );
+
+    observer.observe(trigger);
+    return () => observer.disconnect();
+  }, []);
+
+  return <div ref={triggerRef}>{ready ? <CommitConstellation nodes={nodes} highlightCategories={highlightCategories} /> : <FieldMapPlaceholder />}</div>;
+}
 
 /**
  * Shared explorer used both by the homepage's compact field-map section and the full
@@ -45,7 +83,9 @@ export function WorkExplorer({
   className?: string;
 }) {
   const [view, setView] = useState<WorkView>(defaultView);
-  const [hiringId, setHiringId] = useState<string | null>(initialHiring ?? null);
+  const [hiringId, setHiringId] = useState<string | null>(
+    getHiringLens(initialHiring)?.id ?? null
+  );
   const [activeFilter, setActiveFilter] = useState<ProblemCategory | null>(null);
 
   const nodes = useMemo(() => buildTimelineNodes(), []);
@@ -53,8 +93,14 @@ export function WorkExplorer({
   const highlightCategories = hiringLens?.categories;
 
   const filtered = useMemo(() => {
-    return activeFilter ? projects.filter((project) => project.categories.includes(activeFilter)) : projects;
-  }, [activeFilter]);
+    return projects.filter((project) => {
+      const matchesProblem = !activeFilter || project.categories.includes(activeFilter);
+      const matchesHiringLens =
+        !hiringLens ||
+        project.categories.some((category) => hiringLens.categories.includes(category));
+      return matchesProblem && matchesHiringLens;
+    });
+  }, [activeFilter, hiringLens]);
 
   return (
     <div className={className}>
@@ -65,7 +111,10 @@ export function WorkExplorer({
           </span>
           <button
             type="button"
-            onClick={() => setHiringId(null)}
+            onClick={() => {
+              setHiringId(null);
+              setActiveFilter(null);
+            }}
             aria-pressed={hiringId === null}
             className={clsx(
               "motion-press min-h-11 rounded-full border px-4 py-2 text-xs font-medium",
@@ -78,7 +127,10 @@ export function WorkExplorer({
             <button
               key={lens.id}
               type="button"
-              onClick={() => setHiringId(lens.id === hiringId ? null : lens.id)}
+              onClick={() => {
+                setHiringId(lens.id === hiringId ? null : lens.id);
+                setActiveFilter(null);
+              }}
               aria-pressed={hiringId === lens.id}
               title={lens.description}
               className={clsx(
@@ -102,22 +154,30 @@ export function WorkExplorer({
         <Reveal subtle className="mt-6 flex flex-wrap gap-2">
           <div role="group" aria-label="Filter projects by problem type" className="flex flex-wrap gap-2">
             <FilterChip label="All studies" active={activeFilter === null} onClick={() => setActiveFilter(null)} />
-            {categories.filter((cat) => cat.id !== "community-learning").map((cat) => (
-              <FilterChip
-                key={cat.id}
-                label={cat.label}
-                active={activeFilter === cat.id}
-                onClick={() => setActiveFilter(cat.id === activeFilter ? null : cat.id)}
-                category={cat.id}
-              />
-            ))}
+            {categories
+              .filter(
+                (category) =>
+                  category.id !== "community-learning" &&
+                  (!hiringLens || hiringLens.categories.includes(category.id))
+              )
+              .map((category) => (
+                <FilterChip
+                  key={category.id}
+                  label={category.label}
+                  active={activeFilter === category.id}
+                  onClick={() =>
+                    setActiveFilter(category.id === activeFilter ? null : category.id)
+                  }
+                  category={category.id}
+                />
+              ))}
           </div>
         </Reveal>
       ) : null}
 
       <Reveal subtle className="mt-8">
         {view === "map" ? (
-          <CommitConstellation nodes={nodes} highlightCategories={highlightCategories} />
+          <DeferredConstellation nodes={nodes} highlightCategories={highlightCategories} />
         ) : view === "grid" ? (
           <motion.div layout className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <AnimatePresence mode="popLayout">

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import clsx from "clsx";
+import { useSound } from "@/components/sound/SoundProvider";
 
 type GameId = "shells" | "stars" | "pixels";
 
@@ -138,6 +139,7 @@ function moonlitPixels(): string[] {
 }
 
 function ShellMemoryGame() {
+  const { play } = useSound();
   const initialSeed = useSyncExternalStore(subscribeNoop, () => CLIENT_SHELL_SEED, () => 0);
   const [shuffleSeed, setShuffleSeed] = useState<number | null>(null);
   const [open, setOpen] = useState<number[]>([]);
@@ -168,6 +170,7 @@ function ShellMemoryGame() {
   function chooseCard(index: number) {
     const card = deck[index];
     if (locked || open.includes(index) || matched.includes(card.shell.id)) return;
+    play("shell-flip");
 
     if (open.length === 0) {
       setOpen([index]);
@@ -176,12 +179,16 @@ function ShellMemoryGame() {
 
     const first = deck[open[0]];
     const isMatch = first.shell.id === card.shell.id;
+    const completesGame = isMatch && matched.length + 1 === SHELLS.length;
     setOpen([open[0], index]);
     setMoves((value) => value + 1);
     setLocked(true);
 
     timerRef.current = setTimeout(() => {
-      if (isMatch) setMatched((value) => [...value, card.shell.id]);
+      if (isMatch) {
+        setMatched((value) => [...value, card.shell.id]);
+        play(completesGame ? "completion" : "match");
+      }
       setOpen([]);
       setLocked(false);
     }, isMatch ? 380 : 720);
@@ -290,6 +297,7 @@ function ShellMemoryGame() {
 }
 
 function StarStitchGame() {
+  const { play } = useSound();
   const [pathIndex, setPathIndex] = useState(0);
   const [nextStar, setNextStar] = useState(0);
   const [misses, setMisses] = useState(0);
@@ -300,6 +308,7 @@ function StarStitchGame() {
 
   function chooseStar(index: number) {
     if (index === nextStar) {
+      play(nextStar + 1 === starPoints.length ? "completion" : "constellation");
       setNextStar((value) => value + 1);
     } else if (index > nextStar) {
       setMisses((value) => value + 1);
@@ -572,6 +581,7 @@ function PixelPaintingGame() {
 
 export function PortfolioPlayground() {
   const [activeGame, setActiveGame] = useState<GameId>("shells");
+  const { play } = useSound();
 
   function moveGameTab(currentId: GameId, key: string) {
     const currentIndex = GAMES.findIndex((game) => game.id === currentId);
@@ -585,6 +595,7 @@ export function PortfolioPlayground() {
 
     const nextGame = GAMES[nextIndex];
     setActiveGame(nextGame.id);
+    play("navigation");
     window.requestAnimationFrame(() => document.getElementById(`game-tab-${nextGame.id}`)?.focus());
   }
 
@@ -618,7 +629,10 @@ export function PortfolioPlayground() {
                   aria-controls={`game-panel-${game.id}`}
                   id={`game-tab-${game.id}`}
                   tabIndex={active ? 0 : -1}
-                  onClick={() => setActiveGame(game.id)}
+                  onClick={() => {
+                    if (!active) play("navigation");
+                    setActiveGame(game.id);
+                  }}
                   onKeyDown={(event) => {
                     if (["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) {
                       event.preventDefault();

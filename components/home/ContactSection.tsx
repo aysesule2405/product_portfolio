@@ -6,6 +6,7 @@ import { WindowChrome } from "@/components/ui/WindowChrome";
 import { MoonPhaseChart } from "@/components/celestial/MoonPhaseChart";
 import { ContactForm } from "@/components/home/ContactForm";
 import { socialLinks } from "@/lib/data/nav";
+import { positioning } from "@/lib/data/positioning";
 
 export function ContactSection() {
   return (
@@ -32,9 +33,18 @@ export function ContactSection() {
                   </h2>
                   <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-soft">
                     Tell me what you&rsquo;re building, hiring for, or curious about. I&rsquo;m
-                    especially interested in product design, design engineering, and AI
-                    product work.
+                    open to product and UX design, software and full-stack engineering,
+                    and creative technology or brand work.
                   </p>
+                  <div className="mt-5 max-w-xl rounded-xl border border-line bg-bg-inset/60 p-4">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
+                      Availability
+                    </p>
+                    <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+                      Graduating {positioning.graduation} · remote, hybrid, or onsite ·
+                      open to relocation across the United States
+                    </p>
+                  </div>
                   <div className="mt-4 flex max-w-xl items-center gap-2 border-l-2 border-accent py-1 pl-4 text-sm text-ink-soft">
                     <span className="h-2 w-2 shrink-0 rounded-full bg-positive" aria-hidden />
                     <p>Your message goes directly to my inbox. I read every note.</p>

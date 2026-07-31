@@ -1131,6 +1131,7 @@ export function CommitConstellation({
               onClose={() => setFullscreen(false)}
               autoStartTour={autoStartTour}
               onTourStart={() => setSelectedId(null)}
+              nodes={positioned}
             >
               {svgBody}
             </ConstellationFullscreen>,
@@ -1214,16 +1215,108 @@ function viewForCluster(cluster: { cx: number; cy: number }, scale: number) {
   };
 }
 
+function FieldMapList({
+  nodes,
+  onBackToMap,
+}: {
+  nodes: TimelineNode[];
+  onBackToMap: () => void;
+}) {
+  return (
+    <div id="field-map-list" className="h-full overflow-y-auto px-4 py-5 sm:px-6">
+      <div className="mx-auto max-w-3xl">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
+              Accessible field index
+            </p>
+            <h2 className="mt-2 font-sans text-2xl font-semibold text-ink">Browse every constellation.</h2>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-soft">
+              The same projects, experience, practice, and community work—organized as a readable list.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onBackToMap}
+            className="min-h-11 shrink-0 rounded-md border border-line px-3 py-2 font-mono text-[10px] text-ink-soft hover:border-line-strong hover:text-ink"
+          >
+            Back to map
+          </button>
+        </div>
+
+        <div className="mt-7 grid gap-6 md:grid-cols-2">
+          {CLUSTERS.map((cluster) => {
+            const entries = nodes
+              .filter((node) => node.lane === cluster.id)
+              .sort((a, b) => b.date.localeCompare(a.date));
+
+            return (
+              <section key={cluster.id} className="overflow-hidden rounded-xl border border-line bg-bg-raised">
+                <div className="border-b border-line px-4 py-3">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
+                    {cluster.label} · {entries.length}
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-ink-soft">{cluster.blurb}</p>
+                </div>
+                <ul className="divide-y divide-line">
+                  {entries.map((node) => {
+                    const content = (
+                      <>
+                        <div className="flex items-start justify-between gap-3">
+                          <span className="font-sans text-sm font-semibold text-ink">{node.title}</span>
+                          <span className="shrink-0 font-mono text-[9px] uppercase tracking-[0.08em] text-ink-faint">
+                            {node.dateLabel}
+                          </span>
+                        </div>
+                        <p className="mt-1.5 text-xs leading-relaxed text-ink-soft">{node.summary}</p>
+                        <span className="mt-2 flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.1em] text-ink-faint">
+                          <span
+                            aria-hidden
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{ backgroundColor: categoryColorVar(node.category) }}
+                          />
+                          {categories.find((category) => category.id === node.category)?.shortLabel}
+                        </span>
+                      </>
+                    );
+
+                    return (
+                      <li key={node.id}>
+                        {node.href ? (
+                          <Link
+                            href={node.href}
+                            className="motion-press block min-h-11 px-4 py-3 hover:bg-bg-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+                          >
+                            {content}
+                          </Link>
+                        ) : (
+                          <div className="px-4 py-3">{content}</div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ConstellationFullscreen({
   onClose,
   children,
   autoStartTour = false,
   onTourStart,
+  nodes,
 }: {
   onClose: () => void;
   children: React.ReactNode;
   autoStartTour?: boolean;
   onTourStart?: () => void;
+  nodes: TimelineNode[];
 }) {
   const [view, setView] = useState({ x: 0, y: 0, scale: 1 });
   const dragRef = useRef<{ startX: number; startY: number; viewX: number; viewY: number } | null>(null);
@@ -1232,6 +1325,7 @@ function ConstellationFullscreen({
   const [dragging, setDragging] = useState(false);
   const [tourActive, setTourActive] = useState(autoStartTour);
   const [tourStep, setTourStep] = useState(0);
+  const [listOpen, setListOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
 
   // Runs once, deferred, for the case where the tour auto-starts on mount
@@ -1375,9 +1469,21 @@ function ConstellationFullscreen({
           </button>
           <button
             type="button"
+            aria-controls="field-map-list"
+            aria-pressed={listOpen}
+            onClick={() => {
+              stopTour();
+              setListOpen((open) => !open);
+            }}
+            className="min-h-11 min-w-11 rounded-md border border-line px-2.5 py-2 font-mono text-[10px] text-ink-soft hover:border-line-strong hover:text-ink sm:hidden"
+          >
+            {listOpen ? "Map" : "List"}
+          </button>
+          <button
+            type="button"
             onClick={() => zoomBy(0.85)}
             aria-label="Zoom out"
-            className="flex h-11 w-11 items-center justify-center rounded-md border border-line text-ink-soft hover:border-line-strong hover:text-ink sm:h-9 sm:w-9"
+            className="hidden h-11 w-11 items-center justify-center rounded-md border border-line text-ink-soft hover:border-line-strong hover:text-ink min-[360px]:flex sm:h-9 sm:w-9"
           >
             −
           </button>
@@ -1412,38 +1518,42 @@ function ConstellationFullscreen({
       </div>
 
       <div className="relative min-h-0 w-full flex-1">
-        <div
-          className="h-full w-full touch-none overflow-hidden"
-          style={{ cursor: dragging ? "grabbing" : "grab" }}
-          onWheel={onWheel}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerLeave={onPointerUp}
-        >
+        {listOpen ? (
+          <FieldMapList nodes={nodes} onBackToMap={() => setListOpen(false)} />
+        ) : (
           <div
-            className="flex h-full w-full items-center justify-center"
-            style={{
-              transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`,
-              transformOrigin: "center center",
-              transition: dragging ? "none" : "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
-            }}
+            className="h-full w-full touch-none overflow-hidden"
+            style={{ cursor: dragging ? "grabbing" : "grab" }}
+            onWheel={onWheel}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerLeave={onPointerUp}
           >
-            <svg
-              viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-              width={WIDTH * FULLSCREEN_SVG_SCALE}
-              height={HEIGHT * FULLSCREEN_SVG_SCALE}
-              className="field-map-svg"
-              role="img"
-              aria-hidden
+            <div
+              className="flex h-full w-full items-center justify-center"
+              style={{
+                transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`,
+                transformOrigin: "center center",
+                transition: dragging ? "none" : "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
             >
-              <RealSkyConstellations />
-              {children}
-            </svg>
+              <svg
+                viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+                width={WIDTH * FULLSCREEN_SVG_SCALE}
+                height={HEIGHT * FULLSCREEN_SVG_SCALE}
+                className="field-map-svg"
+                role="img"
+                aria-hidden
+              >
+                <RealSkyConstellations />
+                {children}
+              </svg>
+            </div>
           </div>
-        </div>
+        )}
 
-        {tourActive ? (
+        {tourActive && !listOpen ? (
           <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center px-3 sm:bottom-6 sm:px-4">
             <div className="pointer-events-auto w-full max-w-md rounded-xl border border-line bg-bg-raised/95 p-4 shadow-xl backdrop-blur-sm">
               <div className="flex items-center justify-between gap-2">
