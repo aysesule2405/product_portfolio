@@ -7,7 +7,7 @@ import { visualWork } from "@/lib/data/visual-work";
 export const metadata: Metadata = {
   title: "Visual Practice — The Clarity Lab",
   description:
-    "Graphic design, ceramics, painting, and playground experiments — the art practice that trains the eye behind Ayse Sule Ekiz's product work.",
+    "Graphic design, ceramics, painting, and playable sea-and-sky experiments — the art practice that trains the eye behind Ayse Sule Ekiz's product work.",
 };
 
 export default function VisualPracticePage() {

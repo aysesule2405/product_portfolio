@@ -8,7 +8,7 @@ import Link from "next/link";
 import { Reveal } from "@/components/motion/Reveal";
 import { ProjectCard } from "@/components/work/ProjectCard";
 import { categories } from "@/lib/data/categories";
-import { projects, getFlagshipProjects } from "@/lib/data/projects";
+import { projects } from "@/lib/data/projects";
 import { buildTimelineNodes } from "@/lib/data/timeline";
 import { hiringLenses, getHiringLens } from "@/lib/data/hiring";
 import { categoryColorVar } from "@/lib/category-color";
@@ -38,14 +38,10 @@ const CommitConstellation = dynamic(
 export function WorkExplorer({
   initialHiring,
   defaultView = "map",
-  hideFlagshipFromLists = false,
   className,
 }: {
   initialHiring?: string;
   defaultView?: WorkView;
-  /** Excludes the current flagship set from the Grid/List views, for placement below a
-   *  "Selected work" block that already shows them (map stays comprehensive). */
-  hideFlagshipFromLists?: boolean;
   className?: string;
 }) {
   const [view, setView] = useState<WorkView>(defaultView);
@@ -57,11 +53,8 @@ export function WorkExplorer({
   const highlightCategories = hiringLens?.categories;
 
   const filtered = useMemo(() => {
-    const base = activeFilter ? projects.filter((p) => p.categories.includes(activeFilter)) : projects;
-    if (!hideFlagshipFromLists) return base;
-    const flagshipSlugs = new Set(getFlagshipProjects(hiringId).map((p) => p.slug));
-    return base.filter((p) => !flagshipSlugs.has(p.slug));
-  }, [activeFilter, hideFlagshipFromLists, hiringId]);
+    return activeFilter ? projects.filter((project) => project.categories.includes(activeFilter)) : projects;
+  }, [activeFilter]);
 
   return (
     <div className={className}>
@@ -109,7 +102,7 @@ export function WorkExplorer({
         <Reveal subtle className="mt-6 flex flex-wrap gap-2">
           <div role="group" aria-label="Filter projects by problem type" className="flex flex-wrap gap-2">
             <FilterChip label="All studies" active={activeFilter === null} onClick={() => setActiveFilter(null)} />
-            {categories.map((cat) => (
+            {categories.filter((cat) => cat.id !== "community-learning").map((cat) => (
               <FilterChip
                 key={cat.id}
                 label={cat.label}

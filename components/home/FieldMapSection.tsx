@@ -38,7 +38,6 @@ export function FieldMapSection({ initialHiring }: { initialHiring?: string }) {
         <WorkExplorer
           initialHiring={initialHiring}
           defaultView="map"
-          hideFlagshipFromLists
           className="mt-8"
         />
       </Container>

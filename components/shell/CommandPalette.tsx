@@ -67,6 +67,7 @@ export function CommandPalette({ onClose, onOpenMotionLab }: { onClose: () => vo
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const commands = useMemo(() => buildCommands(), []);
   const shouldReduceMotion = useReducedMotion();
 
@@ -79,8 +80,14 @@ export function CommandPalette({ onClose, onOpenMotionLab }: { onClose: () => vo
   }, [commands, query]);
 
   useEffect(() => {
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     inputRef.current?.focus();
+    return () => previousFocus?.focus();
   }, []);
+
+  useEffect(() => {
+    itemRefs.current[activeIndex]?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex]);
 
   function updateQuery(value: string) {
     setQuery(value);
@@ -99,14 +106,34 @@ export function CommandPalette({ onClose, onOpenMotionLab }: { onClose: () => vo
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === "ArrowDown") {
       e.preventDefault();
+      if (filtered.length === 0) return;
       setActiveIndex((i) => Math.min(i + 1, filtered.length - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
+      if (filtered.length === 0) return;
       setActiveIndex((i) => Math.max(i - 1, 0));
     } else if (e.key === "Enter") {
       e.preventDefault();
       const command = filtered[activeIndex];
       if (command) select(command);
+    }
+  }
+
+  function trapFocus(e: React.KeyboardEvent<HTMLElement>) {
+    if (e.key !== "Tab") return;
+    const focusable = [...e.currentTarget.querySelectorAll<HTMLElement>(
+      'input, button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+    )];
+    if (focusable.length === 0) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
     }
   }
 
@@ -125,7 +152,8 @@ export function CommandPalette({ onClose, onOpenMotionLab }: { onClose: () => vo
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"
-        className="relative flex max-h-[65vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-line bg-bg-raised shadow-2xl"
+        onKeyDown={trapFocus}
+        className="relative flex max-h-[65vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-line bg-bg shadow-2xl"
         initial={shouldReduceMotion ? false : { opacity: 0, y: -10, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={shouldReduceMotion ? undefined : { opacity: 0, y: -6, scale: 0.985 }}
@@ -141,14 +169,18 @@ export function CommandPalette({ onClose, onOpenMotionLab }: { onClose: () => vo
             value={query}
             onChange={(e) => updateQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Jump to a project, section, or say what you're hiring for…"
-            className="w-full bg-transparent font-mono text-sm text-ink placeholder:text-ink-faint focus:outline-none"
+            placeholder="Jump to a project, section, or hiring lens…"
+            role="combobox"
+            aria-controls="command-palette-list"
+            aria-expanded="true"
+            aria-activedescendant={filtered[activeIndex] ? `command-${filtered[activeIndex].id}` : undefined}
+            className="min-w-0 w-full bg-transparent font-mono text-sm text-ink placeholder:text-ink-faint focus:outline-none"
             aria-label="Search"
           />
-          <kbd className="rounded border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-faint">esc</kbd>
+          <kbd className="shrink-0 rounded border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-faint">esc</kbd>
         </div>
 
-        <div className="overflow-y-auto py-2">
+        <div id="command-palette-list" role="listbox" className="overflow-y-auto py-2">
           {filtered.length === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-ink-faint">No matches.</p>
           ) : (
@@ -163,6 +195,12 @@ export function CommandPalette({ onClose, onOpenMotionLab }: { onClose: () => vo
                     </p>
                   ) : null}
                   <button
+                    ref={(element) => {
+                      itemRefs.current[index] = element;
+                    }}
+                    id={`command-${command.id}`}
+                    role="option"
+                    aria-selected={index === activeIndex}
                     type="button"
                     onClick={() => select(command)}
                     onMouseEnter={() => setActiveIndex(index)}

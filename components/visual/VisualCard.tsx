@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { VisualWork } from "@/lib/data/visual-work";
 import { categoryStyle } from "@/lib/category-color";
-import { FieldLabel } from "@/components/ui/FieldLabel";
 import { Disclosure } from "@/components/work/Disclosure";
 
 export function VisualCard({
@@ -48,9 +47,9 @@ export function VisualCard({
 
       <div className="flex flex-1 flex-col gap-3 p-6">
         <div className="flex items-start justify-between gap-3">
-          <FieldLabel>
-            {work.medium} · {work.dateLabel}
-          </FieldLabel>
+          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-faint">
+            {work.medium}
+          </span>
           <a
             href={work.galleryUrl}
             target="_blank"

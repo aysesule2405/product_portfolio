@@ -16,10 +16,9 @@ function useHasMounted() {
 }
 
 /**
- * Ambient light-mode water loop behind the field map — replaces an 82MB GIF with a
- * ~1-1.5MB video pair. Renders a static poster until mounted (avoids an SSR/client
- * mismatch), falls back to that same static poster under reduced motion instead of
- * autoplaying, and exposes a pause control since this is long-running ambient motion.
+ * Ambient light-mode water loop behind the field map. Renders a static poster until
+ * mounted (avoids an SSR/client mismatch), falls back to that same static poster under
+ * reduced motion, and exposes a pause control since this is long-running ambient motion.
  */
 export function WavesBackground({ className }: { className?: string }) {
   const prefersReducedMotion = useReducedMotion();
@@ -31,18 +30,15 @@ export function WavesBackground({ className }: { className?: string }) {
   return (
     <div className={`field-map-video-layer ${className ?? ""}`}>
       {playing ? (
-        <video
-          className="h-full w-full object-cover"
-          poster="/images/waves-poster.jpg"
-          muted
-          loop
-          autoPlay
-          playsInline
+        <Image
+          src="/images/waves-animation.gif"
+          alt=""
           aria-hidden
-        >
-          <source src="/videos/waves.webm" type="video/webm" />
-          <source src="/videos/waves.mp4" type="video/mp4" />
-        </video>
+          unoptimized
+          fill
+          sizes="(min-width: 1024px) 800px, 100vw"
+          className="object-cover"
+        />
       ) : (
         <Image
           src="/images/waves-poster.jpg"

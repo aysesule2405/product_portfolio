@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { motionPurpose, motionEasing } from "@/lib/motion";
 
@@ -22,7 +22,10 @@ function LabSection({ title, explain, children }: { title: string; explain: stri
 }
 
 function DurationDemo() {
-  const [active, setActive] = useState<(typeof purposeOrder)[number]["key"] | null>(null);
+  const [run, setRun] = useState<{
+    key: (typeof purposeOrder)[number]["key"] | null;
+    version: number;
+  }>({ key: null, version: 0 });
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -32,7 +35,7 @@ function DurationDemo() {
           <button
             key={key}
             type="button"
-            onClick={() => setActive(key)}
+            onClick={() => setRun((value) => ({ key, version: value.version + 1 }))}
             className="motion-press flex flex-col items-start gap-2 rounded-lg border border-line px-3 py-2 text-left hover:border-line-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-faint">
@@ -40,8 +43,10 @@ function DurationDemo() {
             </span>
             <span className="relative h-1.5 w-24 overflow-hidden rounded-full bg-bg-inset">
               <motion.span
+                key={run.key === key ? `${key}-${run.version}` : key}
                 className="absolute inset-y-0 left-0 w-4 rounded-full bg-accent"
-                animate={active === key ? { x: [0, 72, 0] } : { x: 0 }}
+                initial={{ x: 0 }}
+                animate={run.key === key ? { x: [0, 72, 0] } : { x: 0 }}
                 transition={{ duration: token.duration, ease: token.ease as never }}
               />
             </span>
@@ -53,7 +58,7 @@ function DurationDemo() {
 }
 
 function EasingDemo() {
-  const [running, setRunning] = useState(false);
+  const [run, setRun] = useState(0);
   const [x1, y1, x2, y2] = motionEasing;
 
   return (
@@ -72,23 +77,27 @@ function EasingDemo() {
       <div className="flex-1 space-y-2">
         <button
           type="button"
-          onClick={() => setRunning((v) => !v)}
+          onClick={() => setRun((value) => value + 1)}
           className="motion-press rounded-full border border-line px-3 py-1.5 text-xs font-medium text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
-          Race: eased vs linear
+          Run eased vs linear
         </button>
         <div className="space-y-2">
           <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-bg-inset">
             <motion.span
+              key={`eased-${run}`}
               className="absolute inset-y-0 left-0 w-4 rounded-full bg-accent"
-              animate={running ? { x: ["0%", "94%"] } : { x: "0%" }}
+              initial={{ x: "0%" }}
+              animate={run > 0 ? { x: ["0%", "94%"] } : { x: "0%" }}
               transition={{ duration: 0.6, ease: motionEasing }}
             />
           </div>
           <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-bg-inset">
             <motion.span
+              key={`linear-${run}`}
               className="absolute inset-y-0 left-0 w-4 rounded-full bg-ink-faint"
-              animate={running ? { x: ["0%", "94%"] } : { x: "0%" }}
+              initial={{ x: "0%" }}
+              animate={run > 0 ? { x: ["0%", "94%"] } : { x: "0%" }}
               transition={{ duration: 0.6, ease: "linear" }}
             />
           </div>
@@ -237,7 +246,7 @@ function SharedElementDemo() {
 }
 
 function ReducedMotionDemo({ shouldReduceMotion }: { shouldReduceMotion: boolean }) {
-  const [on, setOn] = useState(false);
+  const [run, setRun] = useState(0);
   return (
     <div>
       <p className="text-xs text-ink-soft">
@@ -247,7 +256,7 @@ function ReducedMotionDemo({ shouldReduceMotion }: { shouldReduceMotion: boolean
       </p>
       <button
         type="button"
-        onClick={() => setOn((v) => !v)}
+        onClick={() => setRun((value) => value + 1)}
         className="motion-press mt-3 rounded-full border border-line px-3 py-1.5 text-xs font-medium text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         Trigger comparison
@@ -257,8 +266,10 @@ function ReducedMotionDemo({ shouldReduceMotion }: { shouldReduceMotion: boolean
           <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-faint">Full motion</p>
           <div className="relative mt-2 h-1.5 w-full overflow-hidden rounded-full bg-bg-inset">
             <motion.span
+              key={`full-${run}`}
               className="absolute inset-y-0 left-0 w-4 rounded-full bg-accent"
-              animate={on ? { x: ["0%", "88%"] } : { x: "0%" }}
+              initial={{ x: "0%" }}
+              animate={run > 0 ? { x: ["0%", "88%"] } : { x: "0%" }}
               transition={{ duration: 0.5, ease: motionEasing }}
             />
           </div>
@@ -267,8 +278,10 @@ function ReducedMotionDemo({ shouldReduceMotion }: { shouldReduceMotion: boolean
           <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-faint">Reduced motion</p>
           <div className="relative mt-2 h-1.5 w-full overflow-hidden rounded-full bg-bg-inset">
             <motion.span
+              key={`reduced-${run}`}
               className="absolute inset-y-0 left-0 w-4 rounded-full bg-ink-faint"
-              animate={on ? { x: "88%" } : { x: "0%" }}
+              initial={{ x: "0%" }}
+              animate={run > 0 ? { x: "88%" } : { x: "0%" }}
               transition={{ duration: 0.01 }}
             />
           </div>
@@ -280,6 +293,32 @@ function ReducedMotionDemo({ shouldReduceMotion }: { shouldReduceMotion: boolean
 
 export function MotionLab({ onClose }: { onClose: () => void }) {
   const shouldReduceMotion = useReducedMotion();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    closeRef.current?.focus();
+    return () => previousFocus?.focus();
+  }, []);
+
+  function trapFocus(e: React.KeyboardEvent<HTMLElement>) {
+    if (e.key !== "Tab") return;
+    const focusable = [...(dialogRef.current?.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+    ) ?? [])];
+    if (focusable.length === 0) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
 
   return (
     <motion.div
@@ -291,10 +330,12 @@ export function MotionLab({ onClose }: { onClose: () => void }) {
       onClick={onClose}
     >
       <motion.div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Motion Lab"
-        className="relative flex max-h-[82vh] w-full max-w-xl flex-col overflow-hidden rounded-xl border border-line bg-bg-raised shadow-2xl"
+        onKeyDown={trapFocus}
+        className="relative flex max-h-[82vh] w-full max-w-xl flex-col overflow-hidden rounded-xl border border-line bg-bg shadow-2xl"
         initial={shouldReduceMotion ? false : { opacity: 0, y: -10, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={shouldReduceMotion ? undefined : { opacity: 0, y: -6, scale: 0.985 }}
@@ -307,6 +348,7 @@ export function MotionLab({ onClose }: { onClose: () => void }) {
             <h2 className="font-sans text-base font-semibold text-ink">Motion Lab</h2>
           </div>
           <button
+            ref={closeRef}
             type="button"
             onClick={onClose}
             aria-label="Close Motion Lab"

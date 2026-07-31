@@ -37,6 +37,8 @@ export function EditorShell({ children }: { children: React.ReactNode }) {
     function onKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
+        setMotionLabOpen(false);
+        setSidebarOpen(false);
         setPaletteOpen((v) => !v);
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
@@ -53,6 +55,27 @@ export function EditorShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  useEffect(() => {
+    if (!sidebarOpen && !paletteOpen && !motionLabOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [sidebarOpen, paletteOpen, motionLabOpen]);
+
+  function openSidebar() {
+    setPaletteOpen(false);
+    setMotionLabOpen(false);
+    setSidebarOpen(true);
+  }
+
+  function openPalette() {
+    setSidebarOpen(false);
+    setMotionLabOpen(false);
+    setPaletteOpen(true);
+  }
+
   return (
     <OutlineProvider>
       <div className="relative isolate flex min-h-screen w-full">
@@ -64,7 +87,7 @@ export function EditorShell({ children }: { children: React.ReactNode }) {
           onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
         />
         <div className="relative z-10 flex min-h-screen min-w-0 flex-1 flex-col">
-          <TopBar onOpenSidebar={() => setSidebarOpen(true)} onOpenPalette={() => setPaletteOpen(true)} />
+          <TopBar onOpenSidebar={openSidebar} onOpenPalette={openPalette} />
           <main id="main" className="flex-1">
             {children}
           </main>

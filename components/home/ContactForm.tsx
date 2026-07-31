@@ -6,6 +6,7 @@ const WEB3FORMS_ACCESS_KEY = "7b268203-c0a5-47d9-acbe-7eb03d4af6a6";
 
 export function ContactForm() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [messageLength, setMessageLength] = useState(0);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -33,7 +34,7 @@ export function ContactForm() {
         </div>
         <p className="mt-3 font-sans text-base font-semibold text-ink">Message sent.</p>
         <p className="mt-1 text-sm text-ink-soft">
-          Thanks for reaching out — I&rsquo;ll get back to you soon.
+          Thanks for reaching out. Your note is in my inbox, and I&rsquo;ll reply as soon as I can.
         </p>
         <button
           type="button"
@@ -89,27 +90,70 @@ export function ContactForm() {
         </div>
       </div>
 
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="motion-field">
+          <label htmlFor="inquiry-type" className="motion-field-label mb-1 block font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
+            Reaching out about
+          </label>
+          <select
+            id="inquiry-type"
+            name="inquiry_type"
+            required
+            defaultValue=""
+            className="motion-input w-full rounded-lg border border-line bg-bg-inset/70 px-3 py-2.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+          >
+            <option value="" disabled>
+              Choose a topic
+            </option>
+            <option value="Job opportunity">Job opportunity</option>
+            <option value="Project collaboration">Project collaboration</option>
+            <option value="Portfolio or project question">Portfolio or project question</option>
+            <option value="Hello">Just saying hello</option>
+          </select>
+        </div>
+        <div className="motion-field">
+          <label htmlFor="organization" className="motion-field-label mb-1 block font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
+            Company or organization <span className="normal-case tracking-normal">(optional)</span>
+          </label>
+          <input
+            type="text"
+            id="organization"
+            name="organization"
+            placeholder="Where you work"
+            autoComplete="organization"
+            className="motion-input w-full rounded-lg border border-line bg-bg-inset/70 px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+          />
+        </div>
+      </div>
+
       <div className="motion-field">
         <div className="mb-1 flex items-center justify-between gap-3">
           <label htmlFor="message" className="motion-field-label block font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
             Message
           </label>
-          <span className="font-mono text-[10px] text-ink-faint">max 500</span>
+          <span className="font-mono text-[10px] text-ink-faint" aria-live="polite">
+            {messageLength} / 500
+          </span>
         </div>
         <textarea
           id="message"
           name="message"
-          placeholder="What should we make clearer?"
+          placeholder="Share a few details about the role, project, or idea—and what you’d like to discuss."
           rows={5}
           required
           maxLength={500}
+          onChange={(event) => setMessageLength(event.currentTarget.value.length)}
           className="motion-input w-full resize-none rounded-lg border border-line bg-bg-inset/70 px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
         />
       </div>
 
       {status === "error" ? (
         <p className="text-sm" style={{ color: "var(--star-red)" }} role="alert">
-          Something went wrong — try again, or email me directly.
+          Something went wrong. Try again, or{" "}
+          <a className="font-medium underline underline-offset-2" href="mailto:ase2327ekiz@gmail.com">
+            email me directly
+          </a>
+          .
         </p>
       ) : null}
 
@@ -118,7 +162,7 @@ export function ContactForm() {
         disabled={status === "loading"}
         className="motion-press inline-flex w-full items-center justify-center rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-on hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:opacity-60"
       >
-        {status === "loading" ? "Sending…" : "Send message"}
+        {status === "loading" ? "Sending…" : "Send Ayse a message"}
       </button>
     </form>
   );

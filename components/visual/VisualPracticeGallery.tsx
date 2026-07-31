@@ -8,6 +8,7 @@ import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 import { VisualCard } from "@/components/visual/VisualCard";
 import { ArtworkPieceCard } from "@/components/visual/ArtworkPieceCard";
 import { Lightbox, LightboxItem } from "@/components/visual/Lightbox";
+import { PortfolioPlayground } from "@/components/visual/PortfolioPlayground";
 import { VisualWork } from "@/lib/data/visual-work";
 
 function buildGallery(work: VisualWork) {
@@ -117,14 +118,18 @@ export function VisualPracticeGallery({ works }: { works: VisualWork[] }) {
       {playground ? (
         <Container className="border-t border-line py-12">
           <Reveal>
-            <FieldLabel>Interactive experiments</FieldLabel>
-            <p className="mt-3 max-w-xl text-sm leading-relaxed text-ink-soft">
-              Playground work lives apart from the finished pieces above — small, unpolished
-              interaction prototypes built purely out of curiosity.
+            <FieldLabel>Playable experiments</FieldLabel>
+            <h2 className="mt-4 max-w-2xl font-sans text-3xl font-semibold text-ink sm:text-4xl">
+              A little room for play.
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink-soft">
+              Match shells at low tide, draw a constellation into the night, or paint a
+              tiny moonlit seascape pixel by pixel. These experiments are made for
+              curiosity, not a case-study outcome.
             </p>
           </Reveal>
-          <div className="mt-6 max-w-md">
-            <VisualCard work={playground} onImageClick={() => setOpen({ workId: playground.id, index: 0 })} />
+          <div className="mt-7">
+            <PortfolioPlayground />
           </div>
         </Container>
       ) : null}

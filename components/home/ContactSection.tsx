@@ -9,9 +9,6 @@ import { socialLinks, resumeHref } from "@/lib/data/nav";
 
 const directRoutes = [...socialLinks.filter((l) => l.label === "Email" || l.label === "LinkedIn"), { label: "Resume", href: resumeHref }, ...socialLinks.filter((l) => l.label !== "Email" && l.label !== "LinkedIn")];
 
-const lunarPoem =
-  "The moon phase is a small live signal for timing and tone: some nights are for starting, some for refining, some for reflecting. Wherever you are in the cycle, a message is a way to find the same sky for a moment.";
-
 export function ContactSection() {
   return (
     <section id="contact" className="scroll-mt-20 border-t border-line py-20 sm:py-28">
@@ -33,36 +30,17 @@ export function ContactSection() {
                 <div>
                   <FieldLabel>Get in touch</FieldLabel>
                   <h2 className="mt-5 max-w-2xl font-sans text-3xl font-semibold leading-tight text-ink sm:text-5xl">
-                    Let&rsquo;s make complexity feel clear.
+                    Have a role, project, or idea in mind?
                   </h2>
                   <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-soft">
-                    Open to product design, design engineering, and AI product roles —
-                    send a note or use a direct link.
+                    Tell me what you&rsquo;re building, hiring for, or curious about. I&rsquo;m
+                    especially interested in product design, design engineering, and AI
+                    product work.
                   </p>
-                  <p
-                    className="lunar-poem mt-4 max-w-xl border-l-2 border-accent pl-4 text-sm leading-relaxed text-ink-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-                    tabIndex={0}
-                    aria-label={lunarPoem}
-                  >
-                    {lunarPoem.split(" ").map((word, wordIndex) => (
-                      <span key={`${word}-${wordIndex}`} aria-hidden>
-                        <span className="lunar-poem-word">
-                          {word.split("").map((letter, letterIndex) => {
-                            const index = wordIndex * 8 + letterIndex;
-                            return (
-                              <span
-                                key={`${letter}-${wordIndex}-${letterIndex}`}
-                                className="lunar-poem-letter"
-                                style={{ ["--letter-index" as string]: index }}
-                              >
-                                {letter}
-                              </span>
-                            );
-                          })}
-                        </span>{" "}
-                      </span>
-                    ))}
-                  </p>
+                  <div className="mt-4 flex max-w-xl items-center gap-2 border-l-2 border-accent py-1 pl-4 text-sm text-ink-soft">
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-positive" aria-hidden />
+                    <p>Your message goes directly to my inbox. I read every note.</p>
+                  </div>
 
                   <div className="mt-8">
                     <ContactForm />
@@ -74,7 +52,7 @@ export function ContactSection() {
 
                   <div className="rounded-2xl border border-line bg-bg-inset/70 p-5">
                     <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
-                      Direct routes
+                      Prefer another channel?
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2">
                       {directRoutes.map((link) => (

@@ -33,8 +33,8 @@ const CLUSTERS: { id: TimelineLane; label: string; cx: number; cy: number; sprea
   {
     id: "projects",
     label: "Work",
-    cx: 800,
-    cy: 610,
+    cx: 1180,
+    cy: 720,
     spread: 175,
     blurb: "Seven shipped projects — AI tools, learning platforms, campus systems, and more.",
   },
@@ -1223,6 +1223,8 @@ function ConstellationFullscreen({
 }) {
   const [view, setView] = useState({ x: 0, y: 0, scale: 1 });
   const dragRef = useRef<{ startX: number; startY: number; viewX: number; viewY: number } | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   const [dragging, setDragging] = useState(false);
   const [tourActive, setTourActive] = useState(autoStartTour);
   const [tourStep, setTourStep] = useState(0);
@@ -1237,14 +1239,42 @@ function ConstellationFullscreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // This dialog captures wheel events for zoom, so it needs its own Escape
-  // handler rather than relying on a listener further up the tree.
+  // Keep keyboard focus and page scrolling inside the full-screen map until
+  // the visitor closes it, then return them to the control that launched it.
   useEffect(() => {
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
+
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusable?.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     }
+
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus();
+    };
   }, [onClose]);
 
   function clampScale(scale: number) {
@@ -1319,7 +1349,13 @@ function ConstellationFullscreen({
   }
 
   return (
-    <div className="field-map-fullscreen fixed inset-0 z-50 bg-bg" role="dialog" aria-modal="true" aria-label="Field map, expanded">
+    <div
+      ref={dialogRef}
+      className="field-map-fullscreen fixed inset-0 z-50 bg-bg"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Field map, expanded"
+    >
       <WavesBackground />
       <div className="field-map-fullscreen-toolbar flex h-12 items-center justify-between border-b border-line px-4">
         <p className="hidden font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint sm:block">
@@ -1360,6 +1396,7 @@ function ConstellationFullscreen({
             Reset
           </button>
           <button
+            ref={closeRef}
             type="button"
             onClick={onClose}
             aria-label="Close expanded field map"

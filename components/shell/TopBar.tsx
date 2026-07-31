@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
 import { getProjectBySlug } from "@/lib/data/projects";
+import { useLocationHash } from "@/lib/use-location-hash";
 
 interface Tab {
   label: string;
@@ -44,6 +45,7 @@ export function TopBar({
   onOpenPalette: () => void;
 }) {
   const pathname = usePathname();
+  const locationHash = useLocationHash();
   const tabs = useOpenTabs();
 
   return (
@@ -61,11 +63,15 @@ export function TopBar({
 
       <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
         {tabs.map((tab) => {
-          const active = tab.href.includes("#") ? false : tab.href === "/" ? pathname === "/" : pathname?.startsWith(tab.href);
+          const [tabPath, fragment] = tab.href.split("#");
+          const active = fragment
+            ? pathname === tabPath && locationHash === `#${fragment}`
+            : pathname === tabPath && (tabPath !== "/" || locationHash !== "#field-map");
           return (
             <Link
               key={tab.href}
               href={tab.href}
+              aria-current={active ? "page" : undefined}
               className={clsx(
                 "motion-press motion-tab flex h-11 shrink-0 items-center gap-2 border-b-2 px-3 font-mono text-[12.5px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset",
                 active

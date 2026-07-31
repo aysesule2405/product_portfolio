@@ -50,7 +50,6 @@ export default async function WorkPage({
           <WorkExplorer
             initialHiring={hiring}
             defaultView="grid"
-            hideFlagshipFromLists
             className="mt-10"
           />
         </Container>

@@ -8,6 +8,7 @@ import Image from "next/image";
 import { rootFiles, fileTreeGroups } from "@/lib/data/file-tree";
 import { FileTypeIcon, FolderIcon, Chevron } from "@/components/shell/FileTreeIcons";
 import { useOutline } from "@/lib/outline-context";
+import { useLocationHash } from "@/lib/use-location-hash";
 
 function SidebarToggle({
   collapsed,
@@ -84,6 +85,7 @@ export function Sidebar({
   onToggleCollapsed: () => void;
 }) {
   const pathname = usePathname();
+  const locationHash = useLocationHash();
   const [rootOpen, setRootOpen] = useState(true);
   const [outlineOpen, setOutlineOpen] = useState(true);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
@@ -92,8 +94,9 @@ export function Sidebar({
   const { sections, activeId } = useOutline();
 
   const isActive = (href: string) => {
-    if (href.includes("#")) return false;
-    return href === pathname || (href !== "/" && pathname?.startsWith(href));
+    const [linkPath, fragment] = href.split("#");
+    if (fragment) return pathname === linkPath && locationHash === `#${fragment}`;
+    return pathname === linkPath && locationHash === "";
   };
 
   function toggleGroup(label: string) {
