@@ -36,6 +36,7 @@ export const projects: Project[] = [
       { label: "GitHub", href: "https://github.com/LAHacks2026/Obi_Laptop" },
       { label: "Devpost", href: "https://devpost.com/software/obi-mise-en-place-for-your-data" },
       { label: "Figma Make", href: "https://sadly-camp-78163766.figma.site" },
+      { label: "Demo video", href: "https://www.youtube.com/watch?v=r7eSFDm4Wd4" },
     ],
     glyph: "retrieval-nodes",
     fieldNumber: "FS-01",
@@ -160,6 +161,7 @@ export const projects: Project[] = [
     links: [
       { label: "GitHub", href: "https://github.com/aysesule2405/framewise" },
       { label: "Devpost", href: "https://devpost.com/software/framwise" },
+      { label: "Demo video", href: "https://www.youtube.com/watch?v=6Z7QrfIeU24" },
     ],
     glyph: "waveform-notes",
     fieldNumber: "FS-02",
@@ -284,6 +286,7 @@ export const projects: Project[] = [
     links: [
       { label: "Team GitHub", href: "https://github.com/iremdmrc/datathon-openstax" },
       { label: "Devpost", href: "https://devpost.com/software/openstaxalign" },
+      { label: "Demo video", href: "https://youtu.be/Jw43NOKcjG8" },
     ],
     glyph: "diagnostic-scatter",
     fieldNumber: "FS-03",
@@ -510,6 +513,7 @@ export const projects: Project[] = [
     links: [
       { label: "GitHub", href: "https://github.com/aysesule2405/reverie" },
       { label: "Figma", href: "https://record-poppy-86285822.figma.site" },
+      { label: "Demo video", href: "https://youtu.be/Ekzao4b1a60" },
     ],
     glyph: "mood-atmosphere",
     fieldNumber: "FS-05",
@@ -756,6 +760,7 @@ export const projects: Project[] = [
     links: [
       { label: "GitHub", href: "https://github.com/aysesule2405/G-Guardians" },
       { label: "Devpost", href: "https://devpost.com/software/ghibli-guardians" },
+      { label: "Demo video", href: "https://youtu.be/Rs_hmoewDrI" },
     ],
     glyph: "safety-signal",
     fieldNumber: "FS-07",
