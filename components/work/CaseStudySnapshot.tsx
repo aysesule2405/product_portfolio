@@ -32,7 +32,7 @@ export function CaseStudySnapshot({
     <div id={id} className="scroll-mt-20 rounded-2xl border border-line bg-bg-raised p-6 sm:p-8">
       <FieldLabel>Snapshot</FieldLabel>
 
-      <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
+      <dl className="mt-5 grid grid-cols-1 gap-x-6 gap-y-5 min-[380px]:grid-cols-2 sm:grid-cols-4">
         <Fact label="Role">{data.role}</Fact>
         <Fact label="Timeline">{data.timeline}</Fact>
         <Fact label="Team">{data.team}</Fact>

@@ -312,6 +312,22 @@ body {
   }
 }
 
+@media (hover: none) {
+  .motion-card:hover,
+  .motion-card.motion-card-static:hover,
+  .motion-press:hover,
+  .motion-tag:hover,
+  .north-star-quote:hover {
+    transform: none;
+  }
+
+  .motion-card:hover::after,
+  .motion-card.motion-card-static:hover::after,
+  .north-star-quote:hover::after {
+    opacity: 0;
+  }
+}
+
 ::selection {
   background: color-mix(in srgb, var(--accent) 30%, transparent);
   color: var(--ink);
@@ -945,6 +961,11 @@ body {
 .motion-card:hover::after {
   opacity: 1;
   transform: translateX(34%);
+}
+
+.motion-card.motion-card-no-shine::after,
+.motion-card.motion-card-no-shine:hover::after {
+  content: none;
 }
 
 .motion-card.motion-card-static:hover {

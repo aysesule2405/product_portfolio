@@ -56,7 +56,7 @@ export function WavesBackground({ className }: { className?: string }) {
           onClick={() => setPaused((v) => !v)}
           aria-label={paused ? "Play ambient water animation" : "Pause ambient water animation"}
           aria-pressed={paused}
-          className="motion-press absolute bottom-2 left-2 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-line-strong bg-bg/85 text-ink-soft backdrop-blur-sm hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="motion-press absolute bottom-2 left-2 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-line-strong bg-bg/85 text-ink-soft backdrop-blur-sm hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:h-8 sm:w-8"
         >
           {paused ? (
             <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden>

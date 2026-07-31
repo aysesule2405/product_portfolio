@@ -36,7 +36,7 @@ function DurationDemo() {
             key={key}
             type="button"
             onClick={() => setRun((value) => ({ key, version: value.version + 1 }))}
-            className="motion-press flex flex-col items-start gap-2 rounded-lg border border-line px-3 py-2 text-left hover:border-line-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="motion-press flex min-h-11 flex-col items-start gap-2 rounded-lg border border-line px-3 py-2 text-left hover:border-line-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-faint">
               {label} · {Math.round(token.duration * 1000)}ms
@@ -78,7 +78,7 @@ function EasingDemo() {
         <button
           type="button"
           onClick={() => setRun((value) => value + 1)}
-          className="motion-press rounded-full border border-line px-3 py-1.5 text-xs font-medium text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="motion-press min-h-11 rounded-full border border-line px-3 py-2 text-xs font-medium text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           Run eased vs linear
         </button>
@@ -148,16 +148,16 @@ function SpringDemo() {
 function ButtonStatesDemo() {
   return (
     <div className="flex flex-wrap gap-3">
-      <button type="button" className="motion-press rounded-md bg-ink px-4 py-2 text-sm font-medium text-bg">
+      <button type="button" className="motion-press min-h-11 rounded-md bg-ink px-4 py-2 text-sm font-medium text-bg">
         Default
       </button>
-      <button type="button" className="motion-press rounded-md border border-line-strong px-4 py-2 text-sm font-medium text-ink hover:bg-bg-inset">
+      <button type="button" className="motion-press min-h-11 rounded-md border border-line-strong px-4 py-2 text-sm font-medium text-ink hover:bg-bg-inset">
         Hover me
       </button>
-      <button type="button" className="motion-press rounded-md border border-line-strong px-4 py-2 text-sm font-medium text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg">
+      <button type="button" className="motion-press min-h-11 rounded-md border border-line-strong px-4 py-2 text-sm font-medium text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg">
         Tab to me
       </button>
-      <button type="button" disabled className="rounded-md border border-line px-4 py-2 text-sm font-medium text-ink-faint opacity-50">
+      <button type="button" disabled className="min-h-11 rounded-md border border-line px-4 py-2 text-sm font-medium text-ink-faint opacity-50">
         Disabled
       </button>
     </div>
@@ -171,7 +171,7 @@ function ModalTransitionDemo() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="motion-press rounded-full border border-line px-3 py-1.5 text-xs font-medium text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className="motion-press min-h-11 rounded-full border border-line px-3 py-2 text-xs font-medium text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         Open example modal
       </button>
@@ -204,7 +204,7 @@ function ModalTransitionDemo() {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="motion-press mt-3 rounded-md border border-line-strong px-3 py-1.5 text-xs font-medium text-ink hover:bg-bg-inset"
+                className="motion-press mt-3 min-h-11 rounded-md border border-line-strong px-3 py-2 text-xs font-medium text-ink hover:bg-bg-inset"
               >
                 Close
               </button>
@@ -228,7 +228,7 @@ function SharedElementDemo() {
         className={
           expanded
             ? "cat-tint-bg cat-tint-text flex w-full flex-col items-start gap-1 rounded-xl border border-line-strong p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            : "cat-tint-bg cat-tint-text flex h-10 w-10 items-center justify-center rounded-full border border-line-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            : "cat-tint-bg cat-tint-text flex h-11 w-11 items-center justify-center rounded-full border border-line-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         }
         style={{ ["--cat-color" as string]: "var(--accent)" }}
       >
@@ -257,7 +257,7 @@ function ReducedMotionDemo({ shouldReduceMotion }: { shouldReduceMotion: boolean
       <button
         type="button"
         onClick={() => setRun((value) => value + 1)}
-        className="motion-press mt-3 rounded-full border border-line px-3 py-1.5 text-xs font-medium text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className="motion-press mt-3 min-h-11 rounded-full border border-line px-3 py-2 text-xs font-medium text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         Trigger comparison
       </button>
@@ -322,7 +322,7 @@ export function MotionLab({ onClose }: { onClose: () => void }) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex h-dvh items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
       initial={shouldReduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={shouldReduceMotion ? undefined : { opacity: 0 }}
@@ -335,14 +335,14 @@ export function MotionLab({ onClose }: { onClose: () => void }) {
         aria-modal="true"
         aria-label="Motion Lab"
         onKeyDown={trapFocus}
-        className="relative flex max-h-[82vh] w-full max-w-xl flex-col overflow-hidden rounded-xl border border-line bg-bg shadow-2xl"
+        className="relative flex max-h-[calc(100dvh-0.5rem)] w-full max-w-xl flex-col overflow-hidden rounded-t-2xl border border-line bg-bg shadow-2xl sm:max-h-[82vh] sm:rounded-xl"
         initial={shouldReduceMotion ? false : { opacity: 0, y: -10, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={shouldReduceMotion ? undefined : { opacity: 0, y: -6, scale: 0.985 }}
         transition={{ duration: 0.22, ease: motionEasing }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
+        <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5 sm:py-4">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">Command palette</p>
             <h2 className="font-sans text-base font-semibold text-ink">Motion Lab</h2>
@@ -352,7 +352,7 @@ export function MotionLab({ onClose }: { onClose: () => void }) {
             type="button"
             onClick={onClose}
             aria-label="Close Motion Lab"
-            className="motion-press flex h-8 w-8 items-center justify-center rounded-full border border-line-strong text-ink-soft hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="motion-press flex h-11 w-11 items-center justify-center rounded-full border border-line-strong text-ink-soft hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
               <path d="M1.5 1.5l11 11M12.5 1.5l-11 11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
@@ -360,7 +360,7 @@ export function MotionLab({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        <div className="overflow-y-auto px-5 pb-6">
+        <div className="overflow-y-auto px-4 pb-6 sm:px-5">
           <LabSection title="Duration tokens" explain="Every animation in the system picks one of four durations, by purpose, not by feel.">
             <DurationDemo />
           </LabSection>

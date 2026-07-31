@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
@@ -63,7 +63,7 @@ function FileRow({
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={clsx(
-        "motion-press flex items-center gap-2 rounded px-2 py-1 font-mono text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+        "motion-press flex min-h-11 items-center gap-2 rounded px-2 py-1 font-mono text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:min-h-0",
         active ? "bg-bg-inset text-accent" : "text-ink-soft hover:bg-bg-inset hover:text-ink"
       )}
     >
@@ -92,6 +92,38 @@ export function Sidebar({
     Object.fromEntries(fileTreeGroups.map((g) => [g.label, true]))
   );
   const { sections, activeId } = useOutline();
+  const mobilePanelRef = useRef<HTMLDivElement>(null);
+  const mobileCloseRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const focusFrame = window.requestAnimationFrame(() => mobileCloseRef.current?.focus());
+
+    function trapFocus(event: KeyboardEvent) {
+      if (event.key !== "Tab") return;
+      const focusable = mobilePanelRef.current?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusable?.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    window.addEventListener("keydown", trapFocus);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      window.removeEventListener("keydown", trapFocus);
+      previousFocus?.focus();
+    };
+  }, [mobileOpen]);
 
   const isActive = (href: string) => {
     const [linkPath, fragment] = href.split("#");
@@ -118,18 +150,18 @@ export function Sidebar({
   ];
 
   const content = (
-    <nav aria-label="Site navigation" className="flex h-full flex-col overflow-y-auto px-2 py-4">
+    <nav aria-label="Site navigation" className="flex h-full flex-col overflow-y-auto px-2 py-2 lg:py-4">
       <div className="flex items-center justify-between gap-2 px-2 pb-2">
         <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
           Explorer
         </p>
-        <SidebarToggle collapsed={collapsed} onToggle={onToggleCollapsed} className="hidden md:flex" />
+        <SidebarToggle collapsed={collapsed} onToggle={onToggleCollapsed} className="hidden lg:flex" />
       </div>
 
       <button
         type="button"
         onClick={() => setRootOpen((v) => !v)}
-        className="motion-press flex items-center gap-1.5 rounded px-1 py-1 font-mono text-[12px] font-semibold uppercase tracking-[0.04em] text-ink hover:bg-bg-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className="motion-press flex min-h-11 items-center gap-1.5 rounded px-1 py-1 font-mono text-[12px] font-semibold uppercase tracking-[0.04em] text-ink hover:bg-bg-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:min-h-0"
       >
         <Chevron open={rootOpen} className="shrink-0 text-ink-faint" />
         <Image src="/images/logos/logo.png" alt="" width={16} height={16} className="shrink-0" aria-hidden />
@@ -152,7 +184,7 @@ export function Sidebar({
                   type="button"
                   onClick={() => toggleGroup(group.label)}
                   aria-expanded={isOpen}
-                  className="motion-press flex items-center gap-1.5 rounded px-1 py-1 font-mono text-[12px] text-ink-soft hover:bg-bg-inset hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="motion-press flex min-h-11 items-center gap-1.5 rounded px-1 py-1 font-mono text-[12px] text-ink-soft hover:bg-bg-inset hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:min-h-0"
                 >
                   <Chevron open={isOpen} className="shrink-0 text-ink-faint" />
                   <FolderIcon open={isOpen} className="shrink-0 text-ink-faint" />
@@ -178,7 +210,7 @@ export function Sidebar({
             type="button"
             onClick={() => setOutlineOpen((v) => !v)}
             aria-expanded={outlineOpen}
-            className="motion-press flex w-full items-center gap-1.5 rounded px-1 py-1 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-faint hover:bg-bg-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="motion-press flex min-h-11 w-full items-center gap-1.5 rounded px-1 py-1 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-faint hover:bg-bg-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:min-h-0"
           >
             <Chevron open={outlineOpen} className="shrink-0" />
             Outline
@@ -195,7 +227,7 @@ export function Sidebar({
                     onClick={() => jumpToSection(section.id)}
                     aria-current={active ? "location" : undefined}
                     className={clsx(
-                      "motion-press flex items-center gap-2 rounded px-2 py-1 text-left font-mono text-[12px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+                      "motion-press flex min-h-11 items-center gap-2 rounded px-2 py-1 text-left font-mono text-[12px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:min-h-0",
                       active ? "bg-bg-inset text-accent" : "text-ink-soft hover:bg-bg-inset hover:text-ink"
                     )}
                   >
@@ -246,7 +278,7 @@ export function Sidebar({
     <>
       <aside
         className={clsx(
-          "sticky top-0 hidden h-screen shrink-0 border-r border-line bg-bg-raised transition-[width] duration-200 md:block",
+          "sticky top-0 hidden h-screen shrink-0 border-r border-line bg-bg-raised transition-[width] duration-200 lg:block",
           collapsed ? "w-12" : "w-64"
         )}
       >
@@ -254,27 +286,32 @@ export function Sidebar({
       </aside>
 
       {mobileOpen ? (
-        <div className="fixed inset-0 z-50 md:hidden">
+        <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
             aria-label="Close navigation"
             onClick={onCloseMobile}
             className="absolute inset-0 bg-black/40"
           />
-          <div className="absolute inset-y-0 left-0 w-72 max-w-[80vw] border-r border-line bg-bg-raised shadow-2xl">
-            <div className="flex items-center justify-end px-3 pt-3">
+          <div
+            ref={mobilePanelRef}
+            className="absolute inset-y-0 left-0 flex h-dvh w-72 max-w-[86vw] flex-col border-r border-line bg-bg-raised shadow-2xl"
+          >
+            <div className="flex shrink-0 items-center justify-end px-2 pt-1">
               <button
+                ref={mobileCloseRef}
                 type="button"
+                autoFocus
                 onClick={onCloseMobile}
                 aria-label="Close navigation"
-                className="motion-press flex h-8 w-8 items-center justify-center rounded-md text-ink-soft hover:bg-bg-inset hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="motion-press flex h-11 w-11 items-center justify-center rounded-md text-ink-soft hover:bg-bg-inset hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden>
                   <path d="M3 3L15 15M15 3L3 15" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
                 </svg>
               </button>
             </div>
-            {content}
+            <div className="min-h-0 flex-1">{content}</div>
           </div>
         </div>
       ) : null}

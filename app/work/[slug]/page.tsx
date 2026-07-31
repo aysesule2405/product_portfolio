@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import obiWrittenBackgroundLogo from "@/public/projects/Obi/logos/obi_written_background_logo.png";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/Container";
 import { FieldLabel } from "@/components/ui/FieldLabel";
@@ -14,6 +15,10 @@ import { CaseStudyOutlineRegistrar } from "@/components/work/CaseStudyOutlineReg
 import { projects, getProjectBySlug } from "@/lib/data/projects";
 import { categories } from "@/lib/data/categories";
 import { OutlineSection } from "@/lib/outline-context";
+
+const contentHashedLogos = {
+  "/projects/Obi/logos/obi_written_background_logo.png": obiWrittenBackgroundLogo,
+};
 
 export function generateStaticParams() {
   return projects.map((project) => ({ slug: project.slug }));
@@ -66,7 +71,7 @@ export default async function CaseStudyPage({
         <Container className="py-14 sm:py-20">
           <Link
             href="/#field-map"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-soft hover:text-ink"
+            className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-ink-soft hover:text-ink"
           >
             <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden className="rotate-180">
               <path d="M0.5 5H13M13 5L9 1M13 5L9 9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -103,7 +108,13 @@ export default async function CaseStudyPage({
                       key={logo.src}
                       className="logo-swatch relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-line bg-white shadow-md sm:h-24 sm:w-24"
                     >
-                      <Image src={logo.src} alt={logo.alt} fill sizes="96px" className="object-contain p-3" />
+                      <Image
+                        src={contentHashedLogos[logo.src as keyof typeof contentHashedLogos] ?? logo.src}
+                        alt={logo.alt}
+                        fill
+                        sizes="96px"
+                        className="object-contain p-3"
+                      />
                     </div>
                   ))}
                 </div>
@@ -117,7 +128,7 @@ export default async function CaseStudyPage({
                       href={link.href}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-sm font-medium text-ink underline decoration-line-strong decoration-2 underline-offset-4 hover:text-ink-soft"
+                      className="inline-flex min-h-11 items-center text-sm font-medium text-ink underline decoration-line-strong decoration-2 underline-offset-4 hover:text-ink-soft"
                     >
                       {link.label} ↗
                     </a>
@@ -239,11 +250,11 @@ export default async function CaseStudyPage({
       </Container>
 
       <Container className="border-t border-line py-10">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col items-start gap-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
           <FieldLabel>Next field study</FieldLabel>
           <Link
             href={`/work/${next.slug}`}
-            className="group flex items-center gap-2 font-sans text-lg font-semibold text-ink hover:text-ink-soft"
+            className="group flex min-h-11 items-center gap-2 font-sans text-lg font-semibold text-ink hover:text-ink-soft"
           >
             {next.shortName}
             <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden className="transition-transform group-hover:translate-x-1">

@@ -280,7 +280,7 @@ function ShellMemoryGame() {
         <button
           type="button"
           onClick={reset}
-          className="motion-press rounded-full border border-line px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="motion-press min-h-11 rounded-full border border-line px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           Shuffle tidepool
         </button>
@@ -366,7 +366,7 @@ function StarStitchGame() {
                     : `Star ${index + 1}, sleeping`
               }
               className={clsx(
-                "absolute flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f0c75a]",
+                "absolute flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f0c75a]",
                 active && "cursor-pointer",
                 !active && !connected && "cursor-default"
               )}
@@ -432,7 +432,7 @@ function StarStitchGame() {
         <button
           type="button"
           onClick={reset}
-          className="motion-press rounded-full border border-line px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="motion-press min-h-11 rounded-full border border-line px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           Clear &amp; redraw
         </button>
@@ -521,7 +521,7 @@ function PixelPaintingGame() {
               aria-pressed={color === swatch.color}
               title={swatch.name}
               className={clsx(
-                "motion-press h-8 w-8 rounded-full border-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white",
+                "motion-press h-11 w-11 rounded-full border-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white",
                 color === swatch.color ? "scale-110 border-white" : "border-white/20"
               )}
               style={{ backgroundColor: swatch.color }}
@@ -546,21 +546,21 @@ function PixelPaintingGame() {
           <button
             type="button"
             onClick={() => setPixels(moonlitPixels())}
-            className="motion-press rounded-full border border-line px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="motion-press min-h-11 rounded-full border border-line px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             Restore moonlit cove
           </button>
           <button
             type="button"
             onClick={() => setPixels(Array(PIXEL_COLS * PIXEL_ROWS).fill(PIXEL_SKY))}
-            className="motion-press rounded-full border border-line px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="motion-press min-h-11 rounded-full border border-line px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             Blank canvas
           </button>
           <button
             type="button"
             onClick={download}
-            className="motion-press rounded-full bg-ink px-4 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-bg hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-raised"
+            className="motion-press min-h-11 rounded-full bg-ink px-4 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-bg hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-raised"
           >
             Save my painting ↓
           </button>
@@ -626,7 +626,7 @@ export function PortfolioPlayground() {
                     }
                   }}
                   className={clsx(
-                    "relative min-w-0 rounded-t-xl border border-b-0 px-3 pb-3 pt-2 text-left transition focus-visible:z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:min-w-36",
+                    "relative min-h-14 min-w-0 rounded-t-xl border border-b-0 px-2 pb-3 pt-2 text-left transition focus-visible:z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:min-w-36 sm:px-3",
                     active
                       ? "z-10 translate-y-px border-line-strong bg-bg-raised text-ink shadow-sm"
                       : "border-line bg-bg-inset text-ink-soft hover:border-line-strong hover:bg-bg-raised hover:text-ink"
@@ -639,10 +639,10 @@ export function PortfolioPlayground() {
                       active ? "border-line-strong bg-bg-raised" : "border-line bg-bg-inset"
                     )}
                   />
-                  <span className="block font-mono text-[8px] uppercase tracking-[0.12em] opacity-65">
+                  <span className="hidden font-mono text-[8px] uppercase tracking-[0.12em] opacity-65 sm:block">
                     {game.eyebrow}
                   </span>
-                  <span className="mt-0.5 block truncate text-xs font-semibold sm:text-sm">{game.label}</span>
+                  <span className="block truncate text-[11px] font-semibold sm:mt-0.5 sm:text-sm">{game.label}</span>
                 </button>
               );
             })}

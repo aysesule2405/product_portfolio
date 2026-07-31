@@ -141,13 +141,13 @@ export default function AboutPage() {
               href={resumeHref}
               target="_blank"
               rel="noreferrer"
-              className="rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-bg hover:-translate-y-0.5 transition-transform"
+              className="inline-flex min-h-11 items-center rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-bg transition-transform hover:-translate-y-0.5"
             >
               View resume
             </Link>
             <Link
               href="/#contact"
-              className="rounded-full border border-line-strong px-5 py-2.5 text-sm font-medium text-ink hover:bg-bg-raised"
+              className="inline-flex min-h-11 items-center rounded-full border border-line-strong px-5 py-2.5 text-sm font-medium text-ink hover:bg-bg-raised"
             >
               Get in touch
             </Link>

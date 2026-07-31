@@ -60,7 +60,7 @@ export function WorkExplorer({
     <div className={className}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <Reveal subtle className="flex flex-wrap items-center gap-2">
-          <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-faint">
+          <span className="mb-1 w-full font-mono text-[11px] uppercase tracking-[0.1em] text-ink-faint sm:mb-0 sm:w-auto">
             What are you hiring for?
           </span>
           <button
@@ -68,7 +68,7 @@ export function WorkExplorer({
             onClick={() => setHiringId(null)}
             aria-pressed={hiringId === null}
             className={clsx(
-              "motion-press rounded-full border px-3 py-1.5 text-xs font-medium",
+              "motion-press min-h-11 rounded-full border px-4 py-2 text-xs font-medium",
               hiringId === null ? "border-transparent bg-ink text-bg" : "border-line text-ink-soft hover:border-line-strong"
             )}
           >
@@ -82,7 +82,7 @@ export function WorkExplorer({
               aria-pressed={hiringId === lens.id}
               title={lens.description}
               className={clsx(
-                "motion-press rounded-full border px-3 py-1.5 text-xs font-medium",
+                "motion-press min-h-11 rounded-full border px-4 py-2 text-xs font-medium",
                 hiringId === lens.id ? "border-transparent bg-ink text-bg" : "border-line text-ink-soft hover:border-line-strong"
               )}
             >
@@ -91,7 +91,7 @@ export function WorkExplorer({
           ))}
         </Reveal>
 
-        <div className="flex shrink-0 gap-1 rounded-full border border-line p-1" role="group" aria-label="Choose a view">
+        <div className="grid w-full shrink-0 grid-cols-3 gap-1 rounded-full border border-line p-1 sm:flex sm:w-auto" role="group" aria-label="Choose a view">
           <ViewButton label="Map" active={view === "map"} onClick={() => setView("map")} />
           <ViewButton label="Grid" active={view === "grid"} onClick={() => setView("grid")} />
           <ViewButton label="List" active={view === "list"} onClick={() => setView("list")} />
@@ -141,7 +141,7 @@ function ViewButton({ label, active, onClick }: { label: string; active: boolean
       onClick={onClick}
       aria-pressed={active}
       className={clsx(
-        "motion-press rounded-full px-3 py-1.5 text-xs font-medium",
+        "motion-press min-h-11 rounded-full px-3 py-2 text-xs font-medium",
         active ? "bg-ink text-bg" : "text-ink-soft hover:text-ink"
       )}
     >
@@ -168,7 +168,7 @@ function FilterChip({
       aria-pressed={active}
       style={category ? { ["--cat-color" as string]: categoryColorVar(category) } : undefined}
       className={clsx(
-        "motion-press rounded-full border px-4 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+        "motion-press min-h-11 rounded-full border px-4 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
         active
           ? "cat-tint-bg cat-tint-text border-transparent"
           : "border-line text-ink-soft hover:border-line-strong hover:text-ink"

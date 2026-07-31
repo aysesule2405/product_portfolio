@@ -54,7 +54,7 @@ export function VisualCard({
             href={work.galleryUrl}
             target="_blank"
             rel="noreferrer"
-            className="cat-tint-text shrink-0 text-xs font-medium underline-offset-2 hover:underline"
+            className="cat-tint-text inline-flex min-h-11 shrink-0 items-center text-xs font-medium underline-offset-2 hover:underline"
           >
             View gallery ↗
           </a>

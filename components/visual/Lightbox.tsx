@@ -52,7 +52,7 @@ export function Lightbox({
       role="dialog"
       aria-modal="true"
       aria-label={item.title}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-bg/95 p-4 backdrop-blur-sm sm:p-8"
+      className="fixed inset-0 z-50 flex h-dvh items-center justify-center bg-bg/95 p-3 backdrop-blur-sm sm:p-8"
       onClick={onClose}
     >
       <button
@@ -60,7 +60,7 @@ export function Lightbox({
         type="button"
         onClick={onClose}
         aria-label="Close"
-        className="motion-press absolute right-4 top-4 z-10 rounded-full border border-line-strong bg-bg-raised p-2.5 text-ink hover:bg-bg-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className="motion-press absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-line-strong bg-bg-raised text-ink hover:bg-bg-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:right-4 sm:top-4"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
           <path d="M2 2l12 12M14 2 2 14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -75,7 +75,7 @@ export function Lightbox({
             onPrev();
           }}
           aria-label="Previous piece"
-          className="motion-press absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full border border-line-strong bg-bg-raised p-2.5 text-ink hover:bg-bg-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:left-4"
+          className="motion-press absolute left-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-line-strong bg-bg-raised text-ink hover:bg-bg-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:left-4"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
             <path d="M10 2 4 8l6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -90,7 +90,7 @@ export function Lightbox({
             onNext();
           }}
           aria-label="Next piece"
-          className="motion-press absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full border border-line-strong bg-bg-raised p-2.5 text-ink hover:bg-bg-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:right-4"
+          className="motion-press absolute right-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-line-strong bg-bg-raised text-ink hover:bg-bg-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:right-4"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
             <path d="M6 2l6 6-6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -99,7 +99,7 @@ export function Lightbox({
       ) : null}
 
       <div className="flex max-h-full w-full max-w-3xl flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
-        <div className="relative h-[60vh] w-full overflow-hidden rounded-xl border border-line bg-bg-raised">
+        <div className="relative h-[52dvh] w-full overflow-hidden rounded-xl border border-line bg-bg-raised sm:h-[60vh]">
           <Image src={item.src} alt={item.alt} fill sizes="90vw" className="object-contain" priority />
         </div>
         <div className="text-center">

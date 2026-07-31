@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { motion, useReducedMotion, useInView, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
@@ -1069,7 +1070,7 @@ export function CommitConstellation({
               setAutoStartTour(true);
               setFullscreen(true);
             }}
-            className="field-map-action hidden items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono text-[11px] backdrop-blur-sm sm:flex"
+            className="field-map-action hidden min-h-11 items-center gap-1.5 rounded-full border px-3 py-2 font-mono text-[11px] backdrop-blur-sm sm:flex"
           >
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden>
               <path d="M8 1v14M1 8h14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
@@ -1083,7 +1084,7 @@ export function CommitConstellation({
               setAutoStartTour(false);
               setFullscreen(true);
             }}
-            className="field-map-action flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono text-[11px] backdrop-blur-sm"
+            className="field-map-action flex min-h-11 items-center gap-1.5 rounded-full border px-3 py-2 font-mono text-[11px] backdrop-blur-sm"
           >
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden>
               <path
@@ -1109,7 +1110,7 @@ export function CommitConstellation({
               onClick={() => setLegendActive((prev) => (prev === cat.id ? null : cat.id))}
               aria-pressed={active}
               className={clsx(
-                "flex items-center gap-1.5 rounded-full px-1.5 py-0.5 font-mono text-[10px] transition-colors",
+                "flex min-h-10 items-center gap-1.5 rounded-full px-2 py-1 font-mono text-[10px] transition-colors sm:min-h-0 sm:px-1.5 sm:py-0.5",
                 active ? "bg-bg-inset text-ink" : "text-ink-faint hover:text-ink-soft"
               )}
             >
@@ -1124,15 +1125,18 @@ export function CommitConstellation({
         })}
       </div>
 
-      {fullscreen ? (
-        <ConstellationFullscreen
-          onClose={() => setFullscreen(false)}
-          autoStartTour={autoStartTour}
-          onTourStart={() => setSelectedId(null)}
-        >
-          {svgBody}
-        </ConstellationFullscreen>
-      ) : null}
+      {fullscreen
+        ? createPortal(
+            <ConstellationFullscreen
+              onClose={() => setFullscreen(false)}
+              autoStartTour={autoStartTour}
+              onTourStart={() => setSelectedId(null)}
+            >
+              {svgBody}
+            </ConstellationFullscreen>,
+            document.body
+          )
+        : null}
     </div>
   );
 }
@@ -1351,21 +1355,21 @@ function ConstellationFullscreen({
   return (
     <div
       ref={dialogRef}
-      className="field-map-fullscreen fixed inset-0 z-50 bg-bg"
+      className="field-map-fullscreen fixed inset-0 z-50 flex h-dvh flex-col bg-bg"
       role="dialog"
       aria-modal="true"
       aria-label="Field map, expanded"
     >
       <WavesBackground />
-      <div className="field-map-fullscreen-toolbar flex h-12 items-center justify-between border-b border-line px-4">
+      <div className="field-map-fullscreen-toolbar flex min-h-14 shrink-0 items-center justify-between border-b border-line px-2 sm:h-12 sm:min-h-12 sm:px-4">
         <p className="hidden font-mono text-[11px] uppercase tracking-[0.14em] text-ink-faint sm:block">
           Field map — drag to explore, scroll to zoom
         </p>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full items-center justify-between gap-1 sm:w-auto sm:justify-start sm:gap-2">
           <button
             type="button"
             onClick={tourActive ? stopTour : startTour}
-            className="rounded-md border border-line px-2.5 py-1 font-mono text-[11px] text-ink-soft hover:border-line-strong hover:text-ink"
+            className="min-h-11 rounded-md border border-line px-2.5 py-2 font-mono text-[10px] text-ink-soft hover:border-line-strong hover:text-ink sm:text-[11px]"
           >
             {tourActive ? "Exit tour" : "Take the tour"}
           </button>
@@ -1373,7 +1377,7 @@ function ConstellationFullscreen({
             type="button"
             onClick={() => zoomBy(0.85)}
             aria-label="Zoom out"
-            className="flex h-7 w-7 items-center justify-center rounded-md border border-line text-ink-soft hover:border-line-strong hover:text-ink"
+            className="flex h-11 w-11 items-center justify-center rounded-md border border-line text-ink-soft hover:border-line-strong hover:text-ink sm:h-9 sm:w-9"
           >
             −
           </button>
@@ -1381,7 +1385,7 @@ function ConstellationFullscreen({
             type="button"
             onClick={() => zoomBy(1 / 0.85)}
             aria-label="Zoom in"
-            className="flex h-7 w-7 items-center justify-center rounded-md border border-line text-ink-soft hover:border-line-strong hover:text-ink"
+            className="flex h-11 w-11 items-center justify-center rounded-md border border-line text-ink-soft hover:border-line-strong hover:text-ink sm:h-9 sm:w-9"
           >
             +
           </button>
@@ -1391,7 +1395,7 @@ function ConstellationFullscreen({
               stopTour();
               reset();
             }}
-            className="rounded-md border border-line px-2.5 py-1 font-mono text-[11px] text-ink-soft hover:border-line-strong hover:text-ink"
+            className="min-h-11 rounded-md border border-line px-2.5 py-2 font-mono text-[10px] text-ink-soft hover:border-line-strong hover:text-ink sm:text-[11px]"
           >
             Reset
           </button>
@@ -1400,14 +1404,14 @@ function ConstellationFullscreen({
             type="button"
             onClick={onClose}
             aria-label="Close expanded field map"
-            className="flex h-7 w-7 items-center justify-center rounded-md border border-line text-ink-soft hover:border-line-strong hover:text-ink"
+            className="flex h-11 w-11 items-center justify-center rounded-md border border-line text-ink-soft hover:border-line-strong hover:text-ink sm:h-9 sm:w-9"
           >
             ✕
           </button>
         </div>
       </div>
 
-      <div className="relative h-[calc(100%-3rem)] w-full">
+      <div className="relative min-h-0 w-full flex-1">
         <div
           className="h-full w-full touch-none overflow-hidden"
           style={{ cursor: dragging ? "grabbing" : "grab" }}
@@ -1440,7 +1444,7 @@ function ConstellationFullscreen({
         </div>
 
         {tourActive ? (
-          <div className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center px-4">
+          <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center px-3 sm:bottom-6 sm:px-4">
             <div className="pointer-events-auto w-full max-w-md rounded-xl border border-line bg-bg-raised/95 p-4 shadow-xl backdrop-blur-sm">
               <div className="flex items-center justify-between gap-2">
                 <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
@@ -1449,7 +1453,7 @@ function ConstellationFullscreen({
                 <button
                   type="button"
                   onClick={stopTour}
-                  className="text-xs text-ink-faint hover:text-ink-soft"
+                  className="min-h-11 px-2 text-xs text-ink-faint hover:text-ink-soft"
                 >
                   Exit tour
                 </button>

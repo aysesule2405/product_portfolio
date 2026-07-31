@@ -65,7 +65,7 @@ export function PhotoAlbum() {
   }
 
   return (
-    <div className="motion-card overflow-hidden rounded-2xl border border-line bg-bg-raised/90 shadow-2xl shadow-black/20 backdrop-blur-xl">
+    <div className="motion-card motion-card-no-shine overflow-hidden rounded-2xl border border-line bg-bg-raised/90 shadow-2xl shadow-black/20 backdrop-blur-xl">
       <WindowChrome
         filename="ayse_album"
         compact
@@ -105,7 +105,7 @@ export function PhotoAlbum() {
             type="button"
             onClick={() => showPhoto(activeIndex - 1, -1)}
             aria-label="Show previous photo"
-            className="motion-press flex h-9 w-9 items-center justify-center rounded-full border border-line bg-bg-raised/85 text-ink shadow-lg backdrop-blur hover:border-line-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="motion-press flex h-11 w-11 items-center justify-center rounded-full border border-line bg-bg-raised/85 text-ink shadow-lg backdrop-blur hover:border-line-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden>
               <path d="M11 4L6 9L11 14" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
@@ -115,7 +115,7 @@ export function PhotoAlbum() {
             type="button"
             onClick={() => showPhoto(activeIndex + 1, 1)}
             aria-label="Show next photo"
-            className="motion-press flex h-9 w-9 items-center justify-center rounded-full border border-line bg-bg-raised/85 text-ink shadow-lg backdrop-blur hover:border-line-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="motion-press flex h-11 w-11 items-center justify-center rounded-full border border-line bg-bg-raised/85 text-ink shadow-lg backdrop-blur hover:border-line-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden>
               <path d="M7 4L12 9L7 14" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />

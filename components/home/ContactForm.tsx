@@ -38,8 +38,11 @@ export function ContactForm() {
         </p>
         <button
           type="button"
-          onClick={() => setStatus("idle")}
-          className="motion-press mt-4 text-sm font-medium text-ink underline decoration-line-strong decoration-2 underline-offset-4 hover:text-ink-soft"
+          onClick={() => {
+            setStatus("idle");
+            setMessageLength(0);
+          }}
+          className="motion-press mt-4 inline-flex min-h-11 items-center text-sm font-medium text-ink underline decoration-line-strong decoration-2 underline-offset-4 hover:text-ink-soft"
         >
           Send another message
         </button>
@@ -71,8 +74,9 @@ export function ContactForm() {
             id="name"
             name="name"
             placeholder="Your name"
+            autoComplete="name"
             required
-            className="motion-input w-full rounded-lg border border-line bg-bg-inset/70 px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+            className="motion-input min-h-11 w-full rounded-lg border border-line bg-bg-inset/70 px-3 py-2.5 text-base text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 sm:text-sm"
           />
         </div>
         <div className="motion-field">
@@ -84,8 +88,9 @@ export function ContactForm() {
             id="email"
             name="email"
             placeholder="your@email.com"
+            autoComplete="email"
             required
-            className="motion-input w-full rounded-lg border border-line bg-bg-inset/70 px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+            className="motion-input min-h-11 w-full rounded-lg border border-line bg-bg-inset/70 px-3 py-2.5 text-base text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 sm:text-sm"
           />
         </div>
       </div>
@@ -100,7 +105,7 @@ export function ContactForm() {
             name="inquiry_type"
             required
             defaultValue=""
-            className="motion-input w-full rounded-lg border border-line bg-bg-inset/70 px-3 py-2.5 text-sm text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+            className="motion-input min-h-11 w-full rounded-lg border border-line bg-bg-inset/70 px-3 py-2.5 text-base text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 sm:text-sm"
           >
             <option value="" disabled>
               Choose a topic
@@ -121,7 +126,7 @@ export function ContactForm() {
             name="organization"
             placeholder="Where you work"
             autoComplete="organization"
-            className="motion-input w-full rounded-lg border border-line bg-bg-inset/70 px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+            className="motion-input min-h-11 w-full rounded-lg border border-line bg-bg-inset/70 px-3 py-2.5 text-base text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 sm:text-sm"
           />
         </div>
       </div>
@@ -143,7 +148,7 @@ export function ContactForm() {
           required
           maxLength={500}
           onChange={(event) => setMessageLength(event.currentTarget.value.length)}
-          className="motion-input w-full resize-none rounded-lg border border-line bg-bg-inset/70 px-3 py-2.5 text-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+          className="motion-input w-full resize-none rounded-lg border border-line bg-bg-inset/70 px-3 py-2.5 text-base text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 sm:text-sm"
         />
       </div>
 
@@ -160,7 +165,7 @@ export function ContactForm() {
       <button
         type="submit"
         disabled={status === "loading"}
-        className="motion-press inline-flex w-full items-center justify-center rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-on hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:opacity-60"
+        className="motion-press inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-on hover:bg-accent-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:opacity-60"
       >
         {status === "loading" ? "Sending…" : "Send Ayse a message"}
       </button>

@@ -141,7 +141,7 @@ export function CommandPalette({ onClose, onOpenMotionLab }: { onClose: () => vo
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-[12vh]"
+      className="fixed inset-0 z-50 flex h-dvh items-start justify-center px-2 pt-2 sm:px-4 sm:pt-[12vh]"
       initial={shouldReduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={shouldReduceMotion ? undefined : { opacity: 0 }}
@@ -153,7 +153,7 @@ export function CommandPalette({ onClose, onOpenMotionLab }: { onClose: () => vo
         aria-modal="true"
         aria-label="Command palette"
         onKeyDown={trapFocus}
-        className="relative flex max-h-[65vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-line bg-bg shadow-2xl"
+        className="relative flex max-h-[calc(100dvh-1rem)] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-line bg-bg shadow-2xl sm:max-h-[65vh]"
         initial={shouldReduceMotion ? false : { opacity: 0, y: -10, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={shouldReduceMotion ? undefined : { opacity: 0, y: -6, scale: 0.985 }}
@@ -174,10 +174,20 @@ export function CommandPalette({ onClose, onOpenMotionLab }: { onClose: () => vo
             aria-controls="command-palette-list"
             aria-expanded="true"
             aria-activedescendant={filtered[activeIndex] ? `command-${filtered[activeIndex].id}` : undefined}
-            className="min-w-0 w-full bg-transparent font-mono text-sm text-ink placeholder:text-ink-faint focus:outline-none"
+            className="min-w-0 w-full bg-transparent font-mono text-base text-ink placeholder:text-ink-faint focus:outline-none sm:text-sm"
             aria-label="Search"
           />
-          <kbd className="shrink-0 rounded border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-faint">esc</kbd>
+          <kbd className="hidden shrink-0 rounded border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-faint sm:block">esc</kbd>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close command palette"
+            className="motion-press -mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-ink-soft hover:bg-bg-inset hover:text-ink sm:hidden"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+              <path d="M2 2l12 12M14 2 2 14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+          </button>
         </div>
 
         <div id="command-palette-list" role="listbox" className="overflow-y-auto py-2">
@@ -205,7 +215,7 @@ export function CommandPalette({ onClose, onOpenMotionLab }: { onClose: () => vo
                     onClick={() => select(command)}
                     onMouseEnter={() => setActiveIndex(index)}
                     className={clsx(
-                      "motion-press flex w-full flex-col gap-0.5 px-4 py-2 text-left",
+                      "motion-press flex min-h-11 w-full flex-col justify-center gap-0.5 px-4 py-2 text-left",
                       index === activeIndex ? "bg-bg-inset" : ""
                     )}
                   >

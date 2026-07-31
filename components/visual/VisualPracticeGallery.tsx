@@ -86,7 +86,7 @@ export function VisualPracticeGallery({ works }: { works: VisualWork[] }) {
                   href={work.galleryUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="motion-press text-xs font-medium text-ink-soft underline-offset-2 hover:text-ink hover:underline"
+                  className="motion-press inline-flex min-h-11 items-center text-xs font-medium text-ink-soft underline-offset-2 hover:text-ink hover:underline"
                 >
                   View the full gallery ↗
                 </a>

@@ -5,13 +5,11 @@ import { Reveal } from "@/components/motion/Reveal";
 import { WindowChrome } from "@/components/ui/WindowChrome";
 import { MoonPhaseChart } from "@/components/celestial/MoonPhaseChart";
 import { ContactForm } from "@/components/home/ContactForm";
-import { socialLinks, resumeHref } from "@/lib/data/nav";
-
-const directRoutes = [...socialLinks.filter((l) => l.label === "Email" || l.label === "LinkedIn"), { label: "Resume", href: resumeHref }, ...socialLinks.filter((l) => l.label !== "Email" && l.label !== "LinkedIn")];
+import { socialLinks } from "@/lib/data/nav";
 
 export function ContactSection() {
   return (
-    <section id="contact" className="scroll-mt-20 border-t border-line py-20 sm:py-28">
+    <section id="contact" className="scroll-mt-20 border-t border-line py-16 sm:py-28">
       <Container>
         <Reveal>
           <div className="relative overflow-hidden">
@@ -48,20 +46,20 @@ export function ContactSection() {
                 </div>
 
                 <aside className="flex min-w-0 flex-col gap-4">
-                  <MoonPhaseChart />
+                  <div className="order-2 lg:order-1">
+                    <MoonPhaseChart />
+                  </div>
 
-                  <div className="rounded-2xl border border-line bg-bg-inset/70 p-5">
+                  <div className="order-1 rounded-2xl border border-line bg-bg-inset/70 p-5 lg:order-2">
                     <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
                       Prefer another channel?
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2">
-                      {directRoutes.map((link) => (
+                      {socialLinks.map((link) => (
                         <a
                           key={link.label}
                           href={link.href}
-                          target={link.label === "Resume" ? "_blank" : undefined}
-                          rel={link.label === "Resume" ? "noreferrer" : undefined}
-                          className="motion-press rounded-full border border-line-strong bg-bg px-4 py-2 text-sm font-medium text-ink hover:bg-bg-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+                          className="motion-press inline-flex min-h-11 items-center rounded-full border border-line-strong bg-bg px-4 py-2 text-sm font-medium text-ink hover:bg-bg-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
                         >
                           {link.label}
                         </a>
