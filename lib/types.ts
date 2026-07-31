@@ -115,6 +115,10 @@ export interface Project {
   date: string;
   dateLabel: string;
   icon?: ProjectImage;
+  /** Real logo/branding variations designed for this project — a wordmark, an icon-only
+   *  mark, alternate backgrounds, etc. Shown as a row of square swatches on the case-study
+   *  page, distinct from `icon`, which is the single uniform badge mark. */
+  logos?: ProjectImage[];
   images: ProjectImage[];
   video?: ProjectVideo;
   decisionLog: DecisionLogEntry[];

@@ -817,6 +817,10 @@ body {
       inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
   }
 
+  :root:not([data-theme="light"]) .logo-swatch {
+    background: #0d1728;
+  }
+
   :root:not([data-theme="light"]) .project-icon-img {
     opacity: 0.96;
     filter:
@@ -897,6 +901,10 @@ body {
   box-shadow:
     0 22px 48px color-mix(in srgb, var(--project-accent, var(--accent)) 22%, transparent),
     inset 0 1px 0 color-mix(in srgb, white 18%, transparent);
+}
+
+:root[data-theme="dark"] .logo-swatch {
+  background: #0d1728;
 }
 
 :root[data-theme="dark"] .project-icon-img {

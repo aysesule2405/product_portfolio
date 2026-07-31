@@ -96,15 +96,16 @@ export default async function CaseStudyPage({
                 })}
               </div>
 
-              {project.icon ? (
-                <div className="mt-6 inline-flex h-20 items-center rounded-xl border border-line bg-white px-4 py-3 shadow-md sm:h-24">
-                  <Image
-                    src={project.icon.src}
-                    alt={project.icon.alt}
-                    width={96}
-                    height={96}
-                    className="h-full w-auto object-contain"
-                  />
+              {project.logos && project.logos.length > 0 ? (
+                <div className="mt-6 flex flex-wrap gap-3">
+                  {project.logos.map((logo) => (
+                    <div
+                      key={logo.src}
+                      className="logo-swatch relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-line bg-white shadow-md sm:h-24 sm:w-24"
+                    >
+                      <Image src={logo.src} alt={logo.alt} fill sizes="96px" className="object-contain p-3" />
+                    </div>
+                  ))}
                 </div>
               ) : null}
 

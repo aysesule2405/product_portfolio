@@ -42,6 +42,11 @@ export const projects: Project[] = [
     date: "2026-04",
     dateLabel: "Apr 2026",
     icon: { src: "/images/project-icons/obi.png", alt: "Obi project icon" },
+    logos: [
+      { src: "/projects/Obi/logos/obi_logo.png", alt: "Obi icon mark" },
+      { src: "/projects/Obi/logos/obi_written_logo.png", alt: "Obi wordmark" },
+      { src: "/projects/Obi/logos/obi_written_background_logo.png", alt: "Obi wordmark with tagline" },
+    ],
     images: [
       { src: `${GH_PAGES}/projects/Obi/homepage.png`, alt: "Obi desktop app homepage" },
       { src: `${GH_PAGES}/projects/Obi/chat_search.png`, alt: "Obi chat and search interface" },
@@ -161,6 +166,13 @@ export const projects: Project[] = [
     date: "2026-05",
     dateLabel: "May 2026",
     icon: { src: "/images/project-icons/framewise.png", alt: "Framewise project icon" },
+    logos: [
+      { src: "/projects/Framewise/logos/framewise-logo-gradient.png", alt: "Framewise icon, gradient" },
+      { src: "/projects/Framewise/logos/framewise-logo-mono-cocoa.png", alt: "Framewise icon, mono cocoa" },
+      { src: "/projects/Framewise/logos/framewise-logo-mono-cream.png", alt: "Framewise icon, mono cream" },
+      { src: "/projects/Framewise/logos/framewise-logo-outline.png", alt: "Framewise icon, outline" },
+      { src: "/projects/Framewise/logos/framewise-logo-wordmark.png", alt: "Framewise wordmark" },
+    ],
     images: [
       { src: `${GH_PAGES}/projects/Framewise/framewise%20photos.001.jpeg`, alt: "Framewise workspace overview" },
       { src: `${GH_PAGES}/projects/Framewise/framewise%20photos.005.jpeg`, alt: "Framewise timestamped chat and notes" },
@@ -278,6 +290,12 @@ export const projects: Project[] = [
     date: "2026-01",
     dateLabel: "Jan 2026",
     icon: { src: "/images/project-icons/openstax-align.png", alt: "OpenStaxAlign project icon" },
+    logos: [
+      { src: "/projects/OpenStaxAlign/logos/openstaxalign_light_logo.png", alt: "OpenStaxAlign icon, light background" },
+      { src: "/projects/OpenStaxAlign/logos/openstaxalign_dark_logo.png", alt: "OpenStaxAlign icon, dark background" },
+      { src: "/projects/OpenStaxAlign/logos/openstaxalign_written_light_logo.png", alt: "OpenStaxAlign wordmark, light background" },
+      { src: "/projects/OpenStaxAlign/logos/openstaxalign_written_dark_logo.png", alt: "OpenStaxAlign wordmark, dark background" },
+    ],
     images: [
       { src: `${GH_PAGES}/projects/OpenStaxAlign/bg.png`, alt: "OpenStaxAlign presentation background graphic" },
       { src: `${GH_PAGES}/projects/OpenStaxAlign/logo.png`, alt: "OpenStaxAlign project logo" },
@@ -391,6 +409,7 @@ export const projects: Project[] = [
     date: "2024-09",
     dateLabel: "Live since Sep 2024",
     icon: { src: "/images/project-icons/nau-portal.png", alt: "NAU Portal project icon" },
+    logos: [{ src: "/projects/NAU%20Portal/logo.jpg", alt: "North American Stallions crest" }],
     images: [
       { src: `${GH_PAGES}/projects/NAU%20Portal/Dashboard.png`, alt: "NAU Portal dashboard view" },
       { src: `${GH_PAGES}/projects/NAU%20Portal/Statistics.png`, alt: "NAU Portal statistics/analytics view" },
@@ -497,6 +516,16 @@ export const projects: Project[] = [
     date: "2025-12",
     dateLabel: "Dec 2025",
     icon: { src: "/images/project-icons/reverie.png", alt: "Reverie project icon" },
+    logos: [
+      { src: "/projects/Reverie/logos/dark-reverie-logo.png", alt: "Reverie icon, dark background" },
+      { src: "/projects/Reverie/logos/light-reverie-logo.png", alt: "Reverie icon, light background" },
+      { src: "/projects/Reverie/logos/reverie_dark_written_logo.png", alt: "Reverie wordmark, dark background" },
+      { src: "/projects/Reverie/logos/reverie_light_written_logo.png", alt: "Reverie wordmark, light background" },
+      { src: "/projects/Reverie/logos/reverie_lotus_dark_logo.png", alt: "Reverie lotus mark, dark background" },
+      { src: "/projects/Reverie/logos/reverie_lotus_light_logo.png", alt: "Reverie lotus mark, light background" },
+      { src: "/projects/Reverie/logos/reverie_lotus_written_dark_logo.png", alt: "Reverie lotus wordmark, dark background" },
+      { src: "/projects/Reverie/logos/reverie_lotus_written_light_logo.png", alt: "Reverie lotus wordmark, light background" },
+    ],
     images: [
       { src: `${GH_PAGES}/projects/Reverie/Screenshot%201%20-%20Home%20Screen%201%20copy.png`, alt: "Reverie home screen" },
       { src: `${GH_PAGES}/projects/Reverie/Screenshot%205%20-%20My%20Spaces%20copy.png`, alt: "Reverie named emotional spaces" },
@@ -619,6 +648,11 @@ export const projects: Project[] = [
     date: "2026-04",
     dateLabel: "Spring 2026",
     icon: { src: "/images/project-icons/whisperwind-grove.png", alt: "Whisperwind Grove project icon" },
+    logos: [
+      { src: "/projects/Whisperwind%20Grove/logos/grove_logo.png", alt: "Whisperwind Grove icon" },
+      { src: "/projects/Whisperwind%20Grove/logos/grove_transparent_logo.png", alt: "Whisperwind Grove icon, transparent" },
+      { src: "/projects/Whisperwind%20Grove/logos/grove_written_logo.png", alt: "Whisperwind Grove wordmark" },
+    ],
     images: [
       { src: `${GH_PAGES}/projects/Whisperwind%20Grove/whisperwind-grove.copy.jpg`, alt: "Whisperwind Grove key art" },
       { src: `${GH_PAGES}/projects/Whisperwind%20Grove/spirit-drift%20copy.png`, alt: "Spirit Drift wind arcade scene" },
@@ -728,6 +762,10 @@ export const projects: Project[] = [
     date: "2026-02",
     dateLabel: "Feb 2026",
     icon: { src: "/images/project-icons/ghibli-guardians.png", alt: "Ghibli Guardians project icon" },
+    logos: [
+      { src: "/projects/Ghibli%20Guardians/logos/gg_logo.png", alt: "Ghibli Guardians icon" },
+      { src: "/projects/Ghibli%20Guardians/logos/gg_logo_written.png", alt: "Ghibli Guardians wordmark" },
+    ],
     images: [
       { src: `${GH_PAGES}/projects/Ghibli%20Guardians/dashboard.png`, alt: "Ghibli Guardians dashboard interface" },
       { src: `${GH_PAGES}/projects/Ghibli%20Guardians/mobile.png`, alt: "Ghibli Guardians mobile view" },
@@ -849,6 +887,12 @@ export const projects: Project[] = [
     date: "2026-07",
     dateLabel: "Jul 2026",
     icon: { src: "/images/project-icons/atelier-icon.png", alt: "Atelier project icon" },
+    logos: [
+      { src: "/projects/Atelier/logos/atelier_logo.png", alt: "Atelier letter mark" },
+      { src: "/projects/Atelier/logos/atelier_written_logo.png", alt: "Atelier wordmark" },
+      { src: "/projects/Atelier/logos/atelier_moon_logo.png", alt: "Atelier letter mark on moon" },
+      { src: "/projects/Atelier/logos/atelier_moon_written_logo.png", alt: "Atelier wordmark on moon" },
+    ],
     images: [
       { src: "/projects/Atelier/Screenshot%202026-07-21%20at%204.42.10%20PM.png", alt: "Atelier landing page — your personal workshop" },
       { src: "/projects/Atelier/Screenshot%202026-07-21%20at%204.41.57%20PM.png", alt: "Atelier new critique upload flow" },
@@ -967,6 +1011,14 @@ export const projects: Project[] = [
     date: "2026-07",
     dateLabel: "Jul 2026",
     icon: { src: "/images/project-icons/aperture-icon.png", alt: "Aperture project icon" },
+    logos: [
+      { src: "/projects/Aperture/logos/aperture_eye_logo-v2.png", alt: "Aperture eye logo" },
+      { src: "/projects/Aperture/logos/aperture_eye_logo_light_background-v2.png", alt: "Aperture eye logo, light background" },
+      { src: "/projects/Aperture/logos/aperture_eye_logo_dark_background-v2.png", alt: "Aperture eye logo, dark background" },
+      { src: "/projects/Aperture/logos/aperture_iris_logo_dark_background-v2.png", alt: "Aperture iris mark, dark background" },
+      { src: "/projects/Aperture/logos/aperture_eye_logo_written_light_background-v2.png", alt: "Aperture wordmark, light background" },
+      { src: "/projects/Aperture/logos/aperture_eye_logo_written_dark_background-v2.png", alt: "Aperture wordmark, dark background" },
+    ],
     images: [
       { src: "/projects/Aperture/Aperture%20Thread.jpg", alt: "Aperture generating a threaded description for a Slack image" },
       { src: "/projects/Aperture/Aperture%20Commands.jpg", alt: "Aperture's slash command palette in Slack" },
