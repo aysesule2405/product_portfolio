@@ -1,8 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useReducedMotion } from "framer-motion";
 import Image from "next/image";
+
+function subscribeNoop() {
+  return () => {};
+}
+
+/** True once hydrated on the client, false during SSR/first paint — via
+ *  useSyncExternalStore rather than a setState-in-effect, since flipping state inside
+ *  an effect body triggers an avoidable extra render. */
+function useHasMounted() {
+  return useSyncExternalStore(subscribeNoop, () => true, () => false);
+}
 
 /**
  * Ambient light-mode water loop behind the field map — replaces an 82MB GIF with a
@@ -12,10 +23,8 @@ import Image from "next/image";
  */
 export function WavesBackground({ className }: { className?: string }) {
   const prefersReducedMotion = useReducedMotion();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useHasMounted();
   const [paused, setPaused] = useState(false);
-
-  useEffect(() => setMounted(true), []);
 
   const playing = mounted && !prefersReducedMotion && !paused;
 

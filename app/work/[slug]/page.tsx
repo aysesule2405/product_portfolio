@@ -96,6 +96,18 @@ export default async function CaseStudyPage({
                 })}
               </div>
 
+              {project.icon ? (
+                <div className="mt-6 inline-flex h-20 items-center rounded-xl border border-line bg-white px-4 py-3 shadow-md sm:h-24">
+                  <Image
+                    src={project.icon.src}
+                    alt={project.icon.alt}
+                    width={96}
+                    height={96}
+                    className="h-full w-auto object-contain"
+                  />
+                </div>
+              ) : null}
+
               {project.links.length > 0 ? (
                 <div className="mt-5 flex flex-wrap gap-4">
                   {project.links.map((link) => (
@@ -176,7 +188,6 @@ export default async function CaseStudyPage({
 
             {project.video ? (
               <div className="mt-5 overflow-hidden rounded-xl border border-line bg-bg-raised">
-                {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
                 <video controls poster={project.video.poster} aria-label={project.video.alt} className="aspect-video w-full">
                   <source src={project.video.src} type="video/mp4" />
                   {project.video.webmSrc ? <source src={project.video.webmSrc} type="video/webm" /> : null}

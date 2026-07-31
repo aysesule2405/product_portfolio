@@ -811,6 +811,244 @@ export const projects: Project[] = [
       { value: "1 tap", label: "To generate & share an emergency message" },
     ],
   },
+  {
+    slug: "atelier",
+    title: "Atelier — Your Personal Art Workshop",
+    shortName: "Atelier",
+    oneLiner:
+      "A mentor that watches your art grow — not a bot that grades one upload.",
+    categories: ["ai-trust", "creative-tools"],
+    primaryCategory: "ai-trust",
+    description:
+      "A full-stack art-mentorship platform that pairs deterministic image analysis — composition, value contrast, color harmony — with a strictly bounded AI role, so every critique stays inspectable, evidence-backed, and legible about what's measured versus interpreted.",
+    users: "Artists who've lost their built-in feedback loop — art-school graduates and self-taught painters and digital artists building a solo practice.",
+    role: "Product design, full-stack development, computer vision engineering.",
+    keyDecision:
+      "Split every critique into three strictly separated services — deterministic pixel measurement, bounded visual description, and AI synthesis — so no stage can invent the other's answers.",
+    tools: [
+      "React",
+      "Vite",
+      "Node.js",
+      "Express",
+      "Sharp",
+      "GPT-5.6 Sol",
+      "OpenAI Responses API",
+      "ElevenLabs",
+      "Canvas/SVG",
+      "Art Institute of Chicago API",
+      "Wikimedia Commons",
+      "Multer",
+    ],
+    links: [
+      { label: "GitHub", href: "https://github.com/aysesule2405/atelier_starter" },
+      { label: "Devpost", href: "https://devpost.com/software/atelier-your-personalized-art-workshop" },
+      { label: "Demo video", href: "https://www.youtube.com/watch?v=YGlDBxA09tw" },
+    ],
+    glyph: "diagnostic-scatter",
+    fieldNumber: "FS-08",
+    date: "2026-07",
+    dateLabel: "Jul 2026",
+    icon: { src: "/images/project-icons/atelier-icon.png", alt: "Atelier project icon" },
+    images: [
+      { src: "/projects/Atelier/Screenshot%202026-07-21%20at%204.42.10%20PM.png", alt: "Atelier landing page — your personal workshop" },
+      { src: "/projects/Atelier/Screenshot%202026-07-21%20at%204.41.57%20PM.png", alt: "Atelier new critique upload flow" },
+      { src: "/projects/Atelier/Screenshot%202026-07-21%20at%204.42.21%20PM.png", alt: "Atelier progress view — formal-signal timeline and detected patterns" },
+      { src: "/projects/Atelier/Screenshot%202026-07-21%20at%204.42.36%20PM.png", alt: "Atelier inspiration gallery of public-domain museum works" },
+    ],
+    decisionLog: [
+      {
+        decision: "Run deterministic image processing — luminance grids, Sobel edge detection plus color rarity, k-means color clustering — as its own service, entirely separate from any AI model call.",
+        why: "A single model call that both scores a painting and writes about it can't be checked — there's no way to tell whether \"your value contrast could be stronger\" is a real pixel finding or a plausible-sounding guess.",
+        tradeoff: "Keeping the three services honest about their own boundaries — the vision pass is explicitly prohibited from scoring or claiming intent — took more architecture and prompt-boundary work than one combined vision-and-critique call would have.",
+        result: "Every claim in a critique traces back to either a measured number or a description the artist can verify by looking at their own painting — nothing invented in between.",
+      },
+      {
+        decision: "Treat the artist's own stated intent as authoritative fact the AI is never allowed to second-guess.",
+        why: "An artist who says \"this is about my grandmother's kitchen\" doesn't want a model debating whether that's really what the painting is about — that's a fast way to make someone stop trusting the tool, or stop writing statements at all.",
+        tradeoff: "Trusting stated intent outright means Atelier can't catch a mismatch between what an artist says a piece is about and what a viewer would actually perceive — a deliberate blind spot, not an oversight.",
+        result: "The feedback hierarchy stayed artist-statement-first, AI-observation-second, and measurement-third, which is what let the critique read as a mentor's note instead of a judgment.",
+      },
+      {
+        decision: "Combine border exclusion, multiple Sobel scales, color rarity, and local distinctiveness for focal-point detection, instead of shipping the first working edge-detection pass.",
+        why: "Simple edge detection kept picking frames and busy background clutter as the \"focal point,\" not the thing a viewer's eye actually lands on.",
+        tradeoff: "Layering four separate signals into one focal-point score took real iteration time away from other features, inside a single build-week timeline.",
+        result: "Composition read-outs pointed at the part of the painting that mattered — the one measurement an artist would notice being wrong on the very first upload.",
+      },
+      {
+        decision: "Keep critique history strictly append-only, and let pattern-finding cite the specific dated pieces its evidence came from — instead of a single evolving \"latest score.\"",
+        why: "A practice isn't one number that goes up — it's a series of choices you can only reflect on if the record of each one stays intact and dated.",
+        tradeoff: "Append-only history means the interface has to design for a growing archive from day one, rather than a simpler \"overwrite the last critique\" model.",
+        result: "Patterns like a recurring lower-right focal placement across four pieces surface with the actual evidence attached, so an artist can check whether the pattern is real instead of taking Atelier's word for it.",
+      },
+    ],
+    evidenceRail: {
+      users: "Artists who've lost a structured feedback loop after school — building a solo practice with no critique partner.",
+      timeline: "Built solo for OpenAI Build Week, July 2026.",
+      team: "Solo.",
+      role: "Product design, full-stack development, computer vision engineering.",
+      tools: ["React", "Vite", "Node.js", "Express", "Sharp", "GPT-5.6 Sol", "ElevenLabs", "Canvas/SVG"],
+      constraints: "Needed every critique to stay inspectable and grounded — no black-box scoring — while still feeling like a warm, personal mentor rather than a QA report.",
+      outcome: "83 passing backend tests across computer vision, uploads, account isolation, and AI-failure handling; verified accessible down to 320px.",
+    },
+    caseStudy: {
+      messyProblem:
+        "Art school hands you critique on a schedule — a professor, a crit session, a peer review — and then it ends. What's left is a search bar, a folder of exported files, and no consistent way to see whether your value contrast, your compositional habits, or your color choices are actually changing over time, or just varying at random.",
+      whyItMattered:
+        "Feedback that only exists in isolated moments can't show an artist their own trajectory — and a generic AI \"rate my art\" bot solves the wrong problem, because a plausible-sounding score an artist can't verify is worse than no feedback at all.",
+      northStar:
+        "Would an artist trust this critique enough to act on it, and can they tell exactly where it came from?",
+      whoIDesignedFor:
+        "Artists who've lost their built-in feedback loop — self-taught painters and digital artists, and art-school graduates building a solo practice — who wanted a critique they could actually verify, not a black-box score.",
+      constraints:
+        "A single OpenAI Build Week timeline, and a hard design rule that no single AI call could be allowed to both measure a painting and interpret it — those had to be provably separate services, testable and disclosable on their own.",
+      role:
+        "I designed the product end-to-end and built the full stack solo — the deterministic computer-vision pipeline (Sharp, custom luminance/edge/color-clustering algorithms), the bounded AI integration across three distinct roles, and the React/Vite frontend with its evidence overlays.",
+      research:
+        "I treated my own upload history as the test set — deliberately uploading pieces with an obvious compositional habit already in them, to see whether the measurement pipeline would surface it honestly or paper over it with generic praise.",
+      productDecisionsIntro:
+        "Every decision below traces back to the same rule: a critique is only trustworthy if an artist can see exactly which parts of it were measured, which were observed, and which were the artist's own words reflected back.",
+      designExplorations:
+        "An early version let a single vision-and-language call both score and describe a painting in one pass — it was faster to build, but there was no way to tell whether a specific claim (\"your composition is unbalanced\") was a real pixel measurement or a plausible guess. Splitting measurement, observation, and synthesis into three separately testable services fixed that, at the cost of a much more involved architecture for a single build week.",
+      systemOverview:
+        "A React/Vite frontend uploads artwork to a Node/Express backend, where Sharp and custom JavaScript compute value contrast (luminance standard deviation), an 8×8 luminance grid, and a combined Sobel-edge-detection-plus-color-rarity focal point, alongside deterministic k-means color clustering and weighted hue analysis for composition, contrast, and color-harmony scores. GPT-5.6 Sol plays three bounded roles — describing only what's visibly in the image (never scoring or claiming intent), synthesizing a critique from the artist's statement plus the measurements and description, and holding a per-artwork discussion through the Responses API. Canvas and SVG render the rule-of-thirds grid, focal-point marker, and value heatmap overlays and the longitudinal progress charts; ElevenLabs handles voice dictation and four-voice critique narration; and an append-only local JSON/image store keeps every past critique intact for the pattern-finding layer.",
+      finalExperience:
+        "You upload a piece, add as much or as little context as you want, and get back one grounded note in a mentor's voice — value contrast, focal placement, and color harmony described in plain language, tied to a visual overlay you can inspect, ending in one concrete thing to try next instead of a score. Come back with your next piece and Atelier remembers what you brought in last time, charting how your formal choices are actually moving and surfacing patterns — like a recurring focal placement — with the exact pieces that pattern came from, so you can decide for yourself whether it's a habit worth noticing.",
+      whatShipped:
+        "A complete creative feedback loop — upload, deterministic analysis, bounded visual observation, mentor-voiced critique synthesis, inspectable evidence overlays, a private portfolio with project albums, and a longitudinal progress view with evidence-backed pattern detection — plus an open-access inspiration gallery pulling from the Art Institute of Chicago and Wikimedia Commons, and voice dictation/narration throughout.",
+      outcome:
+        "Built solo for OpenAI Build Week, with 83 passing backend tests covering the computer-vision pipeline, upload validation, account isolation, review history, and AI-failure handling, and verified accessibility down to 320px with full keyboard navigation and reduced-motion support.",
+      whatILearned:
+        "Trust in a creative feedback tool comes from the seams staying visible, not from hiding them — the moment an artist can't tell whether a claim was measured or guessed, the whole critique becomes suspect, no matter how well-written the language around it is.",
+      whatIdImproveNext:
+        "I'd build a way for an artist to correct an AI observation directly, with that correction tracked as its own kind of evidence — right now the measurement and observation layers are inspectable, but there's no path for an artist to push back on one and have that disagreement remembered.",
+      challengeSummary:
+        "Art school hands you critique on a schedule, then it ends — what's left is a folder of files and no way to see whether your formal choices are actually changing or just varying at random. A generic AI \"rate my art\" bot solves the wrong problem: a plausible-sounding score an artist can't verify is worse than no feedback. Built solo in a single OpenAI Build Week, Atelier had to keep measurement and interpretation provably separate, so every critique stayed something an artist could check rather than just believe.",
+      keyInsightRealization:
+        "A critique is only trustworthy if an artist can see exactly which parts were measured, which were observed, and which were their own words reflected back — so the three had to be separate, testable services from the start, not one model call wearing a mentor's voice.",
+      reflectionSummary:
+        "Trust in a creative feedback tool comes from keeping the seams visible, not hiding them — once an artist can't tell a measured claim from a guessed one, the whole critique becomes suspect. Next, I'd let an artist correct an AI observation directly, with that correction remembered as its own evidence rather than lost the next time they upload.",
+    },
+    stats: [
+      { value: "83", label: "Passing backend tests, incl. AI-failure handling" },
+      { value: "3", label: "Strictly separated services: measure, observe, synthesize" },
+    ],
+  },
+  {
+    slug: "aperture",
+    title: "Aperture — Slack Accessibility Agent",
+    shortName: "Aperture",
+    oneLiner:
+      "An image posted in Slack shouldn't be the one thing a screen reader can't read.",
+    categories: ["data-clarity", "ai-trust"],
+    primaryCategory: "data-clarity",
+    description:
+      "A Slack agent that generates grounded, structured descriptions for images, charts, and screenshots the moment they're posted — plus backfill, summarization, simplification, and translation commands — so blind and low-vision teammates get the same access to visual conversation as everyone else.",
+    users: "Blind and low-vision Slack users, and the teams whose channels lean increasingly on screenshots, dashboards, and mockups.",
+    role: "Product design, full-stack development (Python/Bolt), AI integration.",
+    keyDecision:
+      "Route every trigger through one dispatcher into six sharply bounded commands, and document — in the architecture itself — exactly where the Slack APIs can't do what the design needs.",
+    tools: [
+      "Python",
+      "Bolt for Python",
+      "Slack Socket Mode",
+      "Slack Real-Time Search API",
+      "Slack Web API",
+      "Slack Block Kit",
+      "Gemini 3 Flash",
+      "SQLite",
+    ],
+    links: [
+      { label: "GitHub", href: "https://github.com/aysesule2405/aperture" },
+      { label: "Devpost", href: "https://devpost.com/software/aperture-ce869v" },
+      { label: "Demo video", href: "https://www.youtube.com/watch?v=j3dVx-kKC4A" },
+    ],
+    glyph: "retrieval-nodes",
+    fieldNumber: "FS-09",
+    date: "2026-07",
+    dateLabel: "Jul 2026",
+    icon: { src: "/images/project-icons/aperture-icon.png", alt: "Aperture project icon" },
+    images: [
+      { src: "/projects/Aperture/Aperture%20Thread.jpg", alt: "Aperture generating a threaded description for a Slack image" },
+      { src: "/projects/Aperture/Aperture%20Commands.jpg", alt: "Aperture's slash command palette in Slack" },
+    ],
+    decisionLog: [
+      {
+        decision: "Give every image, chart, and screenshot posted in a channel a structured description automatically, generated with a JSON schema — description plus chart data — rather than free text.",
+        why: "A screen reader can only announce \"image.png\" unless something gives it real content to read, and a chart rendered as a picture is invisible as data unless it gets pulled back out into numbers.",
+        tradeoff: "Structuring Gemini's output around a responseSchema for charts specifically meant handling two different output shapes — plain description versus description-plus-data — instead of one uniform text blob.",
+        result: "A chart posted as a picture became something a screen reader could announce as actual numbers, not just \"there is an image here.\"",
+      },
+      {
+        decision: "Build /aperture backfill on Slack's Web API (conversations.history / conversations.replies) instead of the Real-Time Search API, once testing showed RTS silently excludes non-text files.",
+        why: "Channels that had been running for months before Aperture joined were full of undescribed images — \"describe going forward\" alone would have left most of a workspace's existing visual history inaccessible.",
+        tradeoff: "Walking channel history via the Web API is slower and more request-heavy than a single search call, and it required skipping images already cached in SQLite to avoid redoing work on every backfill run.",
+        result: "Historical images got real descriptions retroactively, not just the ones posted after the bot was installed — and the architecture diagram documents the RTS limitation directly, as an honest constraint rather than a hidden workaround.",
+      },
+      {
+        decision: "Route simpler and translate to read the last generated output straight from SQLite and hand it to Gemini for a rewrite, bypassing both the Real-Time Search API and the Web API entirely.",
+        why: "Simplifying or translating a description someone already has doesn't need Aperture to re-search the channel or re-fetch anything from Slack — the source text is already sitting in the cache.",
+        tradeoff: "This meant designing the SQLite cache schema — keyed by file_id and channel_id — to double as both a description cache and a short-term \"last output\" buffer, rather than a single-purpose store.",
+        result: "Two of six commands run near-instantly with zero extra Slack API calls, and the architecture stays legible about which commands touch which systems and which deliberately don't.",
+      },
+      {
+        decision: "Make /help a fully static, model-free response, wired with its own bypass path straight from the dispatcher to the Slack reply.",
+        why: "A help command that has to wait on a model call, and could theoretically hallucinate its own instructions, defeats the point of a help command.",
+        tradeoff: "Keeping help genuinely static means it can drift out of sync with the other five commands if one of them changes behavior, since it isn't generated from the same source.",
+        result: "Every user's first interaction with Aperture — asking what it can do — resolves instantly and reliably, with zero dependency on Gemini being available.",
+      },
+    ],
+    evidenceRail: {
+      users: "Blind and low-vision Slack users, and teams whose channels rely on screenshots, dashboards, and mockups.",
+      timeline: "Built solo for the Slack Agent Builder Challenge, July 2026.",
+      team: "Solo.",
+      role: "Product design, full-stack development, AI integration.",
+      tools: ["Python", "Bolt for Python", "Slack Socket Mode", "Gemini 3 Flash", "SQLite", "Slack Block Kit"],
+      constraints: "Socket Mode's lack of a traditional OAuth redirect, the Real-Time Search API's silent exclusion of non-text files, and Block Kit's limited styling surface.",
+      outcome: "Six working commands — describe, backfill, catch me up, simpler, translate, help — validated by reading descriptions aloud through an actual screen reader.",
+    },
+    caseStudy: {
+      messyProblem:
+        "Slack has become a visual medium — dashboards, charts, mockups, error screenshots — dropped into channels constantly, almost never with alt text attached. For a blind or low-vision teammate, a screen reader announces exactly one thing about most of that: \"image.png.\"",
+      whyItMattered:
+        "This isn't a cosmetic accessibility gap — it's an information and participation gap. If a chart in a channel only exists as pixels, a screen-reader user isn't just missing a nice-to-have description, they're missing the actual data everyone else is discussing.",
+      northStar:
+        "Does this give someone real, actionable information — the same information a sighted teammate gets by glancing at the image — or just a polite-sounding placeholder?",
+      whoIDesignedFor:
+        "Blind and low-vision employees trying to participate fully in visual, fast-moving Slack channels, without asking a coworker to describe every screenshot by hand.",
+      constraints:
+        "A single hackathon build for the Slack Agent Builder Challenge, Socket Mode's lack of a standard OAuth redirect for user-scoped auth, the Real-Time Search API's undocumented-until-tested exclusion of non-text files, and Block Kit's limited visual styling, which pushed the design toward semantic structure over polish.",
+      role:
+        "I designed and built the entire agent solo — the Bolt for Python application, the command dispatcher, the Gemini integration across its bounded roles, the SQLite caching layer, and the accessibility validation process.",
+      research:
+        "The most important research step was mundane and non-negotiable: reading generated descriptions aloud through an actual screen reader, repeatedly, to check whether phrasing that looked fine on screen actually made sense heard rather than read.",
+      productDecisionsIntro:
+        "Every decision below is in service of the same test: would a screen-reader user get real, checkable information from this, or something that just sounds like an accessibility feature?",
+      designExplorations:
+        "The first version of backfill tried to reuse the Real-Time Search API that already powered describe and catch me up, since it was already wired up — testing against the dev sandbox showed RTS's content search silently excludes non-text files entirely, meaning it structurally cannot enumerate images. Rebuilding backfill on the Web API's conversations.history/replies instead was the fix, and it's the kind of platform constraint that's only discoverable by testing, not by reading docs.",
+      systemOverview:
+        "Aperture runs as a Bolt for Python app over Socket Mode — one long-lived connection, no public server or webhook. A command dispatcher routes three trigger types (a file-shared event, an @aperture mention carrying a fresh action_token, or a /aperture slash command) to one of six commands. describe and catch me up ground their answers in Slack's Real-Time Search API; backfill walks channel history through the Web API instead, since RTS can't enumerate images, and skips anything already cached in SQLite. simpler and translate skip both APIs, reading the last generated output straight from SQLite and handing it to Gemini 3 Flash for a rewrite. Gemini plays two roles — structured JSON vision output (description plus chart data, via responseSchema) for image analysis, and plain-text generation for summaries and rewrites — and every result returns to Slack as a threaded reply, an ephemeral message, or a Block Kit card.",
+      finalExperience:
+        "An image lands in a channel and, within moments, Aperture threads a structured description underneath it — grounded in the surrounding conversation, with actual extracted numbers if it's a chart. A teammate can @-mention Aperture to backfill an entire channel's history, ask it to catch them up on what they missed, ask for a simpler rewrite of a dense description, or get one translated — all through slash commands that resolve instantly for help and reliably for everything else.",
+      whatShipped:
+        "A working Slack agent with six commands, Gemini-3-Flash-powered image description and chart-data extraction, a Real-Time-Search-plus-Web-API hybrid retrieval layer, a SQLite description cache, and Block-Kit-based threaded replies — built and validated by listening to its output through a real screen reader.",
+      outcome:
+        "Built solo for the Slack Agent Builder Challenge, with the Real-Time Search API's non-text-file limitation discovered through direct testing and documented — and worked around — rather than left as a silent gap in coverage.",
+      whatILearned:
+        "The platform constraints you discover by testing against a real sandbox are worth more than anything in the docs — the Real-Time Search API's inability to enumerate images wasn't written down anywhere I could find, and it reshaped the entire backfill architecture once I hit it.",
+      whatIdImproveNext:
+        "I'd add personalized accessibility preferences — description length, detail level, default language — since right now every user gets the same description style, whether they want a quick gist or a detailed walkthrough of a complex chart.",
+      challengeSummary:
+        "Slack has become a visual medium — dashboards, charts, mockups, screenshots — almost never posted with alt text. For a blind or low-vision teammate, a screen reader announces exactly one thing about most of it: \"image.png,\" which isn't a cosmetic gap but an information and participation gap. Built solo for the Slack Agent Builder Challenge, Aperture had to work within Socket Mode's OAuth limitations and a Real-Time Search API that — as testing revealed — silently can't enumerate images at all.",
+      keyInsightRealization:
+        "A description only counts as accessible if it survives being read aloud, not just read on screen — and the platform constraints that mattered most, like the Real-Time Search API's inability to see images, were only discoverable by testing against the real sandbox, not by reading documentation.",
+      reflectionSummary:
+        "The platform constraints worth designing around are the ones you find by testing, not the ones written in the docs — the Real-Time Search API's silent exclusion of images reshaped the whole backfill architecture once testing surfaced it. Next, I'd add personalized accessibility preferences, since every user currently gets the same description style regardless of whether they want a quick gist or a detailed walkthrough.",
+    },
+    stats: [
+      { value: "6", label: "Commands, one dispatcher" },
+      { value: "2", label: "Retrieval paths — RTS for live context, Web API for history" },
+    ],
+  },
 ];
 
 export function getProjectBySlug(slug: string): Project | undefined {

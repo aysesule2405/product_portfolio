@@ -419,6 +419,26 @@ body {
   --project-shadow: rgba(89, 130, 73, 0.24);
 }
 
+.project-theme-atelier {
+  --project-bg: linear-gradient(135deg, color-mix(in srgb, #eef0fb 86%, var(--bg-raised)), color-mix(in srgb, #fdf6e8 80%, var(--bg-raised)));
+  --project-border: rgba(72, 145, 235, 0.28);
+  --project-accent: #4891eb;
+  --project-accent-2: #c9a227;
+  --project-title: #1a2440;
+  --project-muted: #7c9473;
+  --project-shadow: rgba(72, 145, 235, 0.24);
+}
+
+.project-theme-aperture {
+  --project-bg: linear-gradient(135deg, color-mix(in srgb, #eef7e6 86%, var(--bg-raised)), color-mix(in srgb, #e3f5ea 80%, var(--bg-raised)));
+  --project-border: rgba(47, 191, 127, 0.3);
+  --project-accent: #2fbf7f;
+  --project-accent-2: #8fa97c;
+  --project-title: #16240f;
+  --project-muted: #4a7a3c;
+  --project-shadow: rgba(47, 191, 127, 0.26);
+}
+
 .project-card,
 .project-hero,
 .project-case {
@@ -774,6 +794,20 @@ body {
     --project-shadow: rgba(111, 154, 84, 0.2);
   }
 
+  :root:not([data-theme="light"]) .project-theme-atelier {
+    --project-bg: linear-gradient(135deg, rgba(72, 145, 235, 0.16), rgba(201, 162, 39, 0.07));
+    --project-title: #a8c8f8;
+    --project-muted: #b9cfa8;
+    --project-shadow: rgba(72, 145, 235, 0.2);
+  }
+
+  :root:not([data-theme="light"]) .project-theme-aperture {
+    --project-bg: linear-gradient(135deg, rgba(47, 191, 127, 0.16), rgba(143, 169, 124, 0.08));
+    --project-title: #b4f1a8;
+    --project-muted: #8fa97c;
+    --project-shadow: rgba(47, 191, 127, 0.2);
+  }
+
   :root:not([data-theme="light"]) .project-icon-badge,
   :root:not([data-theme="light"]) .project-hero-icon {
     background: #0d1728;
@@ -840,6 +874,20 @@ body {
   --project-title: #b8dca0;
   --project-muted: #f2c18f;
   --project-shadow: rgba(111, 154, 84, 0.2);
+}
+
+:root[data-theme="dark"] .project-theme-atelier {
+  --project-bg: linear-gradient(135deg, rgba(72, 145, 235, 0.16), rgba(201, 162, 39, 0.07));
+  --project-title: #a8c8f8;
+  --project-muted: #b9cfa8;
+  --project-shadow: rgba(72, 145, 235, 0.2);
+}
+
+:root[data-theme="dark"] .project-theme-aperture {
+  --project-bg: linear-gradient(135deg, rgba(47, 191, 127, 0.16), rgba(143, 169, 124, 0.08));
+  --project-title: #b4f1a8;
+  --project-muted: #8fa97c;
+  --project-shadow: rgba(47, 191, 127, 0.2);
 }
 
 :root[data-theme="dark"] .project-icon-badge,

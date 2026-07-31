@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 1050" font-family="Helvetica Neue, Arial, sans-serif">
+  <defs>
+    <marker id="arrow-sage" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8FA97C"/>
+    </marker>
+    <marker id="arrow-mint" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#B4F1A8"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1280" height="1050" fill="#16240F"/>
+
+  <text x="640" y="40" text-anchor="middle" font-size="26" font-weight="600" fill="#F5F6F4">Aperture — Architecture</text>
+  <text x="640" y="62" text-anchor="middle" font-size="13" fill="#8FA97C">Bolt for Python on Socket Mode · Gemini 3 Flash · Slack Real-Time Search API · SQLite</text>
+
+  <!-- Row 1: Triggers -->
+  <rect x="40" y="90" width="370" height="72" rx="10" fill="#1C2E18" stroke="#8FA97C" stroke-width="1.5"/>
+  <text x="225" y="118" text-anchor="middle" font-size="16" font-weight="600" fill="#F5F6F4">File shared</text>
+  <text x="225" y="138" text-anchor="middle" font-size="11" fill="#8FA97C">Image posted in a channel</text>
+
+  <rect x="455" y="90" width="370" height="72" rx="10" fill="#1C2E18" stroke="#8FA97C" stroke-width="1.5"/>
+  <text x="640" y="118" text-anchor="middle" font-size="16" font-weight="600" fill="#F5F6F4">@aperture mention</text>
+  <text x="640" y="138" text-anchor="middle" font-size="11" fill="#8FA97C">app_mention event — carries a fresh action_token</text>
+
+  <rect x="870" y="90" width="370" height="72" rx="10" fill="#1C2E18" stroke="#8FA97C" stroke-width="1.5"/>
+  <text x="1055" y="118" text-anchor="middle" font-size="16" font-weight="600" fill="#F5F6F4">/aperture slash command</text>
+  <text x="1055" y="138" text-anchor="middle" font-size="11" fill="#8FA97C">channel only — no thread, no action_token</text>
+
+  <path d="M225,162 L225,200" stroke="#8FA97C" stroke-width="2" fill="none" marker-end="url(#arrow-sage)"/>
+  <path d="M640,162 L640,200" stroke="#8FA97C" stroke-width="2" fill="none" marker-end="url(#arrow-sage)"/>
+  <path d="M1055,162 L1055,200" stroke="#8FA97C" stroke-width="2" fill="none" marker-end="url(#arrow-sage)"/>
+
+  <!-- Row 2: Bolt app -->
+  <rect x="40" y="200" width="1200" height="60" rx="10" fill="#1C2E18" stroke="#8FA97C" stroke-width="1.5"/>
+  <text x="640" y="225" text-anchor="middle" font-size="18" font-weight="600" fill="#F5F6F4">Bolt for Python · Socket Mode</text>
+  <text x="640" y="245" text-anchor="middle" font-size="12" fill="#8FA97C">One long-lived connection — no public server or webhook needed</text>
+
+  <path d="M640,260 L640,300" stroke="#8FA97C" stroke-width="2" fill="none" marker-end="url(#arrow-sage)"/>
+
+  <!-- Row 3: Dispatcher -->
+  <rect x="40" y="300" width="1200" height="110" rx="10" fill="#1C2E18" stroke="#8FA97C" stroke-width="1.5"/>
+  <text x="640" y="325" text-anchor="middle" font-size="16" font-weight="600" fill="#F5F6F4">Command dispatcher</text>
+  <text x="640" y="341" text-anchor="middle" font-size="11" fill="#8FA97C">Routes each trigger's verb to one of six commands</text>
+
+  <rect x="60" y="355" width="180" height="40" rx="8" fill="#16240F" stroke="#2FBF7F" stroke-width="1.5"/>
+  <text x="150" y="380" text-anchor="middle" font-size="13" font-weight="600" fill="#F5F6F4">describe</text>
+
+  <rect x="256" y="355" width="180" height="40" rx="8" fill="#16240F" stroke="#8FA97C" stroke-width="1.5"/>
+  <text x="346" y="380" text-anchor="middle" font-size="13" font-weight="600" fill="#F5F6F4">backfill</text>
+
+  <rect x="452" y="355" width="180" height="40" rx="8" fill="#16240F" stroke="#2FBF7F" stroke-width="1.5"/>
+  <text x="542" y="380" text-anchor="middle" font-size="13" font-weight="600" fill="#F5F6F4">catch me up</text>
+
+  <rect x="648" y="355" width="180" height="40" rx="8" fill="#16240F" stroke="#8FA97C" stroke-width="1.5"/>
+  <text x="738" y="380" text-anchor="middle" font-size="13" font-weight="600" fill="#F5F6F4">simpler</text>
+
+  <rect x="844" y="355" width="180" height="40" rx="8" fill="#16240F" stroke="#8FA97C" stroke-width="1.5"/>
+  <text x="934" y="380" text-anchor="middle" font-size="13" font-weight="600" fill="#F5F6F4">translate</text>
+
+  <rect x="1040" y="355" width="180" height="40" rx="8" fill="#16240F" stroke="#B4F1A8" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="1130" y="380" text-anchor="middle" font-size="13" font-weight="600" fill="#F5F6F4">help</text>
+
+  <!-- describe, catch me up -> RTS (straight, well clear of other lines) -->
+  <path d="M150,410 L150,500" stroke="#8FA97C" stroke-width="2" fill="none" marker-end="url(#arrow-sage)"/>
+  <path d="M542,410 L542,500" stroke="#8FA97C" stroke-width="2" fill="none" marker-end="url(#arrow-sage)"/>
+
+  <!-- backfill -> Web API (elbow, its own lane at y=445) -->
+  <path d="M346,410 L346,445 L730,445 L730,500" stroke="#8FA97C" stroke-width="2" fill="none" marker-end="url(#arrow-sage)"/>
+
+  <!-- simpler + translate converge at y=470, then travel the right margin corridor down to SQLite -->
+  <path d="M738,410 L738,470 L836,470" stroke="#8FA97C" stroke-width="2" fill="none"/>
+  <path d="M934,410 L934,470 L836,470" stroke="#8FA97C" stroke-width="2" fill="none"/>
+  <path d="M836,470 L1200,470 L1200,700 L1140,700" stroke="#8FA97C" stroke-width="2" fill="none" marker-end="url(#arrow-sage)"/>
+
+  <!-- help bypass (dashed, its own lane at y=420, left margin, straight to Slack reply) -->
+  <path d="M1130,410 L1130,420 L70,420 L70,895 L340,895" stroke="#B4F1A8" stroke-width="2" fill="none" stroke-dasharray="6,4" marker-end="url(#arrow-mint)"/>
+  <text x="90" y="435" font-size="11" fill="#B4F1A8">help — static text, no model call</text>
+
+  <!-- Row 4: RTS and Web API -->
+  <rect x="110" y="500" width="480" height="105" rx="10" fill="#1C2E18" stroke="#2FBF7F" stroke-width="2.5"/>
+  <text x="350" y="530" text-anchor="middle" font-size="16" font-weight="600" fill="#F5F6F4">Real-Time Search API (RTS)</text>
+  <text x="350" y="550" text-anchor="middle" font-size="11" fill="#8FA97C">Grounds describe in nearby conversation</text>
+  <text x="350" y="566" text-anchor="middle" font-size="11" fill="#8FA97C">Feeds catch me up with recent activity</text>
+  <text x="350" y="587" text-anchor="middle" font-size="10" fill="#8FA97C">Requires a fresh action_token — public-channel mention only</text>
+
+  <rect x="690" y="500" width="480" height="105" rx="10" fill="#1C2E18" stroke="#8FA97C" stroke-width="1.5"/>
+  <text x="930" y="530" text-anchor="middle" font-size="16" font-weight="600" fill="#F5F6F4">Slack Web API</text>
+  <text x="930" y="550" text-anchor="middle" font-size="11" fill="#8FA97C">conversations.history / conversations.replies</text>
+  <text x="930" y="570" text-anchor="middle" font-size="11" fill="#8FA97C">Walks channel history to find images for backfill</text>
+
+  <!-- Honest notes (mint) -->
+  <text x="690" y="628" font-size="12" font-style="italic" fill="#B4F1A8">RTS's content search excludes non-text files, it cannot enumerate images.</text>
+  <text x="690" y="646" font-size="12" font-style="italic" fill="#B4F1A8">Backfill uses the Web API instead, and skips images already in the SQLite cache.</text>
+
+  <text x="130" y="628" font-size="12" font-style="italic" fill="#B4F1A8">simpler and translate skip RTS and the Web API entirely.</text>
+  <text x="130" y="646" font-size="12" font-style="italic" fill="#B4F1A8">They read last_output from SQLite directly, then Gemini rewrites it.</text>
+
+  <!-- Row 4 -> Gemini -->
+  <path d="M350,605 L350,700" stroke="#8FA97C" stroke-width="2" fill="none" marker-end="url(#arrow-sage)"/>
+  <path d="M930,605 L930,700" stroke="#8FA97C" stroke-width="2" fill="none" marker-end="url(#arrow-sage)"/>
+
+  <!-- Row 5: Gemini + SQLite -->
+  <rect x="220" y="700" width="700" height="80" rx="10" fill="#1C2E18" stroke="#2FBF7F" stroke-width="2.5"/>
+  <text x="570" y="730" text-anchor="middle" font-size="18" font-weight="600" fill="#F5F6F4">Gemini 3 Flash</text>
+  <text x="570" y="750" text-anchor="middle" font-size="11" fill="#8FA97C">Vision: structured JSON — description plus chart data, via responseSchema</text>
+  <text x="570" y="766" text-anchor="middle" font-size="11" fill="#8FA97C">Text only: plain-text summaries and rewrites for catch me up, simpler, translate</text>
+
+  <rect x="1010" y="700" width="230" height="80" rx="10" fill="#1C2E18" stroke="#8FA97C" stroke-width="1.5"/>
+  <text x="1125" y="726" text-anchor="middle" font-size="16" font-weight="600" fill="#F5F6F4">SQLite</text>
+  <text x="1125" y="745" text-anchor="middle" font-size="10.5" fill="#8FA97C">description cache — file_id</text>
+  <text x="1125" y="761" text-anchor="middle" font-size="10.5" fill="#8FA97C">last_output — channel_id</text>
+
+  <!-- Gemini <-> SQLite, own lane, well spaced from the incoming corridor arrow -->
+  <path d="M920,728 L1010,728" stroke="#8FA97C" stroke-width="2" fill="none" marker-end="url(#arrow-sage)"/>
+  <text x="965" y="720" text-anchor="middle" font-size="9" fill="#8FA97C">write</text>
+  <path d="M1010,754 L920,754" stroke="#8FA97C" stroke-width="2" fill="none" marker-end="url(#arrow-sage)"/>
+  <text x="965" y="770" text-anchor="middle" font-size="9" fill="#8FA97C">read</text>
+
+  <!-- Gemini -> Slack reply -->
+  <path d="M570,780 L570,860" stroke="#8FA97C" stroke-width="2" fill="none" marker-end="url(#arrow-sage)"/>
+
+  <!-- Row 6: Slack reply -->
+  <rect x="340" y="860" width="600" height="72" rx="10" fill="#1C2E18" stroke="#2FBF7F" stroke-width="2"/>
+  <text x="640" y="890" text-anchor="middle" font-size="18" font-weight="600" fill="#F5F6F4">Slack reply</text>
+  <text x="640" y="910" text-anchor="middle" font-size="12" fill="#8FA97C">Threaded reply · ephemeral message · Block Kit card with buttons</text>
+
+  <!-- Legend -->
+  <line x1="60" y1="962" x2="100" y2="962" stroke="#8FA97C" stroke-width="2"/>
+  <text x="108" y="966" font-size="11" fill="#F5F6F4">Solid line — primary data flow</text>
+
+  <line x1="430" y1="962" x2="470" y2="962" stroke="#B4F1A8" stroke-width="2" stroke-dasharray="6,4"/>
+  <text x="478" y="966" font-size="11" fill="#F5F6F4">Dashed line — bypasses Gemini and SQLite (static text only)</text>
+
+  <rect x="60" y="980" width="16" height="12" fill="none" stroke="#2FBF7F" stroke-width="2" rx="3"/>
+  <text x="86" y="990" font-size="11" fill="#F5F6F4">Emerald border — the two RTS/model components load-bearing to the design</text>
+
+  <text x="60" y="1012" font-size="11" font-style="italic" fill="#B4F1A8">Mint italic text — platform constraints and implementation notes, confirmed by testing against the dev sandbox</text>
+</svg>
