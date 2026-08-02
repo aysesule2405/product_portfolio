@@ -24,6 +24,7 @@ export function ArtworkPieceCard({
     <article className="motion-card flex flex-col overflow-hidden rounded-xl border border-line bg-bg-raised">
       <button
         type="button"
+        data-sound={piece.image ? "shell-flip" : undefined}
         onClick={piece.image ? onImageClick : undefined}
         disabled={!piece.image}
         aria-label={piece.image ? `View ${piece.title} full-screen` : piece.title}

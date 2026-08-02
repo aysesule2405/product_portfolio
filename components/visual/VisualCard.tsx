@@ -21,6 +21,7 @@ export function VisualCard({
     >
       <button
         type="button"
+        data-sound="shell-flip"
         onClick={onImageClick}
         aria-label={`View ${work.featuredPiece} full-screen`}
         className="cat-tint-bg group relative aspect-[4/5] overflow-hidden border-b border-line focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"

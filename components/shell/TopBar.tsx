@@ -57,6 +57,7 @@ export function TopBar({
     <div className="sticky top-0 z-30 flex h-11 items-center gap-1 border-b border-line bg-bg-raised px-2">
       <button
         type="button"
+        data-sound="navigation"
         onClick={onOpenSidebar}
         aria-label="Open navigation"
         className="motion-press flex h-11 w-10 shrink-0 items-center justify-center rounded-md text-ink-soft hover:bg-bg-inset hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:hidden"
@@ -93,6 +94,7 @@ export function TopBar({
 
       <button
         type="button"
+        data-sound="navigation"
         onClick={onOpenPalette}
         className="motion-press hidden h-11 shrink-0 items-center gap-2 rounded-md border border-line px-2.5 font-mono text-[11px] text-ink-faint hover:border-line-strong hover:text-ink-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:flex lg:h-7"
       >
@@ -104,6 +106,7 @@ export function TopBar({
       </button>
       <button
         type="button"
+        data-sound="navigation"
         onClick={onOpenPalette}
         aria-label="Open command palette"
         className="motion-press flex h-11 w-10 shrink-0 items-center justify-center rounded-md text-ink-soft hover:bg-bg-inset hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:hidden"

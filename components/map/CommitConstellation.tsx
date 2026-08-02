@@ -9,6 +9,7 @@ import { TimelineLane, TimelineNode, TimelineNodeKind, ProblemCategory } from "@
 import { categoryColorVar } from "@/lib/category-color";
 import { categories } from "@/lib/data/categories";
 import { WavesBackground } from "@/components/celestial/WavesBackground";
+import { useSound } from "@/components/sound/SoundProvider";
 
 const WIDTH = 1600;
 const HEIGHT = 1000;
@@ -969,6 +970,7 @@ export function CommitConstellation({
         <foreignObject key={`hit-${node.id}`} x={node.x - 20} y={node.y - 20} width={40} height={40}>
           <button
             type="button"
+            data-sound="constellation"
             onClick={() => setSelectedId(node.id === selectedId ? null : node.id)}
             onMouseEnter={() => setHoveredId(node.id)}
             onMouseLeave={() => setHoveredId((v) => (v === node.id ? null : v))}
@@ -1011,6 +1013,7 @@ export function CommitConstellation({
                     </p>
                     <button
                       type="button"
+                      data-sound="navigation"
                       onClick={() => setSelectedId(null)}
                       aria-label="Close"
                       className="text-xs text-ink-faint hover:text-ink-soft"
@@ -1080,6 +1083,7 @@ export function CommitConstellation({
           </button>
           <button
             type="button"
+            data-sound="constellation"
             onClick={() => {
               setAutoStartTour(false);
               setFullscreen(true);
@@ -1107,6 +1111,7 @@ export function CommitConstellation({
             <button
               key={cat.id}
               type="button"
+              data-sound="navigation"
               onClick={() => setLegendActive((prev) => (prev === cat.id ? null : cat.id))}
               aria-pressed={active}
               className={clsx(
@@ -1237,6 +1242,7 @@ function FieldMapList({
           </div>
           <button
             type="button"
+            data-sound="navigation"
             onClick={onBackToMap}
             className="min-h-11 shrink-0 rounded-md border border-line px-3 py-2 font-mono text-[10px] text-ink-soft hover:border-line-strong hover:text-ink"
           >
@@ -1327,6 +1333,7 @@ function ConstellationFullscreen({
   const [tourStep, setTourStep] = useState(0);
   const [listOpen, setListOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
+  const { play } = useSound();
 
   // Runs once, deferred, for the case where the tour auto-starts on mount
   // (the "Take the tour" entry point on the embedded card).
@@ -1395,11 +1402,13 @@ function ConstellationFullscreen({
 
   useEffect(() => {
     if (!tourActive) return;
+    play("constellation");
     const showTimer = setTimeout(() => setView(viewForCluster(CLUSTERS[tourStep], 1.6)), 0);
     const isLast = tourStep >= CLUSTERS.length - 1;
     const advanceTimer = setTimeout(
       () => {
         if (isLast) {
+          play("completion");
           setTourActive(false);
           setView({ x: 0, y: 0, scale: 1 });
         } else {
@@ -1412,7 +1421,7 @@ function ConstellationFullscreen({
       clearTimeout(showTimer);
       clearTimeout(advanceTimer);
     };
-  }, [tourActive, tourStep, shouldReduceMotion]);
+  }, [tourActive, tourStep, shouldReduceMotion, play]);
 
   function onWheel(e: React.WheelEvent) {
     e.preventDefault();
@@ -1462,6 +1471,7 @@ function ConstellationFullscreen({
         <div className="flex w-full items-center justify-between gap-1 sm:w-auto sm:justify-start sm:gap-2">
           <button
             type="button"
+            data-sound={tourActive ? "navigation" : undefined}
             onClick={tourActive ? stopTour : startTour}
             className="min-h-11 rounded-md border border-line px-2.5 py-2 font-mono text-[10px] text-ink-soft hover:border-line-strong hover:text-ink sm:text-[11px]"
           >
@@ -1469,6 +1479,7 @@ function ConstellationFullscreen({
           </button>
           <button
             type="button"
+            data-sound="navigation"
             aria-controls="field-map-list"
             aria-pressed={listOpen}
             onClick={() => {
@@ -1481,6 +1492,7 @@ function ConstellationFullscreen({
           </button>
           <button
             type="button"
+            data-sound="navigation"
             onClick={() => zoomBy(0.85)}
             aria-label="Zoom out"
             className="hidden h-11 w-11 items-center justify-center rounded-md border border-line text-ink-soft hover:border-line-strong hover:text-ink min-[360px]:flex sm:h-9 sm:w-9"
@@ -1489,6 +1501,7 @@ function ConstellationFullscreen({
           </button>
           <button
             type="button"
+            data-sound="navigation"
             onClick={() => zoomBy(1 / 0.85)}
             aria-label="Zoom in"
             className="flex h-11 w-11 items-center justify-center rounded-md border border-line text-ink-soft hover:border-line-strong hover:text-ink sm:h-9 sm:w-9"
@@ -1497,6 +1510,7 @@ function ConstellationFullscreen({
           </button>
           <button
             type="button"
+            data-sound="navigation"
             onClick={() => {
               stopTour();
               reset();
@@ -1508,6 +1522,7 @@ function ConstellationFullscreen({
           <button
             ref={closeRef}
             type="button"
+            data-sound="navigation"
             onClick={onClose}
             aria-label="Close expanded field map"
             className="flex h-11 w-11 items-center justify-center rounded-md border border-line text-ink-soft hover:border-line-strong hover:text-ink sm:h-9 sm:w-9"
@@ -1562,6 +1577,7 @@ function ConstellationFullscreen({
                 </p>
                 <button
                   type="button"
+                  data-sound="navigation"
                   onClick={stopTour}
                   className="min-h-11 px-2 text-xs text-ink-faint hover:text-ink-soft"
                 >

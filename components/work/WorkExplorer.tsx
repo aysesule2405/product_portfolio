@@ -111,6 +111,7 @@ export function WorkExplorer({
           </span>
           <button
             type="button"
+            data-sound="navigation"
             onClick={() => {
               setHiringId(null);
               setActiveFilter(null);
@@ -127,6 +128,7 @@ export function WorkExplorer({
             <button
               key={lens.id}
               type="button"
+              data-sound="navigation"
               onClick={() => {
                 setHiringId(lens.id === hiringId ? null : lens.id);
                 setActiveFilter(null);
@@ -198,6 +200,7 @@ function ViewButton({ label, active, onClick }: { label: string; active: boolean
   return (
     <button
       type="button"
+      data-sound="navigation"
       onClick={onClick}
       aria-pressed={active}
       className={clsx(
@@ -224,6 +227,7 @@ function FilterChip({
   return (
     <button
       type="button"
+      data-sound="navigation"
       onClick={onClick}
       aria-pressed={active}
       style={category ? { ["--cat-color" as string]: categoryColorVar(category) } : undefined}

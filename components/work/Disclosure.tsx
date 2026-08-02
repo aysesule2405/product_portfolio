@@ -3,7 +3,10 @@
 export function Disclosure({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <details className="group mt-5 rounded-xl border border-line">
-      <summary className="motion-press flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 text-sm font-medium text-ink-soft [&::-webkit-details-marker]:hidden hover:text-ink">
+      <summary
+        data-sound="shell-flip"
+        className="motion-press flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 text-sm font-medium text-ink-soft [&::-webkit-details-marker]:hidden hover:text-ink"
+      >
         {label}
         <svg
           width="12"

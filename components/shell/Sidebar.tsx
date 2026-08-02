@@ -22,6 +22,7 @@ function SidebarToggle({
   return (
     <button
       type="button"
+      data-sound="navigation"
       onClick={onToggle}
       aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
       aria-pressed={collapsed}
@@ -160,6 +161,7 @@ export function Sidebar({
 
       <button
         type="button"
+        data-sound="navigation"
         onClick={() => setRootOpen((v) => !v)}
         className="motion-press flex min-h-11 items-center gap-1.5 rounded px-1 py-1 font-mono text-[12px] font-semibold uppercase tracking-[0.04em] text-ink hover:bg-bg-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:min-h-0"
       >
@@ -182,6 +184,7 @@ export function Sidebar({
               <div key={group.label} className="mt-0.5 flex flex-col gap-0.5">
                 <button
                   type="button"
+                  data-sound="navigation"
                   onClick={() => toggleGroup(group.label)}
                   aria-expanded={isOpen}
                   className="motion-press flex min-h-11 items-center gap-1.5 rounded px-1 py-1 font-mono text-[12px] text-ink-soft hover:bg-bg-inset hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:min-h-0"
@@ -208,6 +211,7 @@ export function Sidebar({
         <div className="mt-4 border-t border-line pt-3">
           <button
             type="button"
+            data-sound="navigation"
             onClick={() => setOutlineOpen((v) => !v)}
             aria-expanded={outlineOpen}
             className="motion-press flex min-h-11 w-full items-center gap-1.5 rounded px-1 py-1 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-faint hover:bg-bg-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:min-h-0"
@@ -224,6 +228,7 @@ export function Sidebar({
                   <button
                     key={section.id}
                     type="button"
+                    data-sound="navigation"
                     onClick={() => jumpToSection(section.id)}
                     aria-current={active ? "location" : undefined}
                     className={clsx(
@@ -289,6 +294,7 @@ export function Sidebar({
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
+            data-sound="navigation"
             aria-label="Close navigation"
             onClick={onCloseMobile}
             className="absolute inset-0 bg-black/40"
@@ -301,6 +307,7 @@ export function Sidebar({
               <button
                 ref={mobileCloseRef}
                 type="button"
+                data-sound="navigation"
                 autoFocus
                 onClick={onCloseMobile}
                 aria-label="Close navigation"

@@ -58,6 +58,7 @@ export function Lightbox({
       <button
         ref={closeRef}
         type="button"
+        data-sound="navigation"
         onClick={onClose}
         aria-label="Close"
         className="motion-press absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-line-strong bg-bg-raised text-ink hover:bg-bg-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:right-4 sm:top-4"
@@ -70,6 +71,7 @@ export function Lightbox({
       {onPrev ? (
         <button
           type="button"
+          data-sound="navigation"
           onClick={(e) => {
             e.stopPropagation();
             onPrev();
@@ -85,6 +87,7 @@ export function Lightbox({
       {onNext ? (
         <button
           type="button"
+          data-sound="navigation"
           onClick={(e) => {
             e.stopPropagation();
             onNext();

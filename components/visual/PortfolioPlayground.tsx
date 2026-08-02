@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import clsx from "clsx";
+import { useReducedMotion } from "framer-motion";
 import { useSound } from "@/components/sound/SoundProvider";
 
 type GameId = "shells" | "stars" | "pixels";
@@ -286,6 +287,7 @@ function ShellMemoryGame() {
 
         <button
           type="button"
+          data-sound="navigation"
           onClick={reset}
           className="motion-press min-h-11 rounded-full border border-line px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
@@ -298,27 +300,100 @@ function ShellMemoryGame() {
 
 function StarStitchGame() {
   const { play } = useSound();
+  const shouldReduceMotion = useReducedMotion();
   const [pathIndex, setPathIndex] = useState(0);
+  const [phase, setPhase] = useState<"preview" | "playing" | "complete" | "failed">("preview");
+  const [previewStep, setPreviewStep] = useState(1);
   const [nextStar, setNextStar] = useState(0);
   const [misses, setMisses] = useState(0);
+  const [peeks, setPeeks] = useState(0);
+  const [wrongStar, setWrongStar] = useState<number | null>(null);
+  const wrongTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const constellation = STAR_PATHS[pathIndex % STAR_PATHS.length];
   const starPoints = constellation.points;
-  const complete = nextStar === starPoints.length;
+  const maxShards = 3;
+  const shardsLeft = Math.max(0, maxShards - misses);
+  const lineCount =
+    phase === "preview"
+      ? shouldReduceMotion
+        ? starPoints.length
+        : previewStep
+      : phase === "failed"
+        ? starPoints.length
+        : nextStar;
+  const score = Math.max(100, 700 + shardsLeft * 100 - peeks * 75);
+
+  useEffect(() => {
+    if (phase !== "preview") return;
+
+    if (shouldReduceMotion) {
+      const revealTimer = window.setTimeout(() => setPhase("playing"), 3200);
+      return () => window.clearTimeout(revealTimer);
+    }
+
+    const stepTimers = starPoints.slice(1).map((_, index) =>
+      window.setTimeout(() => setPreviewStep(index + 2), (index + 1) * 480)
+    );
+    const hideTimer = window.setTimeout(
+      () => setPhase("playing"),
+      (starPoints.length - 1) * 480 + 800
+    );
+
+    return () => {
+      stepTimers.forEach((timer) => window.clearTimeout(timer));
+      window.clearTimeout(hideTimer);
+    };
+  }, [phase, shouldReduceMotion, starPoints]);
+
+  useEffect(
+    () => () => {
+      if (wrongTimerRef.current) clearTimeout(wrongTimerRef.current);
+    },
+    []
+  );
 
   function chooseStar(index: number) {
+    if (phase !== "playing" || index < nextStar) return;
+
     if (index === nextStar) {
       play(nextStar + 1 === starPoints.length ? "completion" : "constellation");
       setNextStar((value) => value + 1);
-    } else if (index > nextStar) {
-      setMisses((value) => value + 1);
+      if (nextStar + 1 === starPoints.length) setPhase("complete");
+      return;
     }
+
+    if (wrongTimerRef.current) clearTimeout(wrongTimerRef.current);
+    setWrongStar(index);
+    wrongTimerRef.current = setTimeout(() => setWrongStar(null), 520);
+    const nextMisses = misses + 1;
+    setMisses(nextMisses);
+    if (nextMisses >= maxShards) setPhase("failed");
   }
 
-  function reset() {
-    setPathIndex((value) => value + 1);
+  function showClue({ restart = false }: { restart?: boolean } = {}) {
+    if (restart) {
+      setNextStar(0);
+      setMisses(0);
+    }
+    setPeeks((value) => value + 1);
+    setPreviewStep(1);
+    setWrongStar(null);
+    setPhase("preview");
+  }
+
+  function nextConstellation() {
+    setPathIndex((value) => {
+      const current = value % STAR_PATHS.length;
+      const candidate = Math.floor(Math.random() * STAR_PATHS.length);
+      return candidate === current ? (candidate + 1) % STAR_PATHS.length : candidate;
+    });
     setNextStar(0);
     setMisses(0);
+    setPeeks(0);
+    setPreviewStep(1);
+    setWrongStar(null);
+    setPhase("preview");
   }
 
   return (
@@ -340,7 +415,7 @@ function StarStitchGame() {
           aria-hidden
           className="pointer-events-none absolute inset-0 h-full w-full"
         >
-          {starPoints.slice(1, nextStar).map((point, index) => {
+          {starPoints.slice(1, lineCount).map((point, index) => {
             const from = starPoints[index];
             return (
               <line
@@ -350,46 +425,67 @@ function StarStitchGame() {
                 x2={point.x}
                 y2={point.y}
                 vectorEffect="non-scaling-stroke"
-                stroke="#f0c75a"
+                stroke={phase === "failed" ? "#66aaff" : "#f0c75a"}
                 strokeWidth="1.4"
                 strokeLinecap="round"
-                opacity="0.72"
+                strokeDasharray={phase === "failed" ? "3 4" : undefined}
+                opacity={phase === "failed" ? "0.4" : "0.72"}
               />
             );
           })}
         </svg>
 
         {starPoints.map((point, index) => {
-          const connected = index < nextStar;
-          const active = index === nextStar;
+          const connected = phase === "complete" || index < nextStar;
+          const previewed = phase === "preview" && index < lineCount;
+          const previewingNow =
+            phase === "preview" &&
+            (shouldReduceMotion ? true : index === Math.max(0, previewStep - 1));
+          const isWrong = wrongStar === index;
+          const startHint = phase === "playing" && nextStar === 0 && index === 0;
+          const canChoose = phase === "playing" && !connected;
           return (
             <button
               key={`${pathIndex}-${point.x}-${point.y}`}
               type="button"
               onClick={() => chooseStar(index)}
+              disabled={!canChoose}
               aria-label={
                 connected
                   ? `Star ${index + 1}, connected`
-                  : active
-                    ? `Connect star ${index + 1}`
-                    : `Star ${index + 1}, sleeping`
+                  : phase === "preview"
+                    ? `Route star ${index + 1}`
+                    : startHint
+                      ? "Starting star"
+                      : `Unconnected star ${index + 1}`
               }
               className={clsx(
                 "absolute flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f0c75a]",
-                active && "cursor-pointer",
-                !active && !connected && "cursor-default"
+                canChoose ? "cursor-pointer" : "cursor-default"
               )}
               style={{ left: `${point.x}%`, top: `${point.y}%` }}
             >
-              {active ? (
-                <span className="absolute h-9 w-9 animate-ping rounded-full border border-[#79a9e8]/50 motion-reduce:animate-none" />
+              {previewingNow || startHint ? (
+                <span className="absolute h-9 w-9 animate-ping rounded-full border border-[#79a9e8]/55 motion-reduce:animate-none" />
+              ) : null}
+              {previewed ? (
+                <span className="absolute -top-1 right-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#fff8e8] px-1 font-mono text-[8px] font-semibold text-[#07101f]">
+                  {index + 1}
+                </span>
+              ) : null}
+              {startHint ? (
+                <span className="absolute top-9 whitespace-nowrap font-mono text-[8px] uppercase tracking-[0.12em] text-[#b9d9ff]">
+                  start
+                </span>
               ) : null}
               <span
                 className={clsx(
                   "relative block rotate-45 border transition duration-300",
-                  connected
+                  isWrong
+                    ? "h-4 w-4 border-[#f08a42] bg-[#f08a42] shadow-[0_0_18px_#f08a42]"
+                    : connected
                     ? "h-4 w-4 border-[#f0c75a] bg-[#fff8e8] shadow-[0_0_16px_#f0c75a]"
-                    : active
+                    : previewed
                       ? "h-3.5 w-3.5 border-[#b9d9ff] bg-[#66aaff] shadow-[0_0_18px_#66aaff]"
                       : "h-2.5 w-2.5 border-[#79a9e8]/40 bg-[#b9d9ff]/45"
                 )}
@@ -398,10 +494,19 @@ function StarStitchGame() {
           );
         })}
 
-        {complete ? (
+        {phase === "complete" ? (
           <div className="absolute inset-x-4 bottom-4 rounded-xl border border-[#f0c75a]/30 bg-[#07101f]/90 px-4 py-3 text-center backdrop-blur-sm">
             <p className="font-sans text-lg font-semibold text-[#fff8e8]">{constellation.name}</p>
-            <p className="text-xs text-[#c7bdab]">A new constellation, stitched from sea to sky.</p>
+            <p className="text-xs text-[#c7bdab]">
+              {score} points · {misses === 0 && peeks === 0 ? "Perfect celestial recall." : "Route recovered."}
+            </p>
+          </div>
+        ) : null}
+
+        {phase === "failed" ? (
+          <div className="absolute inset-x-4 bottom-4 rounded-xl border border-[#66aaff]/30 bg-[#07101f]/90 px-4 py-3 text-center backdrop-blur-sm">
+            <p className="font-sans text-base font-semibold text-[#fff8e8]">The route dissolved.</p>
+            <p className="text-xs text-[#c7bdab]">The dashed path is your clue. Study it, then try again.</p>
           </div>
         ) : null}
       </div>
@@ -409,12 +514,12 @@ function StarStitchGame() {
       <div className="flex flex-col justify-between gap-5">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-faint">
-            Night navigation
+            Celestial memory challenge
           </p>
-          <h3 className="mt-2 font-sans text-2xl font-semibold text-ink">Follow the waking star.</h3>
+          <h3 className="mt-2 font-sans text-2xl font-semibold text-ink">Remember the hidden route.</h3>
           <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-            Find the star with the blue pulse and stitch the constellation one point at a
-            time. Each clear reveals a different path.
+            Study the numbered path before it fades. Then predict each connection from
+            memory. Three wrong stars and the route dissolves.
           </p>
         </div>
 
@@ -423,31 +528,64 @@ function StarStitchGame() {
             <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
               Connected
             </span>
-            <span className="font-mono text-2xl text-accent">
-              {nextStar}/{starPoints.length}
+            <span className="font-mono text-2xl text-accent">{nextStar}/{starPoints.length}</span>
+          </div>
+          <div className="mt-3 flex items-center justify-between gap-3 text-xs text-ink-soft">
+            <span aria-label={`${shardsLeft} moon shards remaining`} className="tracking-[0.2em] text-accent">
+              {Array.from({ length: maxShards }, (_, index) => (index < shardsLeft ? "◆" : "◇")).join(" ")}
             </span>
+            <span>{peeks} clue replay{peeks === 1 ? "" : "s"}</span>
           </div>
           <p aria-live="polite" className="mt-2 min-h-5 text-xs text-ink-soft">
-            {complete
-              ? misses === 0
-                ? "Perfect navigation."
-                : `Constellation found with ${misses} wrong turn${misses === 1 ? "" : "s"}.`
-              : misses === 0
-                ? "The next star is pulsing."
-                : `${misses} wrong turn${misses === 1 ? "" : "s"} — keep looking.`}
+            {phase === "preview"
+              ? "Study the route. The numbers will disappear."
+              : phase === "complete"
+                ? `${score} points — ${misses === 0 && peeks === 0 ? "perfect recall" : "constellation recovered"}.`
+                : phase === "failed"
+                  ? "No moon shards remain. The route is revealed."
+                  : startHintText(nextStar, misses)}
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={reset}
-          className="motion-press min-h-11 rounded-full border border-line px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        >
-          Clear &amp; redraw
-        </button>
+        <div className="grid gap-2">
+          {phase === "playing" ? (
+            <button
+              type="button"
+              data-sound="navigation"
+              onClick={() => showClue()}
+              className="motion-press min-h-11 rounded-full border border-line px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              Replay clue · −75 pts
+            </button>
+          ) : null}
+          {phase === "failed" ? (
+            <button
+              type="button"
+              data-sound="navigation"
+              onClick={() => showClue({ restart: true })}
+              className="motion-press min-h-11 rounded-full bg-ink px-4 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              Study &amp; retry
+            </button>
+          ) : null}
+          <button
+            type="button"
+            data-sound="navigation"
+            onClick={nextConstellation}
+            className="motion-press min-h-11 rounded-full border border-line px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            {phase === "complete" ? "Next constellation" : "Draw a new sky"}
+          </button>
+        </div>
       </div>
     </div>
   );
+}
+
+function startHintText(nextStar: number, misses: number) {
+  if (nextStar === 0) return "The starting star is marked. Predict where the path goes next.";
+  if (misses === 0) return "Good memory. Choose the next connection.";
+  return `${3 - misses} moon shard${3 - misses === 1 ? "" : "s"} remain — choose carefully.`;
 }
 
 function PixelPaintingGame() {
@@ -525,6 +663,7 @@ function PixelPaintingGame() {
             <button
               key={swatch.color}
               type="button"
+              data-sound="navigation"
               onClick={() => setColor(swatch.color)}
               aria-label={`Use ${swatch.name}`}
               aria-pressed={color === swatch.color}
@@ -554,6 +693,7 @@ function PixelPaintingGame() {
         <div className="grid gap-2">
           <button
             type="button"
+            data-sound="navigation"
             onClick={() => setPixels(moonlitPixels())}
             className="motion-press min-h-11 rounded-full border border-line px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
@@ -561,6 +701,7 @@ function PixelPaintingGame() {
           </button>
           <button
             type="button"
+            data-sound="navigation"
             onClick={() => setPixels(Array(PIXEL_COLS * PIXEL_ROWS).fill(PIXEL_SKY))}
             className="motion-press min-h-11 rounded-full border border-line px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
@@ -568,6 +709,7 @@ function PixelPaintingGame() {
           </button>
           <button
             type="button"
+            data-sound="navigation"
             onClick={download}
             className="motion-press min-h-11 rounded-full bg-ink px-4 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-bg hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-raised"
           >

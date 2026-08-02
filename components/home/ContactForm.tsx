@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import { useSound } from "@/components/sound/SoundProvider";
 
 const WEB3FORMS_ACCESS_KEY = "7b268203-c0a5-47d9-acbe-7eb03d4af6a6";
 
 export function ContactForm() {
+  const { play } = useSound();
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [messageLength, setMessageLength] = useState(0);
 
@@ -19,6 +21,7 @@ export function ContactForm() {
         headers: { Accept: "application/json" },
       });
       setStatus(res.ok ? "success" : "error");
+      if (res.ok) play("completion");
     } catch {
       setStatus("error");
     }
@@ -38,6 +41,7 @@ export function ContactForm() {
         </p>
         <button
           type="button"
+          data-sound="navigation"
           onClick={() => {
             setStatus("idle");
             setMessageLength(0);

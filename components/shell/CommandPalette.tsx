@@ -150,7 +150,13 @@ export function CommandPalette({ onClose, onOpenMotionLab }: { onClose: () => vo
       exit={shouldReduceMotion ? undefined : { opacity: 0 }}
       transition={{ duration: 0.16 }}
     >
-      <button type="button" aria-label="Close command palette" onClick={onClose} className="absolute inset-0 bg-black/40" />
+      <button
+        type="button"
+        data-sound="navigation"
+        aria-label="Close command palette"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40"
+      />
       <motion.div
         role="dialog"
         aria-modal="true"
@@ -183,6 +189,7 @@ export function CommandPalette({ onClose, onOpenMotionLab }: { onClose: () => vo
           <kbd className="hidden shrink-0 rounded border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-faint sm:block">esc</kbd>
           <button
             type="button"
+            data-sound="navigation"
             onClick={onClose}
             aria-label="Close command palette"
             className="motion-press -mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-ink-soft hover:bg-bg-inset hover:text-ink sm:hidden"
