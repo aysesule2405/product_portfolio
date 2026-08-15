@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import clsx from "clsx";
-import { useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "@/lib/motion";
 import { useSound } from "@/components/sound/SoundProvider";
 
 type GameId = "shells" | "stars" | "pixels";

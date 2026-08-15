@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import clsx from "clsx";
 import { WindowChrome } from "@/components/ui/WindowChrome";
+import { useReducedMotion } from "@/lib/motion";
 
 const photos = [
   {

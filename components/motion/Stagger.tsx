@@ -1,8 +1,8 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { ReactNode } from "react";
-import { softRevealVariants, staggerContainerVariants } from "@/lib/motion";
+import { softRevealVariants, staggerContainerVariants, useReducedMotion } from "@/lib/motion";
 
 type StaggerProps = {
   children: ReactNode;

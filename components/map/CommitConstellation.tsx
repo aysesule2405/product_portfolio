@@ -3,13 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { motion, useReducedMotion, useInView, AnimatePresence } from "framer-motion";
+import { motion, useInView, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import { TimelineLane, TimelineNode, TimelineNodeKind, ProblemCategory } from "@/lib/types";
 import { categoryColorVar } from "@/lib/category-color";
 import { categories } from "@/lib/data/categories";
 import { WavesBackground } from "@/components/celestial/WavesBackground";
 import { useSound } from "@/components/sound/SoundProvider";
+import { useReducedMotion } from "@/lib/motion";
 
 const WIDTH = 1600;
 const HEIGHT = 1000;

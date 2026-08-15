@@ -1,8 +1,8 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { ReactNode } from "react";
-import { revealVariants, softRevealVariants } from "@/lib/motion";
+import { revealVariants, softRevealVariants, useReducedMotion } from "@/lib/motion";
 
 type RevealProps = {
   children: ReactNode;

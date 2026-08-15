@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import clsx from "clsx";
 import { projects } from "@/lib/data/projects";
 import { visualWork } from "@/lib/data/visual-work";
 import { hiringLenses } from "@/lib/data/hiring";
 import { useSound } from "@/components/sound/SoundProvider";
+import { useReducedMotion } from "@/lib/motion";
 
 interface Command {
   id: string;

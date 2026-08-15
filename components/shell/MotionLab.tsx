@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { motionPurpose, motionEasing } from "@/lib/motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { motionPurpose, motionEasing, useReducedMotion } from "@/lib/motion";
 
 const purposeOrder: { key: keyof typeof motionPurpose; label: string; explain: string }[] = [
   { key: "feedback", label: "Feedback", explain: "Buttons, fields, tabs, filters — immediate, so the interface never feels laggy." },

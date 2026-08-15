@@ -1,5 +1,10 @@
+import { useSyncExternalStore } from "react";
 import type { Variants } from "framer-motion";
 import { useReducedMotion as useFramerReducedMotion } from "framer-motion";
+
+function subscribeNoop() {
+  return () => {};
+}
 
 export const motionTimings = {
   fast: 0.18,
@@ -24,9 +29,17 @@ export const motionPurpose = {
   atmosphere: { duration: 2.4, ease: "linear" as const },
 } as const;
 
-/** Wraps framer-motion's reduced-motion hook so ambient/ornamental animation can branch on it explicitly. */
+/**
+ * Wraps framer-motion's reduced-motion hook so it's safe to branch render output on.
+ * framer-motion reads `window.matchMedia` synchronously on the client's first render, which
+ * differs from the server (no `window`) whenever a visitor actually has the OS preference on —
+ * a guaranteed hydration mismatch. Stay false through the first client paint (matching the
+ * server), then resolve to the real preference right after.
+ */
 export function useReducedMotion(): boolean {
-  return useFramerReducedMotion() ?? false;
+  const hasMounted = useSyncExternalStore(subscribeNoop, () => true, () => false);
+  const prefersReducedMotion = useFramerReducedMotion();
+  return hasMounted && Boolean(prefersReducedMotion);
 }
 
 export const revealVariants: Variants = {
