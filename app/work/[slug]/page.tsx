@@ -240,7 +240,7 @@ export default async function CaseStudyPage({
                         src={image.src}
                         alt={image.alt}
                         fill
-                        sizes={featured ? "100vw" : "(min-width: 640px) 50vw, 100vw"}
+                        sizes={featured ? "(min-width: 768px) 768px, 100vw" : "(min-width: 640px) 50vw, 100vw"}
                         className="object-contain transition-transform duration-500 ease-out group-hover:scale-[1.025]"
                       />
                     </div>

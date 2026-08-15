@@ -84,7 +84,7 @@ export default function AboutPage() {
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-relaxed text-ink-soft sm:text-lg">
                 I&rsquo;m Ayse Sule Ekiz. {positioning.story} I&rsquo;m currently studying
-                computer science and expect to graduate in {positioning.graduation}.
+                computer science.
               </p>
             </div>
 
@@ -162,7 +162,7 @@ export default function AboutPage() {
                 Currently
               </dt>
               <dd className="mt-1 text-ink">
-                Computer Science student · graduating {positioning.graduation}
+                Computer Science student
               </dd>
             </div>
             <div>

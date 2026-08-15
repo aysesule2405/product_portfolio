@@ -6,7 +6,6 @@ import { WindowChrome } from "@/components/ui/WindowChrome";
 import { MoonPhaseChart } from "@/components/celestial/MoonPhaseChart";
 import { ContactForm } from "@/components/home/ContactForm";
 import { socialLinks } from "@/lib/data/nav";
-import { positioning } from "@/lib/data/positioning";
 
 export function ContactSection() {
   return (
@@ -41,8 +40,8 @@ export function ContactSection() {
                       Availability
                     </p>
                     <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-                      Graduating {positioning.graduation} · remote, hybrid, or onsite ·
-                      open to relocation across the United States
+                      Remote, hybrid, or onsite · open to relocation across the United
+                      States
                     </p>
                   </div>
                   <div className="mt-4 flex max-w-xl items-center gap-2 border-l-2 border-accent py-1 pl-4 text-sm text-ink-soft">

@@ -10,7 +10,7 @@ import { Tag } from "@/components/ui/Tag";
 import { WindowChrome } from "@/components/ui/WindowChrome";
 import { projectFileName } from "@/lib/data/file-tree";
 
-export function ProjectCard({ project }: { project: Project }) {
+export function ProjectCard({ project, priority = false }: { project: Project; priority?: boolean }) {
   const cover = project.images[0];
   const icon = project.icon;
 
@@ -43,6 +43,7 @@ export function ProjectCard({ project }: { project: Project }) {
               src={cover.src}
               alt={cover.alt}
               fill
+              priority={priority}
               sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
               className="object-cover opacity-90 transition-[transform,opacity] duration-500 ease-out group-hover:scale-105 group-hover:opacity-100"
             />

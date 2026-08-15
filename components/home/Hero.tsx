@@ -108,8 +108,7 @@ export function Hero() {
             </div>
 
             <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.1em] text-ink-faint">
-              Computer Science · graduating {positioning.graduation} · remote, hybrid, or
-              onsite · open to US relocation
+              Computer Science · remote, hybrid, or onsite · open to US relocation
             </p>
           </div>
         </motion.div>

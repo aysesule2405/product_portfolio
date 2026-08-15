@@ -183,8 +183,8 @@ export function WorkExplorer({
         ) : view === "grid" ? (
           <motion.div layout className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <AnimatePresence mode="popLayout">
-              {filtered.map((project) => (
-                <ProjectCard key={project.slug} project={project} />
+              {filtered.map((project, index) => (
+                <ProjectCard key={project.slug} project={project} priority={index === 0} />
               ))}
             </AnimatePresence>
           </motion.div>

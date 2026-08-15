@@ -3,7 +3,6 @@ export const positioning = {
   headline: "I take ideas from concept to polished, working experiences.",
   story:
     "A multidisciplinary product builder who moves between engineering, design, data, and visual craft to take ideas from concept to polished, working experiences.",
-  graduation: "May 2027",
   workModes: ["Remote", "Hybrid", "Onsite"],
   relocation: "Open to relocation across the United States",
   preferredLocations: [

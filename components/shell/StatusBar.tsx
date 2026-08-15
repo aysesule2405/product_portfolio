@@ -8,8 +8,6 @@ export function StatusBar() {
       <span className="shrink-0">Ayse Sule Ekiz</span>
       <span className="hidden shrink-0 sm:inline">·</span>
       <span className="hidden shrink-0 sm:inline">{positioning.role}</span>
-      <span className="hidden shrink-0 sm:inline">·</span>
-      <span className="hidden shrink-0 sm:inline">Graduating {positioning.graduation}</span>
       <span className="ml-auto flex shrink-0 items-center gap-3 sm:gap-4">
         {socialLinks.map((link) => (
           <a
