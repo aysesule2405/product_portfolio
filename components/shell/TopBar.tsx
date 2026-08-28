@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import clsx from "clsx";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
 import { SoundToggle } from "@/components/sound/SoundToggle";
 import { getProjectBySlug } from "@/lib/data/projects";
-import { useLocationHash } from "@/lib/use-location-hash";
+import { useLocationHash, handleHashLinkClick } from "@/lib/use-location-hash";
 
 interface Tab {
   label: string;
@@ -53,6 +54,14 @@ export function TopBar({
   const locationHash = useLocationHash();
   const tabs = useOpenTabs();
 
+  // Next's client-side router doesn't fire hashchange/popstate when a cross-route
+  // navigation lands on a URL with a fragment, so useLocationHash's snapshot goes stale
+  // and the fieldmap.md tab never highlights on first arrival. Nudge it to re-read the
+  // URL whenever the route itself changes.
+  useEffect(() => {
+    if (window.location.hash) window.dispatchEvent(new Event("hashchange"));
+  }, [pathname]);
+
   return (
     <div className="sticky top-0 z-30 flex h-11 items-center gap-1 border-b border-line bg-bg-raised px-2">
       <button
@@ -77,6 +86,7 @@ export function TopBar({
             <Link
               key={tab.href}
               href={tab.href}
+              onClick={(event) => handleHashLinkClick(event, tab.href, pathname)}
               aria-current={active ? "page" : undefined}
               className={clsx(
                 "motion-press motion-tab h-11 shrink-0 items-center gap-2 border-b-2 px-3 font-mono text-[12.5px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset",

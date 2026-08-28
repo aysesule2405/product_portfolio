@@ -8,7 +8,7 @@ import Image from "next/image";
 import { rootFiles, fileTreeGroups } from "@/lib/data/file-tree";
 import { FileTypeIcon, FolderIcon, Chevron } from "@/components/shell/FileTreeIcons";
 import { useOutline } from "@/lib/outline-context";
-import { useLocationHash } from "@/lib/use-location-hash";
+import { useLocationHash, handleHashLinkClick } from "@/lib/use-location-hash";
 
 function SidebarToggle({
   collapsed,
@@ -51,17 +51,22 @@ function FileRow({
   label,
   href,
   active,
+  pathname,
   onNavigate,
 }: {
   label: string;
   href: string;
   active: boolean;
+  pathname: string;
   onNavigate: () => void;
 }) {
   return (
     <Link
       href={href}
-      onClick={onNavigate}
+      onClick={(event) => {
+        onNavigate();
+        handleHashLinkClick(event, href, pathname);
+      }}
       aria-current={active ? "page" : undefined}
       className={clsx(
         "motion-press flex min-h-11 items-center gap-2 rounded px-2 py-1 font-mono text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:min-h-0",
@@ -95,6 +100,14 @@ export function Sidebar({
   const { sections, activeId } = useOutline();
   const mobilePanelRef = useRef<HTMLDivElement>(null);
   const mobileCloseRef = useRef<HTMLButtonElement>(null);
+
+  // Next's client-side router doesn't fire hashchange/popstate when a cross-route
+  // navigation lands on a URL with a fragment, so useLocationHash's snapshot goes stale
+  // and the file tree never highlights entries like fieldmap.md or a practice/ file on
+  // first arrival. Nudge it to re-read the URL whenever the route itself changes.
+  useEffect(() => {
+    if (window.location.hash) window.dispatchEvent(new Event("hashchange"));
+  }, [pathname]);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -174,7 +187,7 @@ export function Sidebar({
         <div className="ml-[9.5px] mt-0.5 border-l border-line pl-2.5">
           <div className="flex flex-col gap-0.5">
             {rootFiles.map((file) => (
-              <FileRow key={file.href} {...file} active={isActive(file.href)} onNavigate={onCloseMobile} />
+              <FileRow key={file.href} {...file} active={isActive(file.href)} pathname={pathname} onNavigate={onCloseMobile} />
             ))}
           </div>
 
@@ -197,7 +210,7 @@ export function Sidebar({
                 {isOpen ? (
                   <div className="ml-[9.5px] flex flex-col gap-0.5 border-l border-line pl-2.5">
                     {group.entries.map((entry) => (
-                      <FileRow key={entry.href} {...entry} active={isActive(entry.href)} onNavigate={onCloseMobile} />
+                      <FileRow key={entry.href} {...entry} active={isActive(entry.href)} pathname={pathname} onNavigate={onCloseMobile} />
                     ))}
                   </div>
                 ) : null}
@@ -263,6 +276,7 @@ export function Sidebar({
             <Link
               key={file.href}
               href={file.href}
+              onClick={(event) => handleHashLinkClick(event, file.href, pathname)}
               aria-label={file.label}
               aria-current={active ? "page" : undefined}
               title={file.label}
