@@ -82,11 +82,16 @@ function FileRow({
 export function Sidebar({
   mobileOpen,
   collapsed,
+  hidden = false,
   onCloseMobile,
   onToggleCollapsed,
 }: {
   mobileOpen: boolean;
   collapsed: boolean;
+  /** Desktop-only: the homepage's moon/sun cover keeps the explorer fully
+   * closed until the visitor scrolls to the intro (see NavRevealProvider) —
+   * distinct from `collapsed`, which is the visitor's own icon-rail preference. */
+  hidden?: boolean;
   onCloseMobile: () => void;
   onToggleCollapsed: () => void;
 }) {
@@ -296,9 +301,11 @@ export function Sidebar({
   return (
     <>
       <aside
+        aria-hidden={hidden || undefined}
+        inert={hidden || undefined}
         className={clsx(
-          "sticky top-0 hidden h-screen shrink-0 border-r border-line bg-bg-raised transition-[width] duration-200 lg:block",
-          collapsed ? "w-12" : "w-64"
+          "sticky top-0 hidden h-screen shrink-0 overflow-hidden border-r border-line bg-bg-raised transition-[width,opacity] duration-300 ease-out lg:block",
+          hidden ? "w-0 border-r-0 opacity-0" : collapsed ? "w-12 opacity-100" : "w-64 opacity-100"
         )}
       >
         {collapsed ? collapsedContent : content}

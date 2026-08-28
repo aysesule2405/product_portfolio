@@ -9,10 +9,12 @@ import { CommandPalette } from "@/components/shell/CommandPalette";
 import { MotionLab } from "@/components/shell/MotionLab";
 import { CelestialBackdrop } from "@/components/celestial/CelestialBackdrop";
 import { OutlineProvider } from "@/lib/outline-context";
+import { NavRevealProvider, useNavReveal } from "@/lib/nav-reveal-context";
 
-export function EditorShell({ children }: { children: React.ReactNode }) {
+function EditorShellInner({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { coverActive, revealNav } = useNavReveal();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [motionLabOpen, setMotionLabOpen] = useState(false);
   const sidebarPreferenceLoaded = useRef(false);
@@ -43,6 +45,7 @@ export function EditorShell({ children }: { children: React.ReactNode }) {
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
         e.preventDefault();
+        revealNav();
         setSidebarCollapsed((v) => !v);
       }
       if (e.key === "Escape") {
@@ -53,7 +56,7 @@ export function EditorShell({ children }: { children: React.ReactNode }) {
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [revealNav]);
 
   useEffect(() => {
     if (!sidebarOpen && !paletteOpen && !motionLabOpen) return;
@@ -65,9 +68,15 @@ export function EditorShell({ children }: { children: React.ReactNode }) {
   }, [sidebarOpen, paletteOpen, motionLabOpen]);
 
   function openSidebar() {
+    revealNav();
     setPaletteOpen(false);
     setMotionLabOpen(false);
     setSidebarOpen(true);
+  }
+
+  function toggleCollapsed() {
+    revealNav();
+    setSidebarCollapsed((v) => !v);
   }
 
   function openPalette() {
@@ -83,8 +92,9 @@ export function EditorShell({ children }: { children: React.ReactNode }) {
         <Sidebar
           mobileOpen={sidebarOpen}
           collapsed={sidebarCollapsed}
+          hidden={coverActive}
           onCloseMobile={() => setSidebarOpen(false)}
-          onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
+          onToggleCollapsed={toggleCollapsed}
         />
         <div className="relative z-10 flex min-h-screen min-w-0 flex-1 flex-col">
           <TopBar onOpenSidebar={openSidebar} onOpenPalette={openPalette} />
@@ -109,5 +119,13 @@ export function EditorShell({ children }: { children: React.ReactNode }) {
         </AnimatePresence>
       </div>
     </OutlineProvider>
+  );
+}
+
+export function EditorShell({ children }: { children: React.ReactNode }) {
+  return (
+    <NavRevealProvider>
+      <EditorShellInner>{children}</EditorShellInner>
+    </NavRevealProvider>
   );
 }
