@@ -86,11 +86,14 @@ function ScrollCue() {
   );
 }
 
-/** Both light-mode 3D models are real downloads with attribution
- * requirements, not procedural geometry — CC-BY-4.0 (commercial use fine)
- * for the balloon, CC-BY-NC-4.0 for the kites. Only rendered once the theme
- * is known client-side to avoid a light/dark hydration mismatch, and only in
- * light mode since that's the only theme using either asset. */
+/** Both the balloon and the kites are real downloads with attribution
+ * requirements, not procedural geometry — the balloon is CC-BY-4.0
+ * (commercial use fine); the kites are CC-BY-NC-4.0 (noncommercial only —
+ * flagged to and knowingly accepted by the site owner for this hackathon
+ * entry, which carries no purchase/licensing fee itself). Only rendered
+ * once the theme is known client-side to avoid a light/dark hydration
+ * mismatch, and only in light mode since that's the only theme using either
+ * asset. */
 function ModelCredits() {
   const { resolvedTheme } = useTheme();
   // Same SSR-safe mount pattern as useReducedMotion in lib/motion.ts: stay

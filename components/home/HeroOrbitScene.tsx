@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Html, OrbitControls, QuadraticBezierLine, Stars, useAnimations, useGLTF } from "@react-three/drei";
+import { Html, OrbitControls, QuadraticBezierLine, Stars, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useTheme } from "next-themes";
@@ -37,15 +37,15 @@ const PALETTE = {
     // so this only ever colors real scene lighting.
     keyLight: "#fff1cf",
     rim: "#ffb066",
-    // Stars are a dark-mode-only motif site-wide (see docs/DESIGN_SYSTEM.md) —
-    // light mode swaps to the same coral/apricot "shell" family the flat
-    // field map uses in `:root[data-theme=light] .field-map`, pushed more
-    // saturated for the same reason as the dark-mode set above.
+    // Pulled straight from the hot-air balloon's own envelope stripe
+    // palette (see useBalloonEnvelopeTexture) rather than an independent
+    // set — the kites now read as belonging to the same sunlit-fabric
+    // family as the centerpiece they fly around.
     nodes: {
-      practice: "#ff8fae",
-      experience: "#ff9d4d",
-      work: "#ff5a4d",
-      community: "#c98a4b",
+      practice: lighten("#e8563f", 0.16),
+      experience: lighten("#f5a623", 0.14),
+      work: "#fdf8ec",
+      community: lighten("#3d8bff", 0.2),
     },
   },
 } as const;
@@ -117,6 +117,27 @@ function rgbToHex({ r, g, b }: { r: number; g: number; b: number }) {
 function lighten(hex: string, amount: number) {
   const { r, g, b } = hexToRgb(hex);
   return rgbToHex({ r: r + (255 - r) * amount, g: g + (255 - g) * amount, b: b + (255 - b) * amount });
+}
+
+function easeOutCubic(t: number) {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+/** Returns 0→1 eased progress for a delayed entrance animation — call once
+ * per frame with the scene clock's `elapsedTime`. `startRef` lazily captures
+ * "now + delay" on its first call, so several instances that all mount in
+ * the same React commit still stagger correctly off their own `delay`. */
+function entranceProgress(
+  startRef: { current: number | null },
+  elapsedTime: number,
+  delay: number,
+  duration: number,
+  reduced: boolean
+) {
+  if (reduced) return 1;
+  if (startRef.current === null) startRef.current = elapsedTime + delay;
+  const t = THREE.MathUtils.clamp((elapsedTime - startRef.current) / duration, 0, 1);
+  return easeOutCubic(t);
 }
 
 function useGlowTexture() {
@@ -399,6 +420,7 @@ function Centerpiece({ color, rimColor, reduced }: { color: string; rimColor: st
   const meshRef = useRef<THREE.Mesh>(null);
   const groupRef = useRef<THREE.Group>(null);
   const pointer = useRef({ x: 0, y: 0 });
+  const introStart = useRef<number | null>(null);
   const radius = 1.75;
   const { colorTexture, normalTexture } = useMoonTextures(color, true);
 
@@ -413,6 +435,12 @@ function Centerpiece({ color, rimColor, reduced }: { color: string; rimColor: st
       const targetY = reduced ? 0 : pointer.current.x * 0.18;
       groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, targetX, 0.04);
       groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, targetY, 0.04);
+      // A slow "moonrise": climbs into place from below and grows to full
+      // size on first mount, instead of simply appearing — the first thing
+      // a visitor sees is the scene arriving, not a static frame.
+      const intro = entranceProgress(introStart, state.clock.elapsedTime, 0, 1.8, reduced);
+      groupRef.current.position.y = THREE.MathUtils.lerp(-4.5, 0, intro);
+      groupRef.current.scale.setScalar(THREE.MathUtils.lerp(0.45, 1, intro));
     }
   });
 
@@ -497,7 +525,9 @@ function useBalloonModel() {
       clearcoat: 0.5,
       clearcoatRoughness: 0.2,
       emissive: "#fff6de",
-      emissiveIntensity: 0.06,
+      // Raised from 0.06 to help carry the "sunlit" look now that the
+      // overhead point lights (see BalloonCenterpiece) run dimmer.
+      emissiveIntensity: 0.16,
     });
     cloned.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) return;
@@ -518,18 +548,32 @@ function BalloonCenterpiece({ reduced }: { reduced: boolean }) {
   const model = useBalloonModel();
   const groupRef = useRef<THREE.Group>(null);
   const pointer = useRef({ x: 0, y: 0 });
+  const introStart = useRef<number | null>(null);
 
   useFrame((state) => {
     pointer.current.x = state.pointer.x;
     pointer.current.y = state.pointer.y;
     if (!groupRef.current) return;
+    const t = state.clock.elapsedTime;
     const targetX = reduced ? 0 : pointer.current.y * 0.06;
     const targetZ = reduced ? 0 : pointer.current.x * 0.08;
-    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, targetX, 0.04);
-    groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, targetZ, 0.04);
-    if (!reduced) {
-      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.45) * 0.14;
-    }
+    // Two mismatched, slow sine frequencies per axis read as a real gust
+    // drifting through and easing off, rather than a metronomic pendulum —
+    // the "hanging from a rope in the wind" motion a rigid tilt can't sell.
+    const windTiltX = reduced ? 0 : Math.sin(t * 0.35) * 0.035 + Math.sin(t * 0.87 + 1.7) * 0.018;
+    const windTiltZ = reduced ? 0 : Math.cos(t * 0.28 + 0.6) * 0.045 + Math.sin(t * 0.61) * 0.02;
+    const windDriftX = reduced ? 0 : Math.sin(t * 0.22) * 0.16;
+    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, targetX + windTiltX, 0.05);
+    groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, targetZ + windTiltZ, 0.05);
+    // Ascends into place on first mount, same beat as the moon's rise — a
+    // balloon literally climbing into view is the obvious version of that
+    // idea for this centerpiece. The idle bob fades in as the climb settles
+    // rather than fighting it the whole way up.
+    const intro = entranceProgress(introStart, t, 0, 2, reduced);
+    const bob = reduced ? 0 : Math.sin(t * 0.45) * 0.14 * intro;
+    groupRef.current.position.y = THREE.MathUtils.lerp(-6.5, 0, intro) + bob;
+    groupRef.current.position.x = windDriftX * intro;
+    groupRef.current.scale.setScalar(THREE.MathUtils.lerp(0.55, 1, intro));
   });
 
   return (
@@ -537,41 +581,24 @@ function BalloonCenterpiece({ reduced }: { reduced: boolean }) {
       <Glow color="#fff2d2" scale={5.4} opacity={0.42} />
       {/* A bright, near-overhead light so the top of the envelope actually
           catches a hard highlight — "sunlight reflecting off it" reads as a
-          real specular hit, not just an overall brightness bump. */}
-      <pointLight color="#fffaf0" position={[1.5, 8, 3]} intensity={46} distance={22} />
-      <pointLight color="#fff6de" position={[6, 4, 4]} intensity={22} distance={20} />
+          real specular hit, not just an overall brightness bump. Kept modest
+          (was 46/22): at full strength these two lights reached far enough
+          to unevenly favor whichever kite satellite sits geometrically
+          closest to them (the "experience" kite, which sits nearest to all
+          three lights, was visibly brighter than its siblings as a result)
+          — most of the balloon's own "sunlit" look now comes from its own
+          material emissive instead, so it stays convincing lower down. */}
+      <pointLight color="#fffaf0" position={[1.5, 8, 3]} intensity={16} distance={22} />
+      <pointLight color="#fff6de" position={[6, 4, 4]} intensity={8} distance={20} />
       <pointLight color="#bcd8ff" position={[-5, -2, -3]} intensity={10} distance={16} />
       {/* Source geometry loads already correctly Y-up and close to scene
           scale via GLTFLoader — the model is simply enlarged and recentered
-          here, not re-oriented. */}
-      <primitive object={model} scale={3.8} position={[0, -1.9, 0]} />
+          here, not re-oriented. The -0.5015 factor keeps it vertically
+          centered on world origin at any scale (half the model's own local
+          y-extent, measured once off its bounding box). */}
+      <primitive object={model} scale={5.8} position={[0, -0.5015 * 5.8, 0]} />
     </group>
   );
-}
-
-const KITE_URL = "/models/kite.glb";
-useGLTF.preload(KITE_URL);
-
-/** The source scene bundles two distinct kite rigs (each its own armature +
- * flutter animation) plus a cloud sphere and trailing ground-string meshes
- * we don't want — already stripped out at the asset level (see
- * public/models/credits and the kite.glb generation). Both rigs' bone tracks
- * live in one shared "Animation" clip; `boneNames` lets each instance filter
- * down to just its own tracks instead of logging "no target found" for the
- * other rig's bones every frame.
- *
- * (three.js's GLTFLoader strips "." from node names at load time — dots
- * delimit animation-track paths — so the source file's "Armature.001_12" is
- * "Armature001_12" once loaded; kite.glb was re-exported with matching
- * dot-free names throughout so the embedded clip's track targets resolve.) */
-const KITE_VARIANTS = [
-  { armature: "Armature_7", boneNames: ["Bone_4", "Bone002_3", "Object_12"] },
-  { armature: "Armature001_12", boneNames: ["Bone_9", "Bone002_8", "Object_21"] },
-] as const;
-
-function filterClipToNodes(clip: THREE.AnimationClip, nodeNames: readonly string[]) {
-  const tracks = clip.tracks.filter((track) => nodeNames.some((name) => track.name.startsWith(`${name}.`)));
-  return new THREE.AnimationClip(clip.name, clip.duration, tracks);
 }
 
 /** A small rocky surface for the orbiting satellites — same crater technique
@@ -649,23 +676,32 @@ function OrbitNode({
   node,
   color,
   reduced,
+  index,
 }: {
   node: PositionedSatellite;
   color: string;
   reduced: boolean;
+  index: number;
 }) {
   const [hovered, setHovered] = useState(false);
   const groupRef = useRef<THREE.Group>(null);
   const sphereRef = useRef<THREE.Mesh>(null);
+  const introStart = useRef<number | null>(null);
   const { colorTexture, bumpTexture } = useSatelliteTextures(node.id, color);
   const bobSeed = useMemo(() => (node.id.charCodeAt(0) % 7) * 0.9, [node.id]);
   const spinSpeed = useMemo(() => 0.25 + (node.id.charCodeAt(1) % 5) * 0.08, [node.id]);
   const radius = 0.46;
 
   useFrame((state, delta) => {
-    if (groupRef.current && !reduced) {
-      const bob = Math.sin(state.clock.elapsedTime * 0.7 + bobSeed) * 0.08;
-      groupRef.current.position.copy(node.position).add(new THREE.Vector3(0, bob, 0));
+    // Each satellite rises into its resting spot below the centerpiece's own
+    // entrance, staggered by index — a cascading "one after another" arrival
+    // rather than the whole scene popping in at once.
+    const intro = entranceProgress(introStart, state.clock.elapsedTime, 0.3 + index * 0.15, 1.1, reduced);
+    if (groupRef.current) {
+      const bob = reduced ? 0 : Math.sin(state.clock.elapsedTime * 0.7 + bobSeed) * 0.08 * intro;
+      const start = node.position.clone().add(new THREE.Vector3(0, -5, 0));
+      groupRef.current.position.lerpVectors(start, node.position, intro).add(new THREE.Vector3(0, bob, 0));
+      groupRef.current.scale.setScalar(THREE.MathUtils.lerp(0.3, 1, intro));
     }
     if (sphereRef.current && !reduced) {
       sphereRef.current.rotation.y += delta * spinSpeed;
@@ -720,121 +756,284 @@ function OrbitNode({
   );
 }
 
-/** Recolors a clone of the kite fabric mesh to match its category's color —
- * the source model ships one kite red and one grey, but each satellite here
- * needs its own established palette color, same as the planet satellites. */
-function tintKiteMaterials(root: THREE.Object3D, color: string) {
-  root.traverse((child) => {
-    if (!(child instanceof THREE.SkinnedMesh) && !(child instanceof THREE.Mesh)) return;
-    const source = child.material as THREE.MeshStandardMaterial;
-    const material = source.clone();
-    material.color = new THREE.Color(color);
-    material.emissive = new THREE.Color(color);
-    material.emissiveIntensity = 0.16;
-    material.roughness = 0.55;
-    child.material = material;
-  });
+const KITE_URL = "/models/kite.glb";
+useGLTF.preload(KITE_URL);
+
+// The downloaded "kites in clouds" file bundles two individually-posed kite
+// meshes under two separate armatures, each driven by its own bones in the
+// shared baked animation clip. Isolating each armature into its own group
+// (see useKiteVariant) and comparing rendered angles against the file's own
+// "side" view showed both kites already share one vertical (world Y) axis —
+// only their yaw into camera-space needed a shared +90° correction to read
+// face-on instead of edge-on/flipped, which is what the original "flipped
+// sideways" bug actually was.
+const KITE_TARGET_HEIGHT = 1.5;
+const KITE_TIP = KITE_TARGET_HEIGHT / 2;
+const KITE_CORRECTION_Y_DEG = 90;
+
+const KITE_VARIANTS = [
+  { armature: "Armature_7", nodes: ["Bone_4", "Bone002_3", "Object_12"] },
+  { armature: "Armature001_12", nodes: ["Bone_9", "Bone002_8", "Object_21"] },
+] as const;
+
+/** three.js animation track names are "<nodeName>.<property>" — this keeps
+ * only the tracks that belong to one variant's own bones/mesh, so playing
+ * the clip on an isolated single-kite clone doesn't spam "no target node
+ * found" warnings for the other kite's bones it doesn't contain. */
+function filterClipToNodes(clip: THREE.AnimationClip, nodeNames: readonly string[]) {
+  const tracks = clip.tracks.filter((t) => nodeNames.some((n) => t.name === n || t.name.startsWith(`${n}.`)));
+  return new THREE.AnimationClip(`${clip.name}:${nodeNames[0]}`, clip.duration, tracks);
 }
 
-/** Light mode's satellites — the two rigged kite meshes from kite.glb,
- * alternated across the four category slots and recolored per category, each
- * cloned via SkeletonUtils (a plain Object3D.clone() shares bone bindings
- * and would make every instance animate in lockstep) so the built-in flutter
- * animation runs independently — and out of phase — per instance. */
+/** Loads the real downloaded kite model (CC-BY-NC — credited in Hero.tsx),
+ * isolates one of its two armatures into its own normalized, upright,
+ * bottom-tip-centered group, recolors it to the satellite's own palette
+ * color, and plays its baked wind-flutter animation (real bone + cloth
+ * morph-target motion authored by the original artist, not a hand-rolled
+ * sine wave) at a per-instance phase offset so the four kites don't flutter
+ * in lockstep. */
+function useKiteVariant(
+  variantIndex: 0 | 1,
+  color: string,
+  phaseOffset: number,
+  reduced: boolean,
+  hovered: boolean
+) {
+  const { scene, animations } = useGLTF(KITE_URL);
+
+  const { holder, material } = useMemo(() => {
+    const variant = KITE_VARIANTS[variantIndex];
+    const clonedScene = SkeletonUtils.clone(scene) as THREE.Group;
+    clonedScene.updateMatrixWorld(true);
+    const armature = clonedScene.getObjectByName(variant.armature) as THREE.Object3D;
+
+    // Re-root the armature under a fresh group carrying its exact original
+    // world transform, then zero its own local transform — this bakes away
+    // the source scene's arbitrary ancestor rotations into a single, known
+    // node we can freely recenter and correct without disturbing the
+    // (already correctly re-bound, via SkeletonUtils.clone) skinning.
+    const holder = new THREE.Group();
+    holder.matrix.copy(armature.matrixWorld);
+    holder.matrix.decompose(holder.position, holder.quaternion, holder.scale);
+    holder.add(armature);
+    armature.position.set(0, 0, 0);
+    armature.quaternion.identity();
+    armature.scale.set(1, 1, 1);
+
+    const box = new THREE.Box3().setFromObject(holder);
+    const center = box.getCenter(new THREE.Vector3());
+    holder.position.sub(center);
+
+    const correction = new THREE.Quaternion().setFromAxisAngle(
+      new THREE.Vector3(0, 1, 0),
+      (KITE_CORRECTION_Y_DEG * Math.PI) / 180
+    );
+    holder.quaternion.premultiply(correction);
+
+    // Normalize both variants to the same on-screen height — the source
+    // scene posed one kite noticeably larger than the other for its own
+    // cluttered-sky composition, which reads as inconsistent once each is
+    // its own standalone satellite.
+    const height = box.max.y - box.min.y;
+    holder.scale.setScalar(KITE_TARGET_HEIGHT / height);
+
+    const material = new THREE.MeshPhysicalMaterial({
+      color,
+      side: THREE.DoubleSide,
+      roughness: 0.35,
+      metalness: 0.05,
+      clearcoat: 0.4,
+      clearcoatRoughness: 0.3,
+      emissive: color,
+      emissiveIntensity: 0.22,
+      sheen: 0.6,
+      sheenColor: lighten(color, 0.5),
+    });
+    holder.traverse((child) => {
+      if (child instanceof THREE.Mesh) child.material = material;
+    });
+
+    return { holder, material };
+  }, [scene, variantIndex, color]);
+
+  const mixer = useMemo(() => new THREE.AnimationMixer(holder), [holder]);
+
+  useEffect(() => {
+    const variant = KITE_VARIANTS[variantIndex];
+    const clip = filterClipToNodes(animations[0], variant.nodes);
+    const action = mixer.clipAction(clip);
+    action.play();
+    mixer.setTime(phaseOffset);
+    return () => {
+      mixer.stopAllAction();
+    };
+  }, [mixer, animations, variantIndex, phaseOffset]);
+
+  useEffect(() => {
+    // THREE.MeshPhysicalMaterial is a mutable class instance (three.js's own
+    // imperative material API), not React state — flipping a property on
+    // hover is the standard way to react to interaction on it.
+    // eslint-disable-next-line react-hooks/immutability
+    material.emissiveIntensity = hovered ? 0.34 : 0.22;
+  }, [material, hovered]);
+
+  useFrame((_, delta) => {
+    if (!reduced) mixer.update(delta);
+  });
+
+  return holder;
+}
+
+const KITE_TAIL_FLAG_TS = [0.2, 0.42, 0.64, 0.86] as const;
+const KITE_TAIL_SEGMENTS = 24;
+
+/** How far a point at `along` (0 = anchored at the kite, 1 = the free end)
+ * has swayed from its rest position at time `t` — the anchored end barely
+ * moves and the free end swings the most, same as a real hanging ribbon in
+ * wind, which is what actually reads as "moving with the kite" instead of a
+ * rigid drawn curve. */
+function kiteTailSway(along: number, t: number, phaseOffset: number) {
+  return {
+    x: Math.sin(t * 1.8 + along * 4 + phaseOffset) * 0.16 * along,
+    z: Math.cos(t * 1.4 + along * 3 + phaseOffset) * 0.1 * along,
+  };
+}
+
+/** The tail — small flags threaded along the same line that stands in for
+ * the flying line, both anchored at the sail's real bottom tip. Doubles as
+ * the "rope" the redesign asked for and a decorative kite tail at once,
+ * rather than drawing two redundant lines from the same point. The line
+ * geometry and the flags share one sway function keyed on `phaseOffset` (the
+ * same value driving that kite's own wind-flutter animation) so the whole
+ * assembly reads as one physically connected object, not a static curve
+ * with independently-jittering flags stapled to it. */
+function KiteTail({
+  color,
+  hovered,
+  reduced,
+  phaseOffset,
+}: {
+  color: string;
+  hovered: boolean;
+  reduced: boolean;
+  phaseOffset: number;
+}) {
+  const flagRefs = useRef<(THREE.Mesh | null)[]>([]);
+  const lineGeometryRef = useRef<THREE.BufferGeometry>(null);
+  const curve = useMemo(
+    () =>
+      new THREE.QuadraticBezierCurve3(
+        new THREE.Vector3(0, -KITE_TIP, 0),
+        new THREE.Vector3(0.35, -KITE_TIP - 1.3, 0.25),
+        new THREE.Vector3(0.55, -KITE_TIP - 2.6, 0.45)
+      ),
+    []
+  );
+  const baseFlagPoints = useMemo(() => KITE_TAIL_FLAG_TS.map((t) => curve.getPoint(t)), [curve]);
+  const basePoints = useMemo(() => curve.getPoints(KITE_TAIL_SEGMENTS), [curve]);
+  const positions = useMemo(
+    () => Float32Array.from(basePoints.flatMap((p) => [p.x, p.y, p.z])),
+    [basePoints]
+  );
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    if (lineGeometryRef.current) {
+      const posAttr = lineGeometryRef.current.attributes.position as THREE.BufferAttribute;
+      for (let i = 0; i < basePoints.length; i++) {
+        const along = i / (basePoints.length - 1);
+        const base = basePoints[i];
+        const sway = reduced ? { x: 0, z: 0 } : kiteTailSway(along, t, phaseOffset);
+        posAttr.setXYZ(i, base.x + sway.x, base.y, base.z + sway.z);
+      }
+      posAttr.needsUpdate = true;
+    }
+    flagRefs.current.forEach((mesh, i) => {
+      if (!mesh) return;
+      const along = KITE_TAIL_FLAG_TS[i];
+      const base = baseFlagPoints[i];
+      const sway = reduced ? { x: 0, z: 0 } : kiteTailSway(along, t, phaseOffset);
+      mesh.position.set(base.x + sway.x, base.y, base.z + sway.z);
+      mesh.rotation.z = reduced ? 0 : Math.sin(t * 3 + i * 1.3 + phaseOffset) * 0.45;
+    });
+  });
+
+  return (
+    <group>
+      <line>
+        <bufferGeometry ref={lineGeometryRef}>
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} count={basePoints.length} itemSize={3} />
+        </bufferGeometry>
+        <lineBasicMaterial color={color} transparent opacity={hovered ? 0.6 : 0.32} />
+      </line>
+      {baseFlagPoints.map((p, i) => (
+        <mesh key={i} ref={(el) => { flagRefs.current[i] = el; }} position={p}>
+          <planeGeometry args={[0.16, 0.1]} />
+          <meshStandardMaterial color={color} side={THREE.DoubleSide} roughness={0.5} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+/** Light mode's satellites — the real downloaded "kites in clouds" model
+ * (see useKiteVariant), alternating its two bundled kite meshes across the
+ * four satellite slots. Billboards around Y only (not a full sprite-style
+ * billboard) so the kite always stays upright with its tail hanging straight
+ * down, however far the scene gets dragged around — a full billboard was
+ * the "flipped sideways" bug this scene was originally asked to fix. */
 function KiteSatellite({
   node,
   color,
-  variant,
   reduced,
+  index,
 }: {
   node: PositionedSatellite;
   color: string;
-  variant: number;
   reduced: boolean;
+  index: number;
 }) {
-  const { scene, animations } = useGLTF(KITE_URL);
   const [hovered, setHovered] = useState(false);
   const groupRef = useRef<THREE.Group>(null);
   const kiteRef = useRef<THREE.Group>(null);
+  const introStart = useRef<number | null>(null);
   const bobSeed = useMemo(() => (node.id.charCodeAt(0) % 7) * 0.9, [node.id]);
+  const phaseOffset = useMemo(() => (hashString(node.id) % 500) / 100, [node.id]);
+  const variantIndex = (index % 2) as 0 | 1;
+  const holder = useKiteVariant(variantIndex, color, phaseOffset, reduced, hovered);
 
-  const kiteVariant = KITE_VARIANTS[variant % KITE_VARIANTS.length];
-
-  const kite = useMemo(() => {
-    const source = scene.getObjectByName(kiteVariant.armature);
-    if (!source) return null;
-    const cloned = SkeletonUtils.clone(source) as THREE.Group;
-    tintKiteMaterials(cloned, color);
-    // The source scene positions each kite rig arbitrarily within its own
-    // original composition — recenter so this instance's own visual center
-    // lands exactly at the group origin, matching where node.position and
-    // the connecting string actually point.
-    const center = new THREE.Box3().setFromObject(cloned).getCenter(new THREE.Vector3());
-    cloned.position.sub(center);
-    return cloned;
-  }, [scene, color, kiteVariant]);
-
-  const filteredAnimations = useMemo(
-    () => animations.map((clip) => filterClipToNodes(clip, kiteVariant.boneNames)),
-    [animations, kiteVariant]
-  );
-  const { actions } = useAnimations(filteredAnimations, kiteRef);
-
-  useEffect(() => {
-    const action = actions?.Animation;
-    if (!action) return;
-    if (reduced) {
-      action.stop();
-      return;
+  useFrame(({ clock, camera }) => {
+    const intro = entranceProgress(introStart, clock.elapsedTime, 0.3 + index * 0.15, 1.1, reduced);
+    if (groupRef.current) {
+      const bob = reduced ? 0 : Math.sin(clock.elapsedTime * 0.6 + bobSeed) * 0.16 * intro;
+      // A slow, wide side-to-side drift on top of the vertical bob — reads
+      // as the whole kite being gently pushed by the same wind gusts as the
+      // balloon (see BalloonCenterpiece), not just floating in place.
+      const drift = reduced ? 0 : Math.sin(clock.elapsedTime * 0.3 + bobSeed * 1.7) * 0.14 * intro;
+      const start = node.position.clone().add(new THREE.Vector3(0, -5, 0));
+      groupRef.current.position.lerpVectors(start, node.position, intro).add(new THREE.Vector3(drift, bob, 0));
+      groupRef.current.scale.setScalar(THREE.MathUtils.lerp(0.3, 1, intro));
     }
-    action.reset().play();
-    // THREE.AnimationAction is a mutable, stateful class instance (three.js's
-    // own imperative animation API), not React state — setting .time desyncs
-    // each kite instance's flutter phase so all four don't move in lockstep.
-    // eslint-disable-next-line react-hooks/immutability
-    action.time = bobSeed;
-    return () => {
-      action.stop();
-    };
-  }, [actions, reduced, bobSeed]);
-
-  useFrame((state) => {
-    if (!groupRef.current || reduced) return;
-    const bob = Math.sin(state.clock.elapsedTime * 0.6 + bobSeed) * 0.16;
-    groupRef.current.position.copy(node.position).add(new THREE.Vector3(0, bob, 0));
+    if (kiteRef.current && groupRef.current) {
+      const dx = camera.position.x - groupRef.current.position.x;
+      const dz = camera.position.z - groupRef.current.position.z;
+      kiteRef.current.rotation.y = Math.atan2(dx, dz);
+    }
   });
-
-  if (!kite) return null;
-
-  // A real kite's line trails down toward whoever's holding it, not sideways
-  // to another object in the sky — down and slightly out, per-instance drift
-  // (from the same seed as the bob) so the four don't all hang dead straight
-  // and parallel.
-  const stringLength = 2.6;
-  const driftX = Math.sin(bobSeed) * 0.6;
-  const driftZ = Math.cos(bobSeed) * 0.6;
 
   return (
     <group ref={groupRef} position={node.position}>
-      <QuadraticBezierLine
-        start={[0, 0, 0]}
-        end={[driftX, -stringLength, driftZ]}
-        mid={[driftX * 0.4, -stringLength * 0.55, driftZ * 0.4]}
-        color={color}
-        lineWidth={1}
-        transparent
-        opacity={hovered ? 0.55 : 0.26}
-      />
+      <Glow color={color} scale={hovered ? 1.4 : 1} opacity={hovered ? 0.5 : 0.3} />
       <group
         ref={kiteRef}
-        scale={hovered ? 0.26 : 0.22}
-        rotation={[-Math.PI / 2, 0, 0]}
+        scale={hovered ? 1.15 : 1}
         onPointerEnter={() => setHovered(true)}
         onPointerLeave={() => setHovered(false)}
       >
-        <primitive object={kite} />
+        <primitive object={holder} />
+        <KiteTail color={color} hovered={hovered} reduced={reduced} phaseOffset={phaseOffset} />
       </group>
-      <Html position={[0, -0.55, 0]} center distanceFactor={7} occlude={false}>
+      <Html position={[0, -KITE_TIP - 0.15, 0]} center distanceFactor={7} occlude={false}>
         <SatelliteLabel label={node.label} color={color} hovered={hovered} onHoverChange={setHovered} />
       </Html>
     </group>
@@ -924,9 +1123,9 @@ export function HeroOrbitScene() {
           )}
           {satellites.map((node, i) =>
             mode === "moon" ? (
-              <OrbitNode key={node.id} node={node} color={palette.nodes[node.id]} reduced={reduced} />
+              <OrbitNode key={node.id} node={node} color={palette.nodes[node.id]} reduced={reduced} index={i} />
             ) : (
-              <KiteSatellite key={node.id} node={node} color={palette.nodes[node.id]} variant={i} reduced={reduced} />
+              <KiteSatellite key={node.id} node={node} color={palette.nodes[node.id]} reduced={reduced} index={i} />
             )
           )}
         </Suspense>
