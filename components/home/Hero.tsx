@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 import { Container } from "@/components/ui/Container";
 import { WindowChrome } from "@/components/ui/WindowChrome";
 import { BrandGlow } from "@/components/ui/BrandGlow";
@@ -85,6 +86,46 @@ function ScrollCue() {
   );
 }
 
+/** Both light-mode 3D models are real downloads with attribution
+ * requirements, not procedural geometry — CC-BY-4.0 (commercial use fine)
+ * for the balloon, CC-BY-NC-4.0 for the kites. Only rendered once the theme
+ * is known client-side to avoid a light/dark hydration mismatch, and only in
+ * light mode since that's the only theme using either asset. */
+function ModelCredits() {
+  const { resolvedTheme } = useTheme();
+  // Same SSR-safe mount pattern as useReducedMotion in lib/motion.ts: stay
+  // false through the first client paint (matching the server, which knows
+  // no theme at all) so this never flashes/hydration-mismatches.
+  const hasMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+
+  if (!hasMounted || resolvedTheme !== "light") return null;
+
+  return (
+    <div className="pointer-events-auto absolute bottom-3 right-3 flex flex-col items-end gap-0.5 font-mono text-[9px] uppercase tracking-[0.06em] text-ink-faint/70">
+      <a
+        href="https://sketchfab.com/3d-models/hot-air-balloon-3861f77828a9460ca3875f9eef00cef4"
+        target="_blank"
+        rel="noreferrer"
+        className="hover:text-ink-soft hover:underline"
+      >
+        Hot Air Balloon by Jacob Thompson (CC BY 4.0)
+      </a>
+      <a
+        href="https://sketchfab.com/3d-models/kites-in-clouds-127390bafd6a40ca9b96f27d40548970"
+        target="_blank"
+        rel="noreferrer"
+        className="hover:text-ink-soft hover:underline"
+      >
+        Kites in Clouds by minhazmehedi (CC BY-NC 4.0)
+      </a>
+    </div>
+  );
+}
+
 export function Hero() {
   const { revealNav } = useNavReveal();
   const introRef = useRef<HTMLDivElement>(null);
@@ -120,10 +161,11 @@ export function Hero() {
         <HeroOrbit className="absolute inset-0" />
         <div className="pointer-events-none absolute inset-x-0 bottom-4 flex flex-col items-center gap-2 sm:bottom-6">
           <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-faint">
-            Drag to orbit · click a cluster to explore
+            Drag to orbit · pinch or ⌃+scroll to zoom · click a cluster to explore
           </span>
           <ScrollCue />
         </div>
+        <ModelCredits />
       </section>
 
       <section ref={introRef} className="relative overflow-hidden border-b border-line">

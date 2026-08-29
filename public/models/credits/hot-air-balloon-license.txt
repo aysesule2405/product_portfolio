@@ -1,0 +1,11 @@
+Model Information:
+* title:	Hot Air Balloon
+* source:	https://sketchfab.com/3d-models/hot-air-balloon-3861f77828a9460ca3875f9eef00cef4
+* author:	Jacob Thompson (https://sketchfab.com/jthomps)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Hot Air Balloon" (https://sketchfab.com/3d-models/hot-air-balloon-3861f77828a9460ca3875f9eef00cef4) by Jacob Thompson (https://sketchfab.com/jthomps) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
