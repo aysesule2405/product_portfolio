@@ -72,10 +72,16 @@ const MOON_POSITIONS: Record<SatelliteId, THREE.Vector3> = {
   community: new THREE.Vector3(1.5, -1.65, 1.5),
 };
 
+// "work" pulled outward (mainly in y/z, not x, to avoid pushing the whole
+// cluster wide enough to clip on narrow/mobile viewports) once the balloon
+// model's own scale grew (3.8 -> 5.8) without these positions being
+// revisited — it ended up sitting almost inside the enlarged basket instead
+// of beside it. The other three already had enough clearance at their
+// original spots.
 const BALLOON_POSITIONS: Record<SatelliteId, THREE.Vector3> = {
   practice: new THREE.Vector3(-1.9, 1.7, 1.9),
   experience: new THREE.Vector3(1.9, 2.0, 1.3),
-  work: new THREE.Vector3(0.3, -2.4, 2.0),
+  work: new THREE.Vector3(0.3, -3.1, 2.6),
   community: new THREE.Vector3(1.75, -1.5, 0.6),
 };
 
@@ -140,6 +146,23 @@ function entranceProgress(
   return easeOutCubic(t);
 }
 
+const CLICK_PUNCH_DURATION = 0.4;
+
+/** A quick scale-up-then-settle pulse starting the instant `active` goes
+ * true — the click "punch" flourish, shared by both satellite variants. A
+ * single sine hump (0 at both ends, peak at the midpoint) rather than a
+ * spring: cheap, and it can't get caught mid-oscillation since the page
+ * navigates away right as it finishes. */
+function clickPunchScale(startRef: { current: number | null }, elapsedTime: number, active: boolean) {
+  if (!active) {
+    startRef.current = null;
+    return 1;
+  }
+  if (startRef.current === null) startRef.current = elapsedTime;
+  const t = THREE.MathUtils.clamp((elapsedTime - startRef.current) / CLICK_PUNCH_DURATION, 0, 1);
+  return 1 + Math.sin(t * Math.PI) * 0.4;
+}
+
 function useGlowTexture() {
   return useMemo(() => {
     const size = 128;
@@ -159,19 +182,69 @@ function useGlowTexture() {
   }, []);
 }
 
-function Glow({ color, scale, opacity = 0.85 }: { color: string; scale: number; opacity?: number }) {
+/** A much softer, wider falloff than the core glow texture — layered behind
+ * it, this is what actually reads as "light spilling into the scene" rather
+ * than a hard-edged disc. Real screen-space bloom would do this job, but
+ * UnrealBloomPass's stock combine shader doesn't preserve alpha and breaks
+ * this canvas's required transparency (verified against a real screenshot,
+ * not assumed) — two layered additive sprites get most of the same visual
+ * payoff with none of that risk. */
+function useHaloTexture() {
+  return useMemo(() => {
+    const size = 128;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d")!;
+    const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+    gradient.addColorStop(0, "rgba(255,255,255,0.5)");
+    gradient.addColorStop(0.35, "rgba(255,255,255,0.2)");
+    gradient.addColorStop(0.7, "rgba(255,255,255,0.06)");
+    gradient.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    return texture;
+  }, []);
+}
+
+function Glow({
+  color,
+  scale,
+  opacity = 0.85,
+  position = [0, 0, 0],
+}: {
+  color: string;
+  scale: number;
+  opacity?: number;
+  position?: [number, number, number];
+}) {
   const texture = useGlowTexture();
+  const haloTexture = useHaloTexture();
   return (
-    <sprite scale={[scale, scale, 1]}>
-      <spriteMaterial
-        map={texture}
-        color={color}
-        transparent
-        opacity={opacity}
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
-      />
-    </sprite>
+    <>
+      <sprite position={position} scale={[scale * 2.6, scale * 2.6, 1]}>
+        <spriteMaterial
+          map={haloTexture}
+          color={color}
+          transparent
+          opacity={opacity * 0.55}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </sprite>
+      <sprite position={position} scale={[scale, scale, 1]}>
+        <spriteMaterial
+          map={texture}
+          color={color}
+          transparent
+          opacity={opacity}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </sprite>
+    </>
   );
 }
 
@@ -648,11 +721,13 @@ function SatelliteLabel({
   color,
   hovered,
   onHoverChange,
+  onActivate,
 }: {
   label: string;
   color: string;
   hovered: boolean;
   onHoverChange: (hovered: boolean) => void;
+  onActivate: () => void;
 }) {
   return (
     <a
@@ -661,6 +736,14 @@ function SatelliteLabel({
       onPointerLeave={() => onHoverChange(false)}
       onFocus={() => onHoverChange(true)}
       onBlur={() => onHoverChange(false)}
+      onClick={(e) => {
+        // A quick, satisfying "punch" flourish on the satellite itself
+        // (scale + glow burst, see the caller's justClicked state) reads as
+        // a real response to the click, not just an instant page-jump — the
+        // navigation itself still happens, just a beat later.
+        e.preventDefault();
+        onActivate();
+      }}
       className="pointer-events-auto block whitespace-nowrap rounded-full px-2.5 py-1 font-mono text-[13px] uppercase tracking-[0.1em] backdrop-blur-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       style={{
         color: hovered ? color : "var(--ink-soft)",
@@ -670,6 +753,26 @@ function SatelliteLabel({
       {label}
     </a>
   );
+}
+
+const SATELLITE_ACTIVATE_DELAY_MS = 280;
+
+/** Shared by both satellite variants: preventDefault'ing the label's click
+ * and navigating on a short timer instead gives the punch animation time to
+ * actually play before the page jumps to #field-map. */
+function useSatelliteActivate(reduced: boolean) {
+  const [justClicked, setJustClicked] = useState(false);
+  const activate = () => {
+    if (reduced) {
+      window.location.hash = "field-map";
+      return;
+    }
+    setJustClicked(true);
+    window.setTimeout(() => {
+      window.location.hash = "field-map";
+    }, SATELLITE_ACTIVATE_DELAY_MS);
+  };
+  return { justClicked, activate };
 }
 
 function OrbitNode({
@@ -687,21 +790,25 @@ function OrbitNode({
   const groupRef = useRef<THREE.Group>(null);
   const sphereRef = useRef<THREE.Mesh>(null);
   const introStart = useRef<number | null>(null);
+  const punchStart = useRef<number | null>(null);
   const { colorTexture, bumpTexture } = useSatelliteTextures(node.id, color);
   const bobSeed = useMemo(() => (node.id.charCodeAt(0) % 7) * 0.9, [node.id]);
   const spinSpeed = useMemo(() => 0.25 + (node.id.charCodeAt(1) % 5) * 0.08, [node.id]);
   const radius = 0.46;
+  const { justClicked, activate } = useSatelliteActivate(reduced);
+  const punchRef = useRef(1);
 
   useFrame((state, delta) => {
     // Each satellite rises into its resting spot below the centerpiece's own
     // entrance, staggered by index — a cascading "one after another" arrival
     // rather than the whole scene popping in at once.
     const intro = entranceProgress(introStart, state.clock.elapsedTime, 0.3 + index * 0.15, 1.1, reduced);
+    punchRef.current = clickPunchScale(punchStart, state.clock.elapsedTime, justClicked);
     if (groupRef.current) {
       const bob = reduced ? 0 : Math.sin(state.clock.elapsedTime * 0.7 + bobSeed) * 0.08 * intro;
       const start = node.position.clone().add(new THREE.Vector3(0, -5, 0));
       groupRef.current.position.lerpVectors(start, node.position, intro).add(new THREE.Vector3(0, bob, 0));
-      groupRef.current.scale.setScalar(THREE.MathUtils.lerp(0.3, 1, intro));
+      groupRef.current.scale.setScalar(THREE.MathUtils.lerp(0.3, 1, intro) * punchRef.current);
     }
     if (sphereRef.current && !reduced) {
       sphereRef.current.rotation.y += delta * spinSpeed;
@@ -722,10 +829,10 @@ function OrbitNode({
         dashed
         dashScale={6}
         transparent
-        opacity={hovered ? 0.65 : 0.3}
+        opacity={hovered || justClicked ? 0.65 : 0.3}
       />
-      <Glow color={color} scale={hovered ? radius * 4.2 : radius * 3} opacity={hovered ? 0.85 : 0.7} />
-      <pointLight color={color} intensity={hovered ? 5 : 2.6} distance={2.4} position={[0.4, 0.3, 1]} />
+      <Glow color={color} scale={(hovered ? radius * 4.2 : radius * 3) * (justClicked ? 1.5 : 1)} opacity={hovered || justClicked ? 0.85 : 0.7} />
+      <pointLight color={color} intensity={(hovered ? 5 : 2.6) * (justClicked ? 1.6 : 1)} distance={2.4} position={[0.4, 0.3, 1]} />
       <group scale={hovered ? 1.12 : 1}>
         <mesh
           ref={sphereRef}
@@ -744,13 +851,13 @@ function OrbitNode({
             sheen={0.5}
             sheenColor={color}
             emissive={color}
-            emissiveIntensity={0.28}
+            emissiveIntensity={justClicked ? 0.55 : 0.28}
           />
         </mesh>
-        <RimGlow color={color} radius={radius} glowIntensity={hovered ? 1.9 : 1.3} />
+        <RimGlow color={color} radius={radius} glowIntensity={hovered || justClicked ? 1.9 : 1.3} />
       </group>
       <Html position={[0, -radius - 0.34, 0]} center distanceFactor={7} occlude={false}>
-        <SatelliteLabel label={node.label} color={color} hovered={hovered} onHoverChange={setHovered} />
+        <SatelliteLabel label={node.label} color={color} hovered={hovered} onHoverChange={setHovered} onActivate={activate} />
       </Html>
     </group>
   );
@@ -770,6 +877,16 @@ useGLTF.preload(KITE_URL);
 const KITE_TARGET_HEIGHT = 1.5;
 const KITE_TIP = KITE_TARGET_HEIGHT / 2;
 const KITE_CORRECTION_Y_DEG = 90;
+// Each model's small tail-flag decoration hangs below the diamond's own
+// bottom point, so centering on the whole mesh's bounding box (as
+// useKiteVariant does, to get a reliable bottom-tip for the rope) pulls
+// that center down below the diamond's actual visual middle — the glow
+// needs a correction or it reads as floating low/off-center against the
+// kite itself. The two source meshes carry noticeably different flag-to-
+// diamond proportions (measured off real renders: variant 0's cross-spar
+// sits ~6% of the total height above its bbox center, variant 1's sits
+// ~19% above), so this is per-variant rather than one shared constant.
+const KITE_GLOW_Y_OFFSET: [number, number] = [KITE_TARGET_HEIGHT * 0.06, KITE_TARGET_HEIGHT * 0.19];
 
 const KITE_VARIANTS = [
   { armature: "Armature_7", nodes: ["Bone_4", "Bone002_3", "Object_12"] },
@@ -997,13 +1114,16 @@ function KiteSatellite({
   const groupRef = useRef<THREE.Group>(null);
   const kiteRef = useRef<THREE.Group>(null);
   const introStart = useRef<number | null>(null);
+  const punchStart = useRef<number | null>(null);
   const bobSeed = useMemo(() => (node.id.charCodeAt(0) % 7) * 0.9, [node.id]);
   const phaseOffset = useMemo(() => (hashString(node.id) % 500) / 100, [node.id]);
   const variantIndex = (index % 2) as 0 | 1;
   const holder = useKiteVariant(variantIndex, color, phaseOffset, reduced, hovered);
+  const { justClicked, activate } = useSatelliteActivate(reduced);
 
   useFrame(({ clock, camera }) => {
     const intro = entranceProgress(introStart, clock.elapsedTime, 0.3 + index * 0.15, 1.1, reduced);
+    const punch = clickPunchScale(punchStart, clock.elapsedTime, justClicked);
     if (groupRef.current) {
       const bob = reduced ? 0 : Math.sin(clock.elapsedTime * 0.6 + bobSeed) * 0.16 * intro;
       // A slow, wide side-to-side drift on top of the vertical bob — reads
@@ -1012,21 +1132,26 @@ function KiteSatellite({
       const drift = reduced ? 0 : Math.sin(clock.elapsedTime * 0.3 + bobSeed * 1.7) * 0.14 * intro;
       const start = node.position.clone().add(new THREE.Vector3(0, -5, 0));
       groupRef.current.position.lerpVectors(start, node.position, intro).add(new THREE.Vector3(drift, bob, 0));
-      groupRef.current.scale.setScalar(THREE.MathUtils.lerp(0.3, 1, intro));
+      groupRef.current.scale.setScalar(THREE.MathUtils.lerp(0.3, 1, intro) * punch);
     }
     if (kiteRef.current && groupRef.current) {
       const dx = camera.position.x - groupRef.current.position.x;
       const dz = camera.position.z - groupRef.current.position.z;
       kiteRef.current.rotation.y = Math.atan2(dx, dz);
+      kiteRef.current.scale.setScalar(hovered ? 1.15 : 1);
     }
   });
 
   return (
     <group ref={groupRef} position={node.position}>
-      <Glow color={color} scale={hovered ? 1.4 : 1} opacity={hovered ? 0.5 : 0.3} />
+      <Glow
+        color={color}
+        scale={(hovered ? 1.4 : 1) * (justClicked ? 1.6 : 1)}
+        opacity={hovered || justClicked ? 0.5 : 0.3}
+        position={[0, KITE_GLOW_Y_OFFSET[variantIndex], 0]}
+      />
       <group
         ref={kiteRef}
-        scale={hovered ? 1.15 : 1}
         onPointerEnter={() => setHovered(true)}
         onPointerLeave={() => setHovered(false)}
       >
@@ -1034,9 +1159,89 @@ function KiteSatellite({
         <KiteTail color={color} hovered={hovered} reduced={reduced} phaseOffset={phaseOffset} />
       </group>
       <Html position={[0, -KITE_TIP - 0.15, 0]} center distanceFactor={7} occlude={false}>
-        <SatelliteLabel label={node.label} color={color} hovered={hovered} onHoverChange={setHovered} />
+        <SatelliteLabel label={node.label} color={color} hovered={hovered} onHoverChange={setHovered} onActivate={activate} />
       </Html>
     </group>
+  );
+}
+
+const DUST_COUNT = 70;
+
+function useDustTexture() {
+  return useMemo(() => {
+    const size = 64;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d")!;
+    const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+    gradient.addColorStop(0, "rgba(255,255,255,1)");
+    gradient.addColorStop(0.4, "rgba(255,255,255,0.5)");
+    gradient.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    return texture;
+  }, []);
+}
+
+function useDustLayout(seed: string) {
+  return useMemo(() => {
+    const rand = mulberry32(hashString(seed));
+    const positions = new Float32Array(DUST_COUNT * 3);
+    const seeds = new Float32Array(DUST_COUNT);
+    for (let i = 0; i < DUST_COUNT; i++) {
+      positions[i * 3] = (rand() - 0.5) * 17;
+      positions[i * 3 + 1] = (rand() - 0.5) * 11;
+      positions[i * 3 + 2] = (rand() - 0.5) * 9 + 1.5;
+      seeds[i] = rand() * 10;
+    }
+    return { positions, seeds };
+  }, [seed]);
+}
+
+/** Slow-drifting sparkle motes filling the space between the centerpiece
+ * and its satellites — dark mode already has drei's Stars for this kind of
+ * ambient depth, but the balloon/kite scene had nothing occupying that
+ * space at all. A single THREE.Points draw call, not per-particle sprites,
+ * so the extra atmosphere is effectively free. */
+function AtmosphereDust({ color, seed, size, opacity, reduced }: { color: string; seed: string; size: number; opacity: number; reduced: boolean }) {
+  const texture = useDustTexture();
+  const { positions, seeds } = useDustLayout(seed);
+  const basePositions = useMemo(() => Float32Array.from(positions), [positions]);
+  const geometryRef = useRef<THREE.BufferGeometry>(null);
+
+  useFrame((state) => {
+    if (reduced || !geometryRef.current) return;
+    const posAttr = geometryRef.current.attributes.position as THREE.BufferAttribute;
+    const t = state.clock.elapsedTime;
+    for (let i = 0; i < DUST_COUNT; i++) {
+      const s = seeds[i];
+      const x = basePositions[i * 3] + Math.cos(t * 0.06 + s) * 0.5;
+      const y = basePositions[i * 3 + 1] + Math.sin(t * 0.08 + s) * 0.7;
+      const z = basePositions[i * 3 + 2];
+      posAttr.setXYZ(i, x, y, z);
+    }
+    posAttr.needsUpdate = true;
+  });
+
+  return (
+    <points>
+      <bufferGeometry ref={geometryRef}>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} count={DUST_COUNT} itemSize={3} />
+      </bufferGeometry>
+      <pointsMaterial
+        map={texture}
+        color={color}
+        size={size}
+        sizeAttenuation
+        transparent
+        opacity={opacity}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+      />
+    </points>
   );
 }
 
@@ -1106,6 +1311,10 @@ export function HeroOrbitScene() {
         camera={{ position: [0, 0, 14.5], fov: 40 }}
         frameloop={reduced ? "demand" : "always"}
         style={{ touchAction: "pan-y" }}
+        onCreated={({ gl }) => {
+          gl.toneMapping = THREE.ACESFilmicToneMapping;
+          gl.toneMappingExposure = 1.15;
+        }}
       >
         {/* Lower ambient for the moon on purpose — deep, real shadow inside
             each crater is what sells the relief. The balloon scene wants a
@@ -1113,8 +1322,13 @@ export function HeroOrbitScene() {
         <ambientLight intensity={mode === "moon" ? 0.3 : 0.7} />
         <pointLight position={[5, 3.5, 6]} intensity={mode === "moon" ? 12 : 18} distance={20} color={palette.keyLight} />
         {mode === "moon" ? (
-          <Stars radius={20} depth={28} count={reduced ? 250 : 700} factor={1.6} saturation={0} fade speed={reduced ? 0 : 0.6} />
-        ) : null}
+          <>
+            <Stars radius={20} depth={28} count={reduced ? 250 : 700} factor={1.6} saturation={0} fade speed={reduced ? 0 : 0.6} />
+            <AtmosphereDust color="#bcd4ff" seed="dust-moon" size={0.1} opacity={0.55} reduced={reduced} />
+          </>
+        ) : (
+          <AtmosphereDust color="#fff3d6" seed="dust-balloon" size={0.09} opacity={0.4} reduced={reduced} />
+        )}
         <Suspense fallback={null}>
           {mode === "moon" ? (
             <Centerpiece color={palette.keyLight} rimColor={palette.rim} reduced={reduced} />
