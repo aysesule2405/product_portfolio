@@ -2,9 +2,11 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Html, OrbitControls, QuadraticBezierLine, Stars, useGLTF } from "@react-three/drei";
+import { Html, OrbitControls, QuadraticBezierLine, Stars, useGLTF, useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
+import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useReducedMotion } from "@/lib/motion";
 
@@ -62,6 +64,18 @@ const SATELLITES = [
 
 type SatelliteId = (typeof SATELLITES)[number]["id"];
 
+/** Practice and Work already have real, dedicated pages (the same ones the
+ * top nav's practice.md/work.tsx tabs point to) — those satellites go
+ * straight there. Experience and Community are just two of the four
+ * clusters inside the single field-map visualization on the home page, not
+ * separate pages of their own, so they still land on #field-map. */
+const SATELLITE_HREFS: Record<SatelliteId, string> = {
+  practice: "/visual-practice",
+  experience: "/#field-map",
+  work: "/work",
+  community: "/#field-map",
+};
+
 /** Positions differ per centerpiece: the moon's satellites orbit a compact
  * sphere, while the balloon's kites need more spread and height variation to
  * read as flying alongside a tall, asymmetric shape instead of a ball. */
@@ -71,6 +85,16 @@ const MOON_POSITIONS: Record<SatelliteId, THREE.Vector3> = {
   work: new THREE.Vector3(0.25, -2.15, 2.75),
   community: new THREE.Vector3(1.5, -1.65, 1.5),
 };
+
+/** Every category satellite wears the same real moon photography (see
+ * public/textures/planets/moon.jpg — extracted from a downloaded Sketchfab
+ * model, cropped to isolate the usable equirect band from its pole-cap
+ * atlas region) so they read as little moons orbiting the centerpiece, not
+ * a mismatched set of different planets. The five real planets are reserved
+ * for the scroll-triggered flythrough (see ScrollPlanetsField) instead of
+ * living here as permanent satellites. */
+const SATELLITE_TEXTURE = "/textures/planets/moon.jpg";
+const SATELLITE_RADIUS = 0.46;
 
 // "work" pulled outward (mainly in y/z, not x, to avoid pushing the whole
 // cluster wide enough to clip on narrow/mobile viewports) once the balloon
@@ -380,26 +404,6 @@ function drawMaria(
   }
 }
 
-function drawSpeckle(
-  cctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  rand: () => number,
-  count: number,
-  floorHex = "#140e04"
-) {
-  const fl = hexToRgb(floorHex);
-  for (let i = 0; i < count; i++) {
-    const x = rand() * width;
-    const y = rand() * height;
-    const r = 0.4 + rand() * 1.3;
-    cctx.fillStyle = `rgba(${fl.r},${fl.g},${fl.b},${0.05 + rand() * 0.07})`;
-    cctx.beginPath();
-    cctx.arc(x, y, r, 0, Math.PI * 2);
-    cctx.fill();
-  }
-}
-
 /** Derives a real per-pixel normal map from a grayscale height canvas via a
  * central-difference gradient — this is what actually makes crater relief
  * look sculpted under lighting, versus the coarser bumpMap approximation
@@ -674,46 +678,6 @@ function BalloonCenterpiece({ reduced }: { reduced: boolean }) {
   );
 }
 
-/** A small rocky surface for the orbiting satellites — same crater technique
- * as the centerpiece moon, scaled down, so they read as little planetoids
- * rather than flat color swatches. Kept theme-independent (always cratered,
- * never a mini sun) since these represent categories, not celestial bodies. */
-function useSatelliteTextures(seedKey: string, baseColor: string) {
-  return useMemo(() => {
-    const width = 512;
-    const height = 256;
-    const rand = mulberry32(hashString(seedKey));
-    const highlight = lighten(baseColor, 0.6);
-
-    const colorCanvas = document.createElement("canvas");
-    colorCanvas.width = width;
-    colorCanvas.height = height;
-    const cctx = colorCanvas.getContext("2d")!;
-    cctx.fillStyle = baseColor;
-    cctx.fillRect(0, 0, width, height);
-
-    const bumpCanvas = document.createElement("canvas");
-    bumpCanvas.width = width;
-    bumpCanvas.height = height;
-    const bctx = bumpCanvas.getContext("2d")!;
-    bctx.fillStyle = "#808080";
-    bctx.fillRect(0, 0, width, height);
-
-    drawMaria(cctx, width, height, rand, 2);
-    drawCraters(cctx, bctx, width, height, rand, 30, 5, 22, highlight);
-    drawSpeckle(cctx, width, height, rand, 200);
-
-    const colorTexture = new THREE.CanvasTexture(colorCanvas);
-    colorTexture.colorSpace = THREE.SRGBColorSpace;
-    colorTexture.needsUpdate = true;
-
-    const bumpTexture = new THREE.CanvasTexture(bumpCanvas);
-    bumpTexture.needsUpdate = true;
-
-    return { colorTexture, bumpTexture };
-  }, [seedKey, baseColor]);
-}
-
 /** The clickable/focusable label every satellite (planet or kite) shows
  * below itself — pulled out since both variants need the identical anchor. */
 function SatelliteLabel({
@@ -722,16 +686,18 @@ function SatelliteLabel({
   hovered,
   onHoverChange,
   onActivate,
+  href,
 }: {
   label: string;
   color: string;
   hovered: boolean;
   onHoverChange: (hovered: boolean) => void;
   onActivate: () => void;
+  href: string;
 }) {
   return (
     <a
-      href="#field-map"
+      href={href}
       onPointerEnter={() => onHoverChange(true)}
       onPointerLeave={() => onHoverChange(false)}
       onFocus={() => onHoverChange(true)}
@@ -759,20 +725,76 @@ const SATELLITE_ACTIVATE_DELAY_MS = 280;
 
 /** Shared by both satellite variants: preventDefault'ing the label's click
  * and navigating on a short timer instead gives the punch animation time to
- * actually play before the page jumps to #field-map. */
-function useSatelliteActivate(reduced: boolean) {
+ * actually play before the page jumps to its destination — the same
+ * client-side router used everywhere else on the site, so a cross-page
+ * satellite (practice, work) transitions instead of hard-reloading. */
+function useSatelliteActivate(reduced: boolean, href: string) {
+  const router = useRouter();
   const [justClicked, setJustClicked] = useState(false);
   const activate = () => {
     if (reduced) {
-      window.location.hash = "field-map";
+      router.push(href);
       return;
     }
     setJustClicked(true);
     window.setTimeout(() => {
-      window.location.hash = "field-map";
+      router.push(href);
     }, SATELLITE_ACTIVATE_DELAY_MS);
   };
   return { justClicked, activate };
+}
+
+useTexture.preload(SATELLITE_TEXTURE);
+
+/** A soft radial-gradient canvas, box-projected onto a flat RingGeometry —
+ * Saturn's headline feature, built the same procedural way as the site's
+ * other soft textures rather than reusing the source model's own "ring,"
+ * which turned out to be ~50 repeated mesh instances (the single biggest
+ * contributor to that file's 150MB size). */
+function useSaturnRingTexture() {
+  return useMemo(() => {
+    const size = 256;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d")!;
+    const c = size / 2;
+    const gradient = ctx.createRadialGradient(c, c, 0, c, c, c);
+    gradient.addColorStop(0, "rgba(0,0,0,0)");
+    gradient.addColorStop(0.5, "rgba(0,0,0,0)");
+    gradient.addColorStop(0.56, "rgba(198,180,150,0.92)");
+    gradient.addColorStop(0.64, "rgba(226,212,184,0.55)");
+    gradient.addColorStop(0.7, "rgba(148,134,112,0.85)");
+    gradient.addColorStop(0.79, "rgba(230,216,188,0.95)");
+    gradient.addColorStop(0.87, "rgba(168,152,126,0.4)");
+    gradient.addColorStop(0.95, "rgba(212,198,170,0.7)");
+    gradient.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    return texture;
+  }, []);
+}
+
+/** `fadeRef` drives opacity imperatively each frame instead of as a React
+ * prop — this only ever appears inside ScrollPlanet, whose own fade value
+ * is itself computed per-frame in a ref (not state) to avoid a re-render on
+ * every scroll tick, so the ring needs the same imperative path. */
+function SaturnRing({ planetRadius, fadeRef }: { planetRadius: number; fadeRef: { current: number } }) {
+  const texture = useSaturnRingTexture();
+  const materialRef = useRef<THREE.MeshBasicMaterial>(null);
+
+  useFrame(() => {
+    if (materialRef.current) materialRef.current.opacity = 0.85 * fadeRef.current;
+  });
+
+  return (
+    <mesh rotation={[Math.PI / 2 - 0.42, 0, 0.22]}>
+      <ringGeometry args={[planetRadius * 1.4, planetRadius * 2.5, 64]} />
+      <meshBasicMaterial ref={materialRef} map={texture} transparent opacity={0} side={THREE.DoubleSide} depthWrite={false} />
+    </mesh>
+  );
 }
 
 function OrbitNode({
@@ -791,12 +813,23 @@ function OrbitNode({
   const sphereRef = useRef<THREE.Mesh>(null);
   const introStart = useRef<number | null>(null);
   const punchStart = useRef<number | null>(null);
-  const { colorTexture, bumpTexture } = useSatelliteTextures(node.id, color);
+  const texture = useTexture(SATELLITE_TEXTURE);
   const bobSeed = useMemo(() => (node.id.charCodeAt(0) % 7) * 0.9, [node.id]);
-  const spinSpeed = useMemo(() => 0.25 + (node.id.charCodeAt(1) % 5) * 0.08, [node.id]);
-  const radius = 0.46;
-  const { justClicked, activate } = useSatelliteActivate(reduced);
+  const spinSpeed = useMemo(() => 0.15 + (node.id.charCodeAt(1) % 5) * 0.05, [node.id]);
+  const tilt = useMemo(() => ((node.id.charCodeAt(0) % 5) - 2) * 0.08, [node.id]);
+  const radius = SATELLITE_RADIUS;
+  const { justClicked, activate } = useSatelliteActivate(reduced, SATELLITE_HREFS[node.id]);
   const punchRef = useRef(1);
+
+  useEffect(() => {
+    // THREE.Texture is a mutable class instance (three.js's own imperative
+    // API), not React state — real photo textures need sRGB decoding to
+    // render at correct brightness/contrast, and drei's useTexture doesn't
+    // default it for us the way CanvasTexture elsewhere in this file does.
+    // eslint-disable-next-line react-hooks/immutability
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.needsUpdate = true;
+  }, [texture]);
 
   useFrame((state, delta) => {
     // Each satellite rises into its resting spot below the centerpiece's own
@@ -831,35 +864,133 @@ function OrbitNode({
         transparent
         opacity={hovered || justClicked ? 0.65 : 0.3}
       />
-      <Glow color={color} scale={(hovered ? radius * 4.2 : radius * 3) * (justClicked ? 1.5 : 1)} opacity={hovered || justClicked ? 0.85 : 0.7} />
-      <pointLight color={color} intensity={(hovered ? 5 : 2.6) * (justClicked ? 1.6 : 1)} distance={2.4} position={[0.4, 0.3, 1]} />
-      <group scale={hovered ? 1.12 : 1}>
+      {/* Real photo textures already look interesting on their own — unlike
+          the old flat-colored crater spheres, they don't need a strong
+          colored halo or a close colored light to sell them, and both would
+          just wash the actual surface color out. These stay small/neutral
+          at rest and only lean into the category color as UI feedback on
+          hover or click. */}
+      <Glow color={color} scale={(hovered ? radius * 3.4 : radius * 1.8) * (justClicked ? 1.4 : 1)} opacity={hovered || justClicked ? 0.6 : 0.22} />
+      <pointLight color={hovered || justClicked ? color : "#fff6de"} intensity={(hovered ? 2.4 : 0.6) * (justClicked ? 1.5 : 1)} distance={2.6} position={[0.4, 0.3, 1]} />
+      <group scale={hovered ? 1.12 : 1} rotation={[0, 0, tilt]}>
         <mesh
           ref={sphereRef}
           onPointerEnter={() => setHovered(true)}
           onPointerLeave={() => setHovered(false)}
         >
-          <sphereGeometry args={[radius, 32, 32]} />
-          <meshPhysicalMaterial
-            map={colorTexture}
-            bumpMap={bumpTexture}
-            bumpScale={0.03}
-            roughness={0.55}
-            metalness={0.06}
-            clearcoat={0.65}
-            clearcoatRoughness={0.25}
-            sheen={0.5}
-            sheenColor={color}
+          <sphereGeometry args={[radius, 48, 48]} />
+          <meshStandardMaterial
+            map={texture}
+            roughness={0.85}
+            metalness={0.02}
             emissive={color}
-            emissiveIntensity={justClicked ? 0.55 : 0.28}
+            emissiveIntensity={justClicked ? 0.18 : hovered ? 0.1 : 0.02}
           />
         </mesh>
-        <RimGlow color={color} radius={radius} glowIntensity={hovered || justClicked ? 1.9 : 1.3} />
+        <RimGlow color={color} radius={radius} glowIntensity={hovered || justClicked ? 1.4 : 0.7} />
       </group>
       <Html position={[0, -radius - 0.34, 0]} center distanceFactor={7} occlude={false}>
-        <SatelliteLabel label={node.label} color={color} hovered={hovered} onHoverChange={setHovered} onActivate={activate} />
+        <SatelliteLabel
+          label={node.label}
+          color={color}
+          hovered={hovered}
+          onHoverChange={setHovered}
+          onActivate={activate}
+          href={SATELLITE_HREFS[node.id]}
+        />
       </Html>
     </group>
+  );
+}
+
+interface ScrollPlanetSpec {
+  id: string;
+  texture: string;
+  radius: number;
+  position: readonly [number, number, number];
+  color: string;
+  hasRing?: boolean;
+}
+
+/** The five real planets extracted from the downloaded models — reserved
+ * entirely for the scroll-triggered camera flythrough (see Rig), not the
+ * static satellite cluster. Spread across the depth the flythrough's own
+ * camera target travels (0 to -7, see Rig) so scrolling actually carries
+ * the camera past them, staggered further apart than that range so the
+ * closer ones arrive early in the scroll and the rest keep unfolding. */
+const SCROLL_PLANETS: readonly ScrollPlanetSpec[] = [
+  { id: "mars", texture: "/textures/planets/mars.jpg", radius: 0.5, position: [-3.2, 1.1, -3.6], color: "#ff8a5c" },
+  { id: "jupiter", texture: "/textures/planets/jupiter.jpg", radius: 0.95, position: [3.4, -0.7, -5.4], color: "#e8c07a" },
+  { id: "saturn", texture: "/textures/planets/saturn.jpg", radius: 0.75, position: [-4.2, -1.5, -7.4], color: "#e8d3a0", hasRing: true },
+  { id: "uranus", texture: "/textures/planets/uranus.jpg", radius: 0.55, position: [2.8, 1.9, -8.8], color: "#8fd6e8" },
+  { id: "neptune", texture: "/textures/planets/neptune.jpg", radius: 0.62, position: [0.3, -2.3, -10.6], color: "#5c8fff" },
+];
+
+for (const planet of SCROLL_PLANETS) useTexture.preload(planet.texture);
+
+/** One planet that only ever appears as part of the scroll-triggered
+ * flythrough — fully transparent at rest, fading in (and slowly turning)
+ * as the user scrolls past the hero, never part of the static satellite
+ * cluster at all. `reduced` snaps it straight to visible/invisible instead
+ * of interpolating, matching this file's other scroll-driven motion. */
+function ScrollPlanet({
+  spec,
+  scrollProgress,
+  reduced,
+}: {
+  spec: ScrollPlanetSpec;
+  scrollProgress: { current: number };
+  reduced: boolean;
+}) {
+  const texture = useTexture(spec.texture);
+  const materialRef = useRef<THREE.MeshStandardMaterial>(null);
+  const sphereRef = useRef<THREE.Mesh>(null);
+  const fadeRef = useRef(0);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.needsUpdate = true;
+  }, [texture]);
+
+  useFrame((state, delta) => {
+    if (sphereRef.current && !reduced) sphereRef.current.rotation.y += delta * 0.1;
+    fadeRef.current = reduced
+      ? scrollProgress.current > 0.05
+        ? 1
+        : 0
+      : THREE.MathUtils.clamp(scrollProgress.current / 0.65, 0, 1);
+    if (materialRef.current) materialRef.current.opacity = fadeRef.current;
+  });
+
+  return (
+    <group position={spec.position}>
+      <mesh ref={sphereRef}>
+        <sphereGeometry args={[spec.radius, 40, 40]} />
+        <meshStandardMaterial
+          ref={materialRef}
+          map={texture}
+          roughness={0.85}
+          metalness={0.02}
+          emissive={spec.color}
+          emissiveIntensity={0.05}
+          transparent
+          opacity={0}
+          depthWrite={false}
+        />
+      </mesh>
+      {spec.hasRing ? <SaturnRing planetRadius={spec.radius} fadeRef={fadeRef} /> : null}
+    </group>
+  );
+}
+
+function ScrollPlanetsField({ scrollProgress, reduced }: { scrollProgress: { current: number }; reduced: boolean }) {
+  return (
+    <>
+      {SCROLL_PLANETS.map((spec) => (
+        <ScrollPlanet key={spec.id} spec={spec} scrollProgress={scrollProgress} reduced={reduced} />
+      ))}
+    </>
   );
 }
 
@@ -1119,7 +1250,7 @@ function KiteSatellite({
   const phaseOffset = useMemo(() => (hashString(node.id) % 500) / 100, [node.id]);
   const variantIndex = (index % 2) as 0 | 1;
   const holder = useKiteVariant(variantIndex, color, phaseOffset, reduced, hovered);
-  const { justClicked, activate } = useSatelliteActivate(reduced);
+  const { justClicked, activate } = useSatelliteActivate(reduced, SATELLITE_HREFS[node.id]);
 
   useFrame(({ clock, camera }) => {
     const intro = entranceProgress(introStart, clock.elapsedTime, 0.3 + index * 0.15, 1.1, reduced);
@@ -1159,7 +1290,14 @@ function KiteSatellite({
         <KiteTail color={color} hovered={hovered} reduced={reduced} phaseOffset={phaseOffset} />
       </group>
       <Html position={[0, -KITE_TIP - 0.15, 0]} center distanceFactor={7} occlude={false}>
-        <SatelliteLabel label={node.label} color={color} hovered={hovered} onHoverChange={setHovered} onActivate={activate} />
+        <SatelliteLabel
+          label={node.label}
+          color={color}
+          hovered={hovered}
+          onHoverChange={setHovered}
+          onActivate={activate}
+          href={SATELLITE_HREFS[node.id]}
+        />
       </Html>
     </group>
   );
@@ -1245,10 +1383,37 @@ function AtmosphereDust({ color, seed, size, opacity, reduced }: { color: string
   );
 }
 
-function Rig({ reduced }: { reduced: boolean }) {
+/** Wraps the whole centerpiece+satellite cluster so scrolling past the hero
+ * reads as the solar system drifting away into the distance — shrinking,
+ * turning, and receding — rather than just sliding off-screen with the
+ * rest of the page. Adjusts scale/rotation/position directly instead of the
+ * camera or OrbitControls' own distance, so it can't fight the user's own
+ * drag/zoom state (OrbitControls recomputes camera.position from its own
+ * internal spherical coordinates every frame; anything set on the camera
+ * externally would just get overwritten). */
+function Rig({ reduced, scrollProgress }: { reduced: boolean; scrollProgress: { current: number } }) {
   const { invalidate } = useThree();
+  const controlsRef = useRef<OrbitControlsImpl>(null);
+
+  useFrame(() => {
+    const controls = controlsRef.current;
+    if (!controls || reduced) return;
+    // Camera flythrough as the hero scrolls out of view: push the orbit
+    // target deeper into the scene, past the moon and satellites.
+    // OrbitControls keeps the camera at a constant spherical offset from
+    // its target, so moving the target carries the camera forward with it
+    // — the "flying past the planets" sensation — without ever touching
+    // camera.position directly, which OrbitControls would just overwrite
+    // from its own internal spherical state on the next update() anyway.
+    // No explicit controls.update() here — drei's own OrbitControls already
+    // calls it once per frame at priority -1; running this at -2 just needs
+    // to land before that, not duplicate the work.
+    controls.target.z = THREE.MathUtils.lerp(0, -7, scrollProgress.current);
+  }, -2);
+
   return (
     <OrbitControls
+      ref={controlsRef}
       enableZoom
       minDistance={8}
       maxDistance={22}
@@ -1280,6 +1445,36 @@ export function HeroOrbitScene() {
       })),
     [mode]
   );
+
+  // Drives Rig's camera flythrough — a plain ref, not React state, since it
+  // needs to update every scroll frame without triggering a re-render;
+  // useFrame reads it directly instead. Progress is 0 while the hero is
+  // fully in view and reaches 1 once it's scrolled a full hero-height out
+  // of view.
+  const scrollProgressRef = useRef(0);
+  // Unlike scrollProgressRef, this DOES need to be state — it gates whether
+  // ScrollPlanetsField mounts at all. Five real-photo-textured spheres (plus
+  // Saturn's ring) sitting at opacity 0 still cost a full render pass every
+  // frame; deferring them until scrolling actually starts keeps that cost
+  // off the page entirely during first load and the very first scroll
+  // attempt, rather than paying for five invisible planets from frame one.
+  // Flips once and stays true — no need to unmount them again on scroll-up.
+  const [hasScrolled, setHasScrolled] = useState(false);
+  useEffect(() => {
+    const node = wrapperRef.current;
+    if (!node) return;
+    function updateScrollProgress() {
+      if (!node) return;
+      const rect = node.getBoundingClientRect();
+      const heroHeight = node.offsetHeight || 1;
+      const progress = THREE.MathUtils.clamp(-rect.top / heroHeight, 0, 1);
+      scrollProgressRef.current = progress;
+      if (progress > 0.01) setHasScrolled(true);
+    }
+    updateScrollProgress();
+    window.addEventListener("scroll", updateScrollProgress, { passive: true });
+    return () => window.removeEventListener("scroll", updateScrollProgress);
+  }, []);
 
   // A plain wheel/scroll should scroll the page — with the scene filling the
   // full-viewport hero, letting OrbitControls eat every wheel event would
@@ -1342,8 +1537,9 @@ export function HeroOrbitScene() {
               <KiteSatellite key={node.id} node={node} color={palette.nodes[node.id]} reduced={reduced} index={i} />
             )
           )}
+          {mode === "moon" && hasScrolled ? <ScrollPlanetsField scrollProgress={scrollProgressRef} reduced={reduced} /> : null}
         </Suspense>
-        <Rig reduced={reduced} />
+        <Rig reduced={reduced} scrollProgress={scrollProgressRef} />
       </Canvas>
     </div>
   );
