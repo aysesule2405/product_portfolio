@@ -8,6 +8,7 @@ import clsx from "clsx";
 import { TimelineLane, TimelineNode, TimelineNodeKind, ProblemCategory } from "@/lib/types";
 import { categoryColorVar } from "@/lib/category-color";
 import { categories } from "@/lib/data/categories";
+import { getFieldMapCategory } from "@/lib/data/field-map-categories";
 import { WavesBackground } from "@/components/celestial/WavesBackground";
 import { useSound } from "@/components/sound/SoundProvider";
 import { useReducedMotion } from "@/lib/motion";
@@ -16,40 +17,22 @@ const WIDTH = 1600;
 const HEIGHT = 1000;
 const FULLSCREEN_SVG_SCALE = 0.92;
 
-const CLUSTERS: { id: TimelineLane; label: string; cx: number; cy: number; spread: number; blurb: string }[] = [
-  {
-    id: "roots",
-    label: "Practice",
-    cx: 370,
-    cy: 285,
-    spread: 220,
-    blurb: "Ceramics, painting, and design — where the eye training started, long before product work.",
-  },
-  {
-    id: "experience",
-    label: "Experience",
-    cx: 1300,
-    cy: 220,
-    spread: 100,
-    blurb: "Two internships and a campus IT role — systems, data, and design put into production.",
-  },
-  {
-    id: "projects",
-    label: "Work",
-    cx: 1180,
-    cy: 720,
-    spread: 175,
-    blurb: "Seven shipped projects — AI tools, learning platforms, campus systems, and more.",
-  },
-  {
-    id: "community",
-    label: "Community",
-    cx: 320,
-    cy: 830,
-    spread: 205,
-    blurb: "Leading ACM-Women, GDSC, and Design Club — mentoring 70+ students along the way.",
-  },
+// Identity (label, blurb) comes from the shared field-map category source —
+// see lib/data/field-map-categories.ts — so it isn't hand-duplicated here and
+// in the home hero's 3D field map. cx/cy/spread are this SVG layout's own
+// concern and have no equivalent in the 3D scene, so they stay local.
+const CLUSTER_LAYOUT: { id: TimelineLane; cx: number; cy: number; spread: number }[] = [
+  { id: "roots", cx: 370, cy: 285, spread: 220 },
+  { id: "experience", cx: 1300, cy: 220, spread: 100 },
+  { id: "projects", cx: 1180, cy: 720, spread: 175 },
+  { id: "community", cx: 320, cy: 830, spread: 205 },
 ];
+
+const CLUSTERS: { id: TimelineLane; label: string; cx: number; cy: number; spread: number; blurb: string }[] =
+  CLUSTER_LAYOUT.map((layout) => {
+    const meta = getFieldMapCategory(layout.id);
+    return { ...layout, label: meta.label, blurb: meta.blurb };
+  });
 
 const POPOVER_WIDTH = 236;
 const POPOVER_HEIGHT = 168;

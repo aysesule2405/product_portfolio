@@ -1,0 +1,97 @@
+"use client";
+
+import Link from "next/link";
+import { useSyncExternalStore } from "react";
+import { useTheme } from "next-themes";
+import { FIELD_MAP_CATEGORIES, type FieldMapCategory } from "@/lib/data/field-map-categories";
+import type { TimelineLane } from "@/lib/types";
+
+export interface FieldMapSelection {
+  hoveredId: TimelineLane | null;
+  activeId: TimelineLane | null;
+}
+
+/** The hero's real navigation — four semantic links to the site's existing
+ * four categories. Deliberately NOT positioned as an overlay pinned to each
+ * 3D node's projected screen coordinate: that would need a live
+ * camera-projection bridge to stay correct across every viewport/aspect
+ * ratio (this scene's camera is fixed, so it's possible, but adds a second
+ * synced-position system for a decorative alignment gain). Instead this
+ * renders as its own bottom-anchored row, color-matched per category so the
+ * association with its floating counterpart in the scene still reads
+ * clearly. Statically imported into Hero.tsx (not part of the
+ * dynamically-imported WebGL module) and fully functional without it — the
+ * 3D nodes add hover/glow enhancement on top of this, they don't gate it.
+ * `resolvedTheme` is undefined until the client mount; this only affects
+ * which of the two (dark/light) tints get used for the color chip, not
+ * layout, so unlike ModelCredits there's no content to gate behind a mount
+ * guard beyond falling back to the dark tint (the site's own default
+ * theme) for that first paint. */
+export function FieldMapNav({
+  selection,
+  onHoverChange,
+  onActivate,
+}: {
+  selection: FieldMapSelection;
+  onHoverChange: (id: TimelineLane, hovered: boolean) => void;
+  onActivate: (category: FieldMapCategory) => void;
+}) {
+  const { resolvedTheme } = useTheme();
+  const hasMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+  const isLight = hasMounted && resolvedTheme === "light";
+
+  return (
+    <nav
+      aria-label="Field map categories"
+      // A single scrollable row rather than a wrapped grid — two stacked
+      // rows of cards on a narrow viewport eat enough vertical space to
+      // visually collide with the satellites floating above them (the
+      // scene fills the full hero height on every device; the nav is what
+      // needs to adapt). Matches the existing site convention for a
+      // horizontal strip that doesn't fit (see TopBar's own tab list).
+      // The trailing mask fade is the "this scrolls" affordance below the
+      // sm breakpoint, where the row doesn't fit; at sm and up every card
+      // fits unscrolled, so the mask is turned off rather than fading
+      // content that was never clipped.
+      className="pointer-events-auto flex w-full max-w-full snap-x items-stretch gap-2 overflow-x-auto px-3 [mask-image:linear-gradient(to_right,black_88%,transparent_100%)] sm:justify-center sm:gap-3 sm:[mask-image:none]"
+    >
+      {FIELD_MAP_CATEGORIES.map((category) => {
+        const color = isLight ? category.colorLight : category.colorDark;
+        const isHovered = selection.hoveredId === category.id;
+        const isActive = selection.activeId === category.id;
+        const highlighted = isHovered || isActive;
+        return (
+          <Link
+            key={category.id}
+            href={category.href}
+            onMouseEnter={() => onHoverChange(category.id, true)}
+            onMouseLeave={() => onHoverChange(category.id, false)}
+            onFocus={() => onHoverChange(category.id, true)}
+            onBlur={() => onHoverChange(category.id, false)}
+            onClick={(e) => {
+              e.preventDefault();
+              onActivate(category);
+            }}
+            className="motion-press flex w-[7.25rem] shrink-0 snap-start flex-col gap-0.5 rounded-xl border px-3 py-2 text-left backdrop-blur-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:w-auto sm:max-w-[11rem]"
+            style={{
+              borderColor: highlighted ? color : "var(--line)",
+              background: "color-mix(in srgb, var(--bg) 55%, transparent)",
+            }}
+          >
+            <span
+              className="font-mono text-[12px] uppercase tracking-[0.1em] transition-colors"
+              style={{ color: highlighted ? color : "var(--ink)" }}
+            >
+              {category.label}
+            </span>
+            <span className="text-[11px] leading-snug text-ink-faint">{category.shortDescription}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}

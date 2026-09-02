@@ -1,16 +1,27 @@
 "use client";
 
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
 import { Container } from "@/components/ui/Container";
 import { WindowChrome } from "@/components/ui/WindowChrome";
 import { BrandGlow } from "@/components/ui/BrandGlow";
 import { HeroOrbit } from "@/components/home/Hero3D";
+import { FieldMapNav } from "@/components/home/FieldMapNav";
 import { positioning } from "@/lib/data/positioning";
 import { useNavReveal } from "@/lib/nav-reveal-context";
 import { useReducedMotion } from "@/lib/motion";
+import type { TimelineLane } from "@/lib/types";
+import type { FieldMapCategory } from "@/lib/data/field-map-categories";
+
+/** How long the click "punch" flourish gets to play in the 3D scene before
+ * the real navigation actually fires — skipped entirely under reduced
+ * motion (see handleActivate below), which navigates immediately instead.
+ * Lives here (not components/home/orbit/) since this constant is needed by
+ * the semantic nav's own click handling, which must work whether or not the
+ * WebGL module has loaded. */
+const CATEGORY_ACTIVATE_DELAY_MS = 280;
 
 const focusAreas = [
   "Product building",
@@ -86,52 +97,40 @@ function ScrollCue() {
   );
 }
 
-/** Both the balloon and the kites are real downloads with attribution
- * requirements, not procedural geometry — the balloon is CC-BY-4.0
- * (commercial use fine); the kites are CC-BY-NC-4.0 (noncommercial only —
- * flagged to and knowingly accepted by the site owner for this hackathon
- * entry, which carries no purchase/licensing fee itself). Only rendered
- * once the theme is known client-side to avoid a light/dark hydration
- * mismatch, and only in light mode since that's the only theme using either
- * asset. */
-function ModelCredits() {
-  const { resolvedTheme } = useTheme();
-  // Same SSR-safe mount pattern as useReducedMotion in lib/motion.ts: stay
-  // false through the first client paint (matching the server, which knows
-  // no theme at all) so this never flashes/hydration-mismatches.
-  const hasMounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false
-  );
-
-  if (!hasMounted || resolvedTheme !== "light") return null;
-
-  return (
-    <div className="pointer-events-auto absolute bottom-3 right-3 flex flex-col items-end gap-0.5 font-mono text-[9px] uppercase tracking-[0.06em] text-ink-faint/70">
-      <a
-        href="https://sketchfab.com/3d-models/hot-air-balloon-3861f77828a9460ca3875f9eef00cef4"
-        target="_blank"
-        rel="noreferrer"
-        className="hover:text-ink-soft hover:underline"
-      >
-        Hot Air Balloon by Jacob Thompson (CC BY 4.0)
-      </a>
-      <a
-        href="https://sketchfab.com/3d-models/kites-in-clouds-127390bafd6a40ca9b96f27d40548970"
-        target="_blank"
-        rel="noreferrer"
-        className="hover:text-ink-soft hover:underline"
-      >
-        Kites in Clouds by minhazmehedi (CC BY-NC 4.0)
-      </a>
-    </div>
-  );
-}
-
 export function Hero() {
   const { revealNav } = useNavReveal();
   const introRef = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotion();
+  const router = useRouter();
+
+  // One shared source of truth for hover/active state — read by both the
+  // real semantic nav (FieldMapNav) and, once it loads, the decorative/
+  // hit-testing-enhanced 3D nodes inside HeroOrbit. Neither maintains its
+  // own independent hover state, so pointing at either one highlights both,
+  // and there's exactly one place (this component, statically rendered,
+  // not the dynamically-imported WebGL module) that owns real navigation.
+  const [hoveredId, setHoveredId] = useState<TimelineLane | null>(null);
+  const [activeId, setActiveId] = useState<TimelineLane | null>(null);
+
+  const handleHoverChange = useCallback((id: TimelineLane, hovered: boolean) => {
+    setHoveredId((prev) => (hovered ? id : prev === id ? null : prev));
+  }, []);
+
+  // Under reduced motion, activation navigates immediately — no punch
+  // animation, no delay. Otherwise the delay gives the 3D node's click
+  // "punch" flourish (see SatelliteNode) time to actually play before the
+  // page jumps to its destination.
+  const handleActivate = useCallback(
+    (category: FieldMapCategory) => {
+      if (reduced) {
+        router.push(category.href);
+        return;
+      }
+      setActiveId(category.id);
+      window.setTimeout(() => router.push(category.href), CATEGORY_ACTIVATE_DELAY_MS);
+    },
+    [reduced, router]
+  );
 
   // The nav stays closed for the moon/sun cover screen and opens for good the
   // moment the visitor scrolls far enough into the index.tsx intro to mean it
@@ -161,14 +160,19 @@ export function Hero() {
           bleed on purpose — no border, no boxed-in canvas — the moon/sun
           scene owns the entire screen. */}
       <section className="relative h-[calc(100dvh-5.25rem)] min-h-[520px] overflow-hidden sm:h-[calc(100dvh-4.75rem)]">
-        <HeroOrbit className="absolute inset-0" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-4 flex flex-col items-center gap-2 sm:bottom-6">
-          <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-faint">
-            Drag to orbit · pinch or ⌃+scroll to zoom · click a cluster to explore
-          </span>
+        <HeroOrbit
+          className="absolute inset-0"
+          selection={{ hoveredId, activeId }}
+          onHoverChange={handleHoverChange}
+        />
+        <div className="pointer-events-none absolute inset-x-0 bottom-4 flex flex-col items-center gap-3 sm:bottom-6">
+          <FieldMapNav
+            selection={{ hoveredId, activeId }}
+            onHoverChange={handleHoverChange}
+            onActivate={handleActivate}
+          />
           <ScrollCue />
         </div>
-        <ModelCredits />
       </section>
 
       <section ref={introRef} className="relative overflow-hidden border-b border-line">

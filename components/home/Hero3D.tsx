@@ -3,6 +3,8 @@
 import { Component, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import clsx from "clsx";
+import type { TimelineLane } from "@/lib/types";
+import type { FieldMapSelection } from "@/components/home/FieldMapNav";
 
 const HeroOrbitScene = dynamic(
   () => import("./HeroOrbitScene").then((mod) => mod.HeroOrbitScene),
@@ -42,11 +44,19 @@ class OrbitErrorBoundary extends Component<{ children: ReactNode }, { failed: bo
   }
 }
 
-export function HeroOrbit({ className }: { className?: string }) {
+export function HeroOrbit({
+  className,
+  selection,
+  onHoverChange,
+}: {
+  className?: string;
+  selection: FieldMapSelection;
+  onHoverChange: (id: TimelineLane, hovered: boolean) => void;
+}) {
   return (
     <div className={clsx("h-full w-full", className)}>
       <OrbitErrorBoundary>
-        <HeroOrbitScene />
+        <HeroOrbitScene selection={selection} onHoverChange={onHoverChange} />
       </OrbitErrorBoundary>
     </div>
   );
