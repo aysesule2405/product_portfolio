@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { FIELD_MAP_CATEGORIES, type FieldMapCategory } from "@/lib/data/field-map-categories";
 import type { TimelineLane } from "@/lib/types";
@@ -9,6 +9,58 @@ import type { TimelineLane } from "@/lib/types";
 export interface FieldMapSelection {
   hoveredId: TimelineLane | null;
   activeId: TimelineLane | null;
+}
+
+const FADE_NONE = "none";
+const FADE_RIGHT = "linear-gradient(to right, black 88%, transparent 100%)";
+const FADE_LEFT = "linear-gradient(to right, transparent 0%, black 12%, black 100%)";
+const FADE_BOTH = "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)";
+
+/** Fades only the edge that still has more to scroll toward — a static
+ * always-on right fade (Phase 2B) implied there was always more content to
+ * the right, even once you'd scrolled all the way to the last card. Reads
+ * scrollLeft/scrollWidth directly rather than tracking an approximate
+ * "hasOverflow" boolean, so it stays correct if font size, card width, or
+ * viewport changes. */
+function useEdgeFadeMask(ref: React.RefObject<HTMLElement | null>) {
+  const [mask, setMask] = useState(FADE_NONE);
+
+  const update = useCallback(() => {
+    const node = ref.current;
+    if (!node) return;
+    const { scrollLeft, scrollWidth, clientWidth } = node;
+    const overflowing = scrollWidth - clientWidth > 4;
+    if (!overflowing) {
+      setMask(FADE_NONE);
+      return;
+    }
+    // scroll-snap's own resting position sits at ~1 padding unit (px-3 =
+    // 12px), not 0 — a 4px threshold never registered "at the start" at
+    // all. 18px clears that snap offset with a little margin.
+    const edgeThreshold = 18;
+    const atStart = scrollLeft <= edgeThreshold;
+    const atEnd = scrollLeft + clientWidth >= scrollWidth - edgeThreshold;
+    if (atStart) setMask(FADE_RIGHT);
+    else if (atEnd) setMask(FADE_LEFT);
+    else setMask(FADE_BOTH);
+  }, [ref]);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    update();
+    node.addEventListener("scroll", update, { passive: true });
+    const resizeObserver = new ResizeObserver(update);
+    resizeObserver.observe(node);
+    window.addEventListener("resize", update);
+    return () => {
+      node.removeEventListener("scroll", update);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, [ref, update]);
+
+  return mask;
 }
 
 /** The hero's real navigation — four semantic links to the site's existing
@@ -43,9 +95,12 @@ export function FieldMapNav({
     () => false
   );
   const isLight = hasMounted && resolvedTheme === "light";
+  const navRef = useRef<HTMLElement | null>(null);
+  const maskImage = useEdgeFadeMask(navRef);
 
   return (
     <nav
+      ref={navRef}
       aria-label="Field map categories"
       // A single scrollable row rather than a wrapped grid — two stacked
       // rows of cards on a narrow viewport eat enough vertical space to
@@ -53,11 +108,11 @@ export function FieldMapNav({
       // scene fills the full hero height on every device; the nav is what
       // needs to adapt). Matches the existing site convention for a
       // horizontal strip that doesn't fit (see TopBar's own tab list).
-      // The trailing mask fade is the "this scrolls" affordance below the
-      // sm breakpoint, where the row doesn't fit; at sm and up every card
-      // fits unscrolled, so the mask is turned off rather than fading
-      // content that was never clipped.
-      className="pointer-events-auto flex w-full max-w-full snap-x items-stretch gap-2 overflow-x-auto px-3 [mask-image:linear-gradient(to_right,black_88%,transparent_100%)] sm:justify-center sm:gap-3 sm:[mask-image:none]"
+      // The mask (see useEdgeFadeMask) only ever fades the edge that still
+      // has more to scroll toward, and turns off entirely once every card
+      // fits without scrolling (sm and up).
+      className="pointer-events-auto flex w-full max-w-full snap-x items-stretch gap-2 overflow-x-auto px-3 sm:justify-center sm:gap-3"
+      style={{ maskImage, WebkitMaskImage: maskImage }}
     >
       {FIELD_MAP_CATEGORIES.map((category) => {
         const color = isLight ? category.colorLight : category.colorDark;

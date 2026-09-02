@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import * as THREE from "three";
+import { mulberry32, hashString } from "./procedural";
 
 /**
  * The Glass Instruments material/geometry toolkit — promoted from the
@@ -101,6 +102,48 @@ function useCoronaTexture() {
   }, []);
 }
 
+/** A handful of small, randomly-placed soft blobs layered around the rim of
+ * an otherwise-normal radial gradient — breaks the perfectly-circular
+ * silhouette into something closer to an irregular solar corona (real
+ * coronae aren't concentric circles) without needing per-pixel noise. Used
+ * by the sun only; the moon's atmosphere reads better perfectly soft/round. */
+function useIrregularCoronaTexture(seed: string) {
+  return useMemo(() => {
+    const size = 160;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d")!;
+    const c = size / 2;
+    const base = ctx.createRadialGradient(c, c, 0, c, c, c * 0.72);
+    base.addColorStop(0, "rgba(255,255,255,0.15)");
+    base.addColorStop(0.4, "rgba(255,255,255,0.05)");
+    base.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = base;
+    ctx.fillRect(0, 0, size, size);
+
+    const rand = mulberry32(hashString(seed));
+    const blobCount = 7;
+    for (let i = 0; i < blobCount; i++) {
+      const angle = (i / blobCount) * Math.PI * 2 + rand() * 0.7;
+      const reach = c * (0.55 + rand() * 0.4);
+      const bx = c + Math.cos(angle) * reach;
+      const by = c + Math.sin(angle) * reach;
+      const br = c * (0.28 + rand() * 0.22);
+      const blob = ctx.createRadialGradient(bx, by, 0, bx, by, br);
+      blob.addColorStop(0, "rgba(255,255,255,0.06)");
+      blob.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = blob;
+      ctx.beginPath();
+      ctx.arc(bx, by, br, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    return texture;
+  }, [seed]);
+}
+
 /**
  * A soft, low-opacity radial falloff behind the centerpiece — significantly
  * larger than the object but never opaque enough to read as its own shape.
@@ -110,10 +153,27 @@ function useCoronaTexture() {
  * has no geometric edge at all, which is what "soft falloff" actually
  * requires. Not scene-lit and not silhouette-following: it's atmosphere,
  * not a second material layer, so it disappears when glow is disabled and
- * the object still needs to read on its own.
+ * the object still needs to read on its own. `irregular` swaps in a
+ * blob-perturbed variant (see useIrregularCoronaTexture) for the sun, whose
+ * brief specifically asked for "irregular radial falloff" rather than the
+ * moon's calmer, perfectly round atmosphere.
  */
-export function Corona({ color, radius, opacity = 0.3 }: { color: string; radius: number; opacity?: number }) {
-  const texture = useCoronaTexture();
+export function Corona({
+  color,
+  radius,
+  opacity = 0.3,
+  irregular = false,
+  seed = "corona",
+}: {
+  color: string;
+  radius: number;
+  opacity?: number;
+  irregular?: boolean;
+  seed?: string;
+}) {
+  const regularTexture = useCoronaTexture();
+  const irregularTexture = useIrregularCoronaTexture(seed);
+  const texture = irregular ? irregularTexture : regularTexture;
   return (
     <sprite scale={[radius * 2, radius * 2, 1]} renderOrder={-1}>
       <spriteMaterial map={texture} color={color} transparent opacity={opacity} depthWrite={false} blending={THREE.AdditiveBlending} />

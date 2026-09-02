@@ -18,8 +18,10 @@ export interface FieldMapCategory {
   href: string;
   /** Dark-mode (moon/crystal) tint. */
   colorDark: string;
-  /** Light-mode (sun/prism) tint — a lightened variant of the dark tone,
-   * pulled forward from HeroOrbitScene's original per-theme palette. */
+  /** Light-mode (sun/prism) tint. Deepened in Phase 2C — the original
+   * pastel values washed out against the cloud background; a satellite's
+   * own GlassShell back-face pass darkens this further for internal
+   * contrast, so this value only needs to hold up as the *front* tint. */
   colorLight: string;
 }
 
@@ -32,7 +34,7 @@ export const FIELD_MAP_CATEGORIES: FieldMapCategory[] = [
     href: "/visual-practice",
     // deep coral -> soft coral
     colorDark: "#9c5240",
-    colorLight: "#e3a894",
+    colorLight: "#d18e73",
   },
   {
     id: "experience",
@@ -42,7 +44,7 @@ export const FIELD_MAP_CATEGORIES: FieldMapCategory[] = [
     href: "/#field-map",
     // smoked indigo (with a controlled-violet undertone) -> lavender
     colorDark: "#4f4a7a",
-    colorLight: "#b3a8d4",
+    colorLight: "#9686bd",
   },
   {
     id: "projects",
@@ -52,7 +54,7 @@ export const FIELD_MAP_CATEGORIES: FieldMapCategory[] = [
     href: "/work",
     // antique gold -> pale amber
     colorDark: "#a68a4a",
-    colorLight: "#e6c988",
+    colorLight: "#d1a94e",
   },
   {
     id: "community",
@@ -62,7 +64,7 @@ export const FIELD_MAP_CATEGORIES: FieldMapCategory[] = [
     href: "/#field-map",
     // muted cyan -> powder blue
     colorDark: "#3f7a82",
-    colorLight: "#a3c4dd",
+    colorLight: "#6fa0c2",
   },
 ];
 

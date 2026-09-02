@@ -345,8 +345,13 @@ export function useCraterTerrainTextures(baseColor: string, enabled: boolean, se
     hctx.fillStyle = "#808080";
     hctx.fillRect(0, 0, width, height);
 
-    drawMaria(cctx, width, height, rand, 4, darken(baseColor, 0.35), 0.24);
-    drawCraters(cctx, hctx, width, height, rand, 42, 6, 38, lighten(baseColor, 0.5), darken(baseColor, 0.45), 0.28);
+    // Two crater passes at different scales (large-sparse + small-numerous)
+    // rather than one uniform distribution — real maria are patchy at
+    // multiple scales, and a single pass reads as more uniform/artificial
+    // than layering two does.
+    drawMaria(cctx, width, height, rand, 6, darken(baseColor, 0.35), 0.2);
+    drawCraters(cctx, hctx, width, height, rand, 34, 8, 40, lighten(baseColor, 0.5), darken(baseColor, 0.45), 0.26);
+    drawCraters(cctx, hctx, width, height, rand, 26, 3, 9, lighten(baseColor, 0.45), darken(baseColor, 0.4), 0.22);
 
     const normalCanvas = heightCanvasToNormalCanvas(heightCanvas, 2.1);
 
