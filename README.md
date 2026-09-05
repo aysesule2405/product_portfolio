@@ -109,5 +109,5 @@ variants of every tint.
   sorted date across three lanes (visual practice "roots", work, community)
   and draws faint cross-lane threads between nodes that share a problem
   category. It intentionally overflows horizontally (git-graph-style) rather
-  than cramming onto one screen — a List view toggle sits next to it as the
+  than cramming onto one screen, a List view toggle sits next to it as the
   fast-scan fallback.
