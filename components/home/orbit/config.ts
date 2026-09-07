@@ -31,7 +31,10 @@ export const SCENE_PALETTE = {
 export const SATELLITE_POSITIONS: Record<CategoryId, THREE.Vector3> = {
   roots: new THREE.Vector3(-2.05, 1.35, 1.9),
   experience: new THREE.Vector3(2.05, 1.9, 1.35),
-  projects: new THREE.Vector3(0.35, -2.75, 2.35),
+  // Pulled up from y=-2.75 (Phase 2C) — Work's lowest extent was
+  // intersecting the protected zone above the category nav row. Verified
+  // by measuring the rendered gap directly, not just eyeballing it.
+  projects: new THREE.Vector3(0.35, -2.25, 2.35),
   community: new THREE.Vector3(2.35, -1.95, 1.05),
 };
 
@@ -43,7 +46,10 @@ export const SATELLITE_POSITIONS: Record<CategoryId, THREE.Vector3> = {
 export const MOBILE_SATELLITE_POSITIONS: Record<CategoryId, THREE.Vector3> = {
   roots: new THREE.Vector3(-2.05, 2.05, 1.0),
   experience: new THREE.Vector3(2.15, 2.0, 0.5),
-  projects: new THREE.Vector3(0.3, -2.55, 1.1),
+  // Pulled up further still than desktop's equivalent adjustment — the
+  // narrower mobile frame leaves less vertical room between the scene and
+  // the nav row to begin with.
+  projects: new THREE.Vector3(0.3, -2.0, 1.1),
   community: new THREE.Vector3(2.3, -1.65, -0.35),
 };
 

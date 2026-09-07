@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { RimGlow, useCraterTerrainTextures } from "./procedural";
-import { Corona, GlassShell } from "./glass";
+import { Corona, GlassShell, MoonShell } from "./glass";
 import { entranceProgress } from "./motion-utils";
 import { CENTERPIECE_RADIUS, CENTERPIECE_TONE } from "./config";
 import type { ThemeMorphState } from "./useThemeMorph";
@@ -106,11 +106,15 @@ export function CelestialBody({ theme, reduced }: { theme: ThemeMorphState; redu
           <meshStandardMaterial color={CENTERPIECE_TONE.dark.core} emissive={CENTERPIECE_TONE.dark.core} emissiveIntensity={0.4} roughness={0.4} />
         </mesh>
         <mesh ref={meshRef} geometry={surfaceGeometry} material={moonSurfaceMaterial} />
-        {/* Outer nested shell — thinner and lower-opacity than Phase 2B so
-            it reads as an optical coating, not a physical ring/porthole
-            frame around the moon. */}
-        <GlassShell geometry={shellGeometry} frontColor={CENTERPIECE_TONE.dark.shellFront} backColor={CENTERPIECE_TONE.dark.shellBack} opacity={0.09} />
-        <RimGlow color={CENTERPIECE_TONE.dark.rim} radius={radius} power={3.2} glowIntensity={0.35} />
+        {/* Phase 2C's GlassShell (uniform opacity all the way around) read
+            as "a visible blue ring" regardless of viewing angle — a flat-
+            opacity shell can't help but trace an even circumference. This
+            view-dependent shell instead rises only near the true grazing
+            edge and dims on the side facing away from the key light, so it
+            reads as a coating that reveals itself on inspection rather than
+            a frame that's always fully visible. */}
+        <MoonShell radius={radius * 1.03} color={CENTERPIECE_TONE.dark.shellFront} opacity={0.24} />
+        <RimGlow color={CENTERPIECE_TONE.dark.rim} radius={radius} power={3.6} glowIntensity={0.22} />
       </group>
     );
   }
@@ -125,7 +129,19 @@ export function CelestialBody({ theme, reduced }: { theme: ThemeMorphState; redu
       <mesh ref={meshRef} geometry={surfaceGeometry}>
         <shaderMaterial uniforms={sunUniforms} vertexShader={SUN_VERTEX} fragmentShader={SUN_FRAGMENT} />
       </mesh>
-      <GlassShell geometry={shellGeometry} frontColor={CENTERPIECE_TONE.light.shellFront} backColor={CENTERPIECE_TONE.light.shellBack} opacity={0.15} />
+      {/* Lower opacity and a much softer, rougher clearcoat than the default
+          GlassShell — the sharper 0.8 clearcoat caught the key light as a
+          bright, near-white specular rim at the silhouette edge, which read
+          as "a thin grey outline" against the warm surface underneath. */}
+      <GlassShell
+        geometry={shellGeometry}
+        frontColor={CENTERPIECE_TONE.light.shellFront}
+        backColor={CENTERPIECE_TONE.light.shellBack}
+        opacity={0.09}
+        frontRoughness={0.4}
+        frontClearcoat={0.1}
+        frontClearcoatRoughness={0.5}
+      />
     </group>
   );
 }

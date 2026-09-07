@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { mulberry32, hashString } from "./procedural";
 
@@ -184,23 +184,35 @@ export function Corona({
 /** Cheap "faux transmission": two coincident meshes on the same geometry,
  * one rendered back-face-only with a deeper tint (what you'd see looking
  * through the far wall of the object) and one front-face-only with a paler
- * tint plus a stronger clearcoat — no real MeshPhysicalMaterial transmission
+ * tint plus a soft clearcoat — no real MeshPhysicalMaterial transmission
  * (which forces a back-buffer render pass per instance), just two ordinary
  * transparent draws. This front/back tint contrast is also what carries
  * edge definition in light mode, where additive rim light washes out
  * against the pale background (see RimGlow's dark-only gating in
  * SatelliteNode/CelestialBody) — no separate "light mode edge" technique
- * needed on top of it. */
+ * needed on top of it.
+ *
+ * `frontRoughness`/`frontClearcoat` default to a softer, less uniformly
+ * glossy finish than the original values (0.08/0.8) — those read as
+ * "opaque and plastic" at normal viewing size, especially in light mode; a
+ * rougher clearcoat scatters its highlight into something narrower and
+ * less like a toy's molded-plastic sheen. */
 export function GlassShell({
   geometry,
   frontColor,
   backColor,
   opacity = 0.55,
+  frontRoughness = 0.16,
+  frontClearcoat = 0.5,
+  frontClearcoatRoughness = 0.28,
 }: {
   geometry: THREE.BufferGeometry;
   frontColor: string;
   backColor: string;
   opacity?: number;
+  frontRoughness?: number;
+  frontClearcoat?: number;
+  frontClearcoatRoughness?: number;
 }) {
   return (
     <>
@@ -209,7 +221,7 @@ export function GlassShell({
           color={backColor}
           transparent
           opacity={opacity * 0.8}
-          roughness={0.15}
+          roughness={0.2}
           metalness={0}
           side={THREE.BackSide}
           depthWrite={false}
@@ -220,14 +232,161 @@ export function GlassShell({
           color={frontColor}
           transparent
           opacity={opacity}
-          roughness={0.08}
+          roughness={frontRoughness}
           metalness={0}
-          clearcoat={0.8}
-          clearcoatRoughness={0.1}
+          clearcoat={frontClearcoat}
+          clearcoatRoughness={frontClearcoatRoughness}
           side={THREE.FrontSide}
           depthWrite={false}
         />
       </mesh>
     </>
+  );
+}
+
+export interface InstanceTransform {
+  position: THREE.Vector3;
+  rotation?: THREE.Euler;
+  scale?: THREE.Vector3 | number;
+}
+
+/** The same two-pass faux-transmission technique as GlassShell, but for N
+ * repeated instances of one geometry sharing one material each (front pass,
+ * back pass) — two draw calls total regardless of instance count, instead
+ * of two per instance. Used wherever a form repeats an identical shell
+ * several times with only position/rotation/scale varying (Experience's
+ * lens segments, Community's companion lenses) — the single largest lever
+ * available for the Phase 2C.1 draw-call reduction, since those two forms
+ * alone accounted for 18 of Phase 2C's 100 dark-mode draws. */
+export function InstancedGlassShell({
+  geometry,
+  frontColor,
+  backColor,
+  opacity = 0.55,
+  transforms,
+  frontRoughness = 0.16,
+  frontClearcoat = 0.5,
+  frontClearcoatRoughness = 0.28,
+}: {
+  geometry: THREE.BufferGeometry;
+  frontColor: string;
+  backColor: string;
+  opacity?: number;
+  transforms: InstanceTransform[];
+  frontRoughness?: number;
+  frontClearcoat?: number;
+  frontClearcoatRoughness?: number;
+}) {
+  const count = transforms.length;
+  const frontRef = useRef<THREE.InstancedMesh>(null);
+  const backRef = useRef<THREE.InstancedMesh>(null);
+
+  useEffect(() => {
+    const matrix = new THREE.Matrix4();
+    const quaternion = new THREE.Quaternion();
+    const scaleVec = new THREE.Vector3();
+    for (const ref of [frontRef, backRef]) {
+      const mesh = ref.current;
+      if (!mesh) continue;
+      transforms.forEach((t, i) => {
+        quaternion.setFromEuler(t.rotation ?? new THREE.Euler());
+        if (typeof t.scale === "number") scaleVec.setScalar(t.scale);
+        else if (t.scale) scaleVec.copy(t.scale);
+        else scaleVec.set(1, 1, 1);
+        matrix.compose(t.position, quaternion, scaleVec);
+        mesh.setMatrixAt(i, matrix);
+      });
+      mesh.instanceMatrix.needsUpdate = true;
+    }
+  }, [transforms, geometry]);
+
+  return (
+    <>
+      <instancedMesh ref={backRef} args={[geometry, undefined, count]} renderOrder={0}>
+        <meshPhysicalMaterial color={backColor} transparent opacity={opacity * 0.8} roughness={0.2} metalness={0} side={THREE.BackSide} depthWrite={false} />
+      </instancedMesh>
+      <instancedMesh ref={frontRef} args={[geometry, undefined, count]} renderOrder={1}>
+        <meshPhysicalMaterial
+          color={frontColor}
+          transparent
+          opacity={opacity}
+          roughness={frontRoughness}
+          metalness={0}
+          clearcoat={frontClearcoat}
+          clearcoatRoughness={frontClearcoatRoughness}
+          side={THREE.FrontSide}
+          depthWrite={false}
+        />
+      </instancedMesh>
+    </>
+  );
+}
+
+/** A view-dependent (fresnel) shell for the moon specifically — a uniform-
+ * opacity GlassShell around a sphere reads as a flat-opacity ring at every
+ * point on the circumference regardless of viewing angle, which is what
+ * made Phase 2C's moon shell look like "a visible blue ring" rather than an
+ * optical coating. This instead fades toward zero opacity head-on and rises
+ * only near the true grazing silhouette edge, and separately dims on the
+ * side facing away from the key light — so the coating all but disappears
+ * on the shadowed hemisphere instead of tracing an even circumference all
+ * the way around. */
+const MOON_SHELL_VERTEX = `
+  varying vec3 vNormal;
+  varying vec3 vViewDir;
+  void main() {
+    vNormal = normalize(normalMatrix * normal);
+    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+    vViewDir = normalize(-mvPosition.xyz);
+    gl_Position = projectionMatrix * mvPosition;
+  }
+`;
+
+const MOON_SHELL_FRAGMENT = `
+  uniform vec3 color;
+  uniform float opacity;
+  uniform vec3 lightDir;
+  varying vec3 vNormal;
+  varying vec3 vViewDir;
+  void main() {
+    vec3 n = normalize(vNormal);
+    float fresnel = pow(1.0 - max(dot(n, normalize(vViewDir)), 0.0), 3.2);
+    float lit = smoothstep(-0.5, 0.35, dot(n, normalize(lightDir)));
+    gl_FragColor = vec4(color, fresnel * opacity * mix(0.12, 1.0, lit));
+  }
+`;
+
+export function MoonShell({
+  radius,
+  color,
+  opacity = 0.22,
+  lightDirection = new THREE.Vector3(4.5, 5, 5.5),
+}: {
+  radius: number;
+  color: string;
+  opacity?: number;
+  lightDirection?: THREE.Vector3;
+}) {
+  const uniforms = useMemo(
+    () => ({
+      color: { value: new THREE.Color(color) },
+      opacity: { value: opacity },
+      lightDir: { value: lightDirection.clone().normalize() },
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [color]
+  );
+  return (
+    <mesh renderOrder={1}>
+      <sphereGeometry args={[radius, 40, 40]} />
+      <shaderMaterial
+        uniforms={uniforms}
+        vertexShader={MOON_SHELL_VERTEX}
+        fragmentShader={MOON_SHELL_FRAGMENT}
+        transparent
+        depthWrite={false}
+        side={THREE.FrontSide}
+      />
+    </mesh>
   );
 }
