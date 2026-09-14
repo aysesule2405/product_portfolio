@@ -28,6 +28,12 @@ import type { ThemeMorphState } from "./useThemeMorph";
  *   Community  -> ring + orbiting lens cluster (unchanged concept — shrunk
  *                 rim glow, instanced companions/rails)
  */
+// How much further out a satellite drifts at full scroll-departure (40% of
+// its own distance from the centerpiece) — restrained on purpose, per the
+// original brief's "short, controlled transition, not another planetary
+// flythrough."
+const SCROLL_SEPARATION = 0.4;
+
 export function SatelliteNode({
   category,
   theme,
@@ -36,6 +42,7 @@ export function SatelliteNode({
   position,
   isHovered,
   isActive,
+  scrollProgress,
   onHoverChange,
 }: {
   category: FieldMapCategory;
@@ -45,6 +52,12 @@ export function SatelliteNode({
   position: THREE.Vector3;
   isHovered: boolean;
   isActive: boolean;
+  /** 0–1, owned by Hero.tsx — see CameraRig's doc comment. Read directly
+   * (not mirrored into a ref) inside this component's own useFrame, the
+   * same way `reduced`/`isActive`/`position` already are: useFrame always
+   * calls the latest render's closure, so a plain prop stays current
+   * without any extra plumbing. */
+  scrollProgress: number;
   onHoverChange: (hovered: boolean) => void;
 }) {
   const groupRef = useRef<THREE.Group>(null);
@@ -62,8 +75,10 @@ export function SatelliteNode({
     const punch = clickPunchScale(punchStart, state.clock.elapsedTime, isActive);
     if (groupRef.current) {
       const bob = reduced ? 0 : Math.sin(state.clock.elapsedTime * 0.7 + bobSeed) * 0.08 * intro;
-      const start = position.clone().add(new THREE.Vector3(0, -5, 0));
-      groupRef.current.position.lerpVectors(start, position, intro).add(new THREE.Vector3(0, bob, 0));
+      const departed = reduced ? 0 : scrollProgress;
+      const target = position.clone().multiplyScalar(1 + departed * SCROLL_SEPARATION);
+      const start = target.clone().add(new THREE.Vector3(0, -5, 0));
+      groupRef.current.position.lerpVectors(start, target, intro).add(new THREE.Vector3(0, bob, 0));
       const hoverScale = isHovered ? 1.12 : 1;
       groupRef.current.scale.setScalar(THREE.MathUtils.lerp(0.3, 1, intro) * punch * hoverScale * categoryScale);
     }
@@ -77,7 +92,11 @@ export function SatelliteNode({
 
   return (
     <group ref={groupRef} position={position}>
-      <ConstellationLine targetPosition={position} color={color} opacity={isHovered || isActive ? 0.65 : 0.3} />
+      <ConstellationLine
+        targetPosition={position}
+        color={color}
+        opacity={(isHovered || isActive ? 0.65 : 0.3) * (1 - (reduced ? 0 : scrollProgress))}
+      />
       <pointLight
         color={color}
         intensity={(isHovered ? 1.6 : 0) + (isActive ? 1.0 : 0)}

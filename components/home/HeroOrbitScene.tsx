@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { Stars } from "@react-three/drei";
 import * as THREE from "three";
 import { useReducedMotion } from "@/lib/motion";
@@ -54,6 +54,16 @@ function useDocumentVisible() {
   return visible;
 }
 
+/** Calls `useThemeMorph`'s `tick()` once per rendered frame — the single
+ * owner the hook's own doc comment anticipates. Lives inside the Canvas
+ * (tick() itself needs no R3F context, but useFrame does) so every consumer
+ * of `morphRef` elsewhere in the scene can just read `.current` without
+ * separately advancing the animation. */
+function MorphTicker({ tick }: { tick: () => void }) {
+  useFrame(() => tick());
+  return null;
+}
+
 /** Drives the mobile-specific composition (see MOBILE_SATELLITE_POSITIONS /
  * MOBILE_CENTERPIECE_SCALE / MOBILE_CAMERA_Z in config.ts) — a real
  * viewport-width switch, not the desktop composition uniformly scaled
@@ -74,12 +84,18 @@ function useIsCompactViewport() {
 export function HeroOrbitScene({
   selection,
   onHoverChange,
+  scrollProgress,
 }: {
   selection: FieldMapSelection;
   onHoverChange: (id: TimelineLane, hovered: boolean) => void;
+  /** 0–1, owned by Hero.tsx — drives the scroll-departure sequence (camera
+   * recede, satellite separation, constellation-line fade). Defaults to 0
+   * so this component still works if ever rendered without a scroll owner
+   * (e.g. in isolation). */
+  scrollProgress?: number;
 }) {
   const reduced = useReducedMotion();
-  const { theme } = useThemeMorph();
+  const { theme, morphRef, tick } = useThemeMorph();
   const qualityTier = useQualityTier();
   const [wrapperNode, setWrapperNode] = useState<HTMLDivElement | null>(null);
   const inView = useInHeroView(wrapperNode);
@@ -121,7 +137,8 @@ export function HeroOrbitScene({
           gl.toneMappingExposure = 1.15;
         }}
       >
-        <SceneLightingRig theme={theme} />
+        <MorphTicker tick={tick} />
+        <SceneLightingRig morphRef={morphRef} />
         {theme === "dark" ? (
           <Stars radius={20} depth={28} count={reduced ? 200 : STAR_COUNT[qualityTier]} factor={1.6} saturation={0} fade speed={reduced ? 0 : 0.6} />
         ) : null}
@@ -135,7 +152,7 @@ export function HeroOrbitScene({
         />
         <Suspense fallback={null}>
           <group scale={compact ? MOBILE_CENTERPIECE_SCALE : 1}>
-            <CelestialBody theme={theme} reduced={reduced} />
+            <CelestialBody reduced={reduced} morphRef={morphRef} />
           </group>
           {CATEGORY_ORDER.map((id, index) => {
             const category = FIELD_MAP_CATEGORIES.find((c) => c.id === id)!;
@@ -149,12 +166,13 @@ export function HeroOrbitScene({
                 position={satellitePositions[id]}
                 isHovered={selection.hoveredId === id}
                 isActive={selection.activeId === id}
+                scrollProgress={scrollProgress ?? 0}
                 onHoverChange={(hovered) => onHoverChange(id, hovered)}
               />
             );
           })}
         </Suspense>
-        <CameraRig />
+        <CameraRig reduced={reduced} scrollProgress={scrollProgress ?? 0} />
       </Canvas>
     </div>
   );

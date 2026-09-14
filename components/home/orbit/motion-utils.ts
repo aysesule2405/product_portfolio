@@ -4,6 +4,14 @@ export function easeOutCubic(t: number) {
   return 1 - Math.pow(1 - t, 3);
 }
 
+/** A plain mutable ref carrying one 0–1 multiplier, read inside some other
+ * component's own `useFrame` — the same "no React state" imperative pattern
+ * as everywhere else in this module, applied to opacity/intensity instead of
+ * position. Used to crossfade the centerpiece's moon/sun subtrees off
+ * `useThemeMorph`'s `morphRef` without either subtree owning its own
+ * animation loop. */
+export type FadeRef = { current: number };
+
 /** Returns 0→1 eased progress for a delayed entrance animation — call once
  * per frame with the scene clock's `elapsedTime`. `startRef` lazily captures
  * "now + delay" on its first call, so several instances that all mount in

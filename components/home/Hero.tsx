@@ -23,6 +23,11 @@ import type { FieldMapCategory } from "@/lib/data/field-map-categories";
  * WebGL module has loaded. */
 const CATEGORY_ACTIVATE_DELAY_MS = 280;
 
+// A short, fixed scroll distance (not the hero's full height) over which the
+// departure sequence completes — "short, controlled transition," finishing
+// well before the section has actually scrolled out of the viewport.
+const DEPARTURE_SCROLL_PX = 420;
+
 const focusAreas = [
   "Product building",
   "Software engineering",
@@ -97,11 +102,52 @@ function ScrollCue() {
   );
 }
 
+/** Tracks how far the hero has been scrolled past, as a 0–1 progress value
+ * completing over a short fixed distance (DEPARTURE_SCROLL_PX) rather than
+ * the section's full height — drives both the WebGL scroll-departure
+ * sequence (via HeroOrbit's scrollProgress prop) and this component's own
+ * HTML fade-out below. rAF-throttled rather than tied to every scroll event,
+ * and only active while genuinely scrolling (idle at 0 or 1 otherwise), so
+ * this stays a bounded, self-limiting cost rather than an always-on loop —
+ * unlike the imperative-ref pattern used for the 3D scene's own per-frame
+ * motion, a state update here is cheap: it drives a handful of plain CSS/
+ * prop values, not per-frame material mutation. Reduced motion skips this
+ * entirely (stays pinned at 0) — the brief's explicit "no scroll-linked
+ * animation at all" option, rather than a brief snap-transition. */
+function useScrollDeparture(sectionRef: React.RefObject<HTMLElement | null>, reduced: boolean) {
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    if (reduced) return;
+    let rafId: number | null = null;
+    function measure() {
+      rafId = null;
+      const node = sectionRef.current;
+      if (!node) return;
+      const rect = node.getBoundingClientRect();
+      setProgress(Math.min(1, Math.max(0, -rect.top / DEPARTURE_SCROLL_PX)));
+    }
+    function onScrollOrResize() {
+      if (rafId === null) rafId = requestAnimationFrame(measure);
+    }
+    onScrollOrResize();
+    window.addEventListener("scroll", onScrollOrResize, { passive: true });
+    window.addEventListener("resize", onScrollOrResize);
+    return () => {
+      window.removeEventListener("scroll", onScrollOrResize);
+      window.removeEventListener("resize", onScrollOrResize);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
+  }, [sectionRef, reduced]);
+  return reduced ? 0 : progress;
+}
+
 export function Hero() {
   const { revealNav } = useNavReveal();
   const introRef = useRef<HTMLDivElement>(null);
+  const heroSectionRef = useRef<HTMLElement>(null);
   const reduced = useReducedMotion();
   const router = useRouter();
+  const scrollProgress = useScrollDeparture(heroSectionRef, reduced);
 
   // One shared source of truth for hover/active state — read by both the
   // real semantic nav (FieldMapNav) and, once it loads, the decorative/
@@ -159,13 +205,21 @@ export function Hero() {
           screen" means 100dvh minus that chrome, not 100dvh itself. Full
           bleed on purpose — no border, no boxed-in canvas — the moon/sun
           scene owns the entire screen. */}
-      <section className="relative h-[calc(100dvh-5.25rem)] min-h-[520px] overflow-hidden sm:h-[calc(100dvh-4.75rem)]">
+      <section ref={heroSectionRef} className="relative h-[calc(100dvh-5.25rem)] min-h-[520px] overflow-hidden sm:h-[calc(100dvh-4.75rem)]">
         <HeroOrbit
           className="absolute inset-0"
           selection={{ hoveredId, activeId }}
           onHoverChange={handleHoverChange}
+          scrollProgress={scrollProgress}
         />
-        <div className="pointer-events-none absolute inset-x-0 bottom-4 flex flex-col items-center gap-3 sm:bottom-6">
+        {/* Fades and settles out of the way as the scroll-departure sequence
+            plays in the WebGL layer above — "the HTML hero content and
+            interaction guidance should transition out cleanly," not remain
+            static while the 3D scene alone reacts to scroll. */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-4 flex flex-col items-center gap-3 sm:bottom-6"
+          style={{ opacity: 1 - scrollProgress, transform: `translateY(${scrollProgress * 14}px)` }}
+        >
           <FieldMapNav
             selection={{ hoveredId, activeId }}
             onHoverChange={handleHoverChange}

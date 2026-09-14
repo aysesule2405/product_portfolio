@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef } from "react";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { mulberry32, hashString } from "./procedural";
+import type { FadeRef } from "./motion-utils";
 
 /**
  * The Glass Instruments material/geometry toolkit — promoted from the
@@ -59,20 +61,59 @@ export function pleatedGeometry(teeth = 5, width = 0.5, amplitude = 0.09, depth 
   return geometry;
 }
 
+const LIGHTING_TONE = {
+  dark: { key: "#dfe8ff", rim: "#7fb0ff", sky: "#25406b", ground: "#050810", keyIntensity: 1.7, hemiIntensity: 0.55, rimIntensity: 0.9 },
+  light: { key: "#fff3d8", rim: "#ffb066", sky: "#fff6df", ground: "#c9b998", keyIntensity: 2.1, hemiIntensity: 0.7, rimIntensity: 1.0 },
+} as const;
+
 /** A small, intentional three-point rig — key + hemisphere fill + a subtle
  * rim-toned point light. Proved out during the Phase 2B exploration against
  * Phase 2's flatter single-ambient-plus-point setup and is now the
- * production lighting rig, not a direction-specific variable. */
-export function SceneLightingRig({ theme }: { theme: "dark" | "light" }) {
-  const key = theme === "dark" ? "#dfe8ff" : "#fff3d8";
-  const rim = theme === "dark" ? "#7fb0ff" : "#ffb066";
-  const skyColor = theme === "dark" ? "#25406b" : "#fff6df";
-  const groundColor = theme === "dark" ? "#050810" : "#c9b998";
+ * production lighting rig, not a direction-specific variable.
+ *
+ * Phase 3 switched this from a static `theme` prop to a live `morphRef` —
+ * every material the light falls on now crossfades over the theme-morph
+ * duration, so a light that snapped instantly would mean the crossfading
+ * moon/sun are lit wrong for most of that transition. Colors/intensities are
+ * lerped every frame via refs on each light, the same imperative pattern as
+ * everywhere else in this scene. */
+export function SceneLightingRig({ morphRef }: { morphRef: FadeRef }) {
+  const keyRef = useRef<THREE.DirectionalLight>(null);
+  const hemiRef = useRef<THREE.HemisphereLight>(null);
+  const rimRef = useRef<THREE.PointLight>(null);
+  const keyColor = useMemo(() => new THREE.Color(), []);
+  const skyColor = useMemo(() => new THREE.Color(), []);
+  const groundColor = useMemo(() => new THREE.Color(), []);
+  const rimColor = useMemo(() => new THREE.Color(), []);
+
+  useFrame(() => {
+    const m = morphRef.current;
+    const dark = LIGHTING_TONE.dark;
+    const light = LIGHTING_TONE.light;
+    if (keyRef.current) {
+      keyColor.set(dark.key).lerp(new THREE.Color(light.key), m);
+      keyRef.current.color.copy(keyColor);
+      keyRef.current.intensity = THREE.MathUtils.lerp(dark.keyIntensity, light.keyIntensity, m);
+    }
+    if (hemiRef.current) {
+      skyColor.set(dark.sky).lerp(new THREE.Color(light.sky), m);
+      groundColor.set(dark.ground).lerp(new THREE.Color(light.ground), m);
+      hemiRef.current.color.copy(skyColor);
+      hemiRef.current.groundColor.copy(groundColor);
+      hemiRef.current.intensity = THREE.MathUtils.lerp(dark.hemiIntensity, light.hemiIntensity, m);
+    }
+    if (rimRef.current) {
+      rimColor.set(dark.rim).lerp(new THREE.Color(light.rim), m);
+      rimRef.current.color.copy(rimColor);
+      rimRef.current.intensity = THREE.MathUtils.lerp(dark.rimIntensity, light.rimIntensity, m);
+    }
+  });
+
   return (
     <>
-      <directionalLight position={[4.5, 5, 5.5]} intensity={theme === "dark" ? 1.7 : 2.1} color={key} />
-      <hemisphereLight args={[skyColor, groundColor, theme === "dark" ? 0.55 : 0.7]} />
-      <pointLight position={[-5, -2.2, -3]} intensity={theme === "dark" ? 0.9 : 1.0} color={rim} distance={13} />
+      <directionalLight ref={keyRef} position={[4.5, 5, 5.5]} />
+      <hemisphereLight ref={hemiRef} />
+      <pointLight ref={rimRef} position={[-5, -2.2, -3]} distance={13} />
     </>
   );
 }
@@ -164,19 +205,28 @@ export function Corona({
   opacity = 0.3,
   irregular = false,
   seed = "corona",
+  fadeRef,
 }: {
   color: string;
   radius: number;
   opacity?: number;
   irregular?: boolean;
   seed?: string;
+  /** Optional per-frame multiplier (see FadeRef) — used to crossfade this
+   * corona out with the rest of its subtree during the theme morph without
+   * this component owning any animation state of its own. */
+  fadeRef?: FadeRef;
 }) {
   const regularTexture = useCoronaTexture();
   const irregularTexture = useIrregularCoronaTexture(seed);
   const texture = irregular ? irregularTexture : regularTexture;
+  const materialRef = useRef<THREE.SpriteMaterial>(null);
+  useFrame(() => {
+    if (materialRef.current && fadeRef) materialRef.current.opacity = opacity * fadeRef.current;
+  });
   return (
     <sprite scale={[radius * 2, radius * 2, 1]} renderOrder={-1}>
-      <spriteMaterial map={texture} color={color} transparent opacity={opacity} depthWrite={false} blending={THREE.AdditiveBlending} />
+      <spriteMaterial ref={materialRef} map={texture} color={color} transparent opacity={opacity} depthWrite={false} blending={THREE.AdditiveBlending} />
     </sprite>
   );
 }
@@ -205,6 +255,7 @@ export function GlassShell({
   frontRoughness = 0.16,
   frontClearcoat = 0.5,
   frontClearcoatRoughness = 0.28,
+  fadeRef,
 }: {
   geometry: THREE.BufferGeometry;
   frontColor: string;
@@ -213,11 +264,23 @@ export function GlassShell({
   frontRoughness?: number;
   frontClearcoat?: number;
   frontClearcoatRoughness?: number;
+  /** Optional per-frame multiplier (see FadeRef) — used by the sun's shell
+   * to crossfade with the rest of its subtree during the theme morph. */
+  fadeRef?: FadeRef;
 }) {
+  const backRef = useRef<THREE.MeshPhysicalMaterial>(null);
+  const frontRef = useRef<THREE.MeshPhysicalMaterial>(null);
+  useFrame(() => {
+    if (!fadeRef) return;
+    const f = fadeRef.current;
+    if (backRef.current) backRef.current.opacity = opacity * 0.8 * f;
+    if (frontRef.current) frontRef.current.opacity = opacity * f;
+  });
   return (
     <>
       <mesh geometry={geometry} renderOrder={0}>
         <meshPhysicalMaterial
+          ref={backRef}
           color={backColor}
           transparent
           opacity={opacity * 0.8}
@@ -229,6 +292,7 @@ export function GlassShell({
       </mesh>
       <mesh geometry={geometry} renderOrder={1}>
         <meshPhysicalMaterial
+          ref={frontRef}
           color={frontColor}
           transparent
           opacity={opacity}
@@ -361,11 +425,15 @@ export function MoonShell({
   color,
   opacity = 0.22,
   lightDirection = new THREE.Vector3(4.5, 5, 5.5),
+  fadeRef,
 }: {
   radius: number;
   color: string;
   opacity?: number;
   lightDirection?: THREE.Vector3;
+  /** Optional per-frame multiplier (see FadeRef) — crossfades this shell
+   * with the rest of the moon subtree during the theme morph. */
+  fadeRef?: FadeRef;
 }) {
   const uniforms = useMemo(
     () => ({
@@ -376,10 +444,22 @@ export function MoonShell({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [color]
   );
+  // Mutated only through this ref, only inside useFrame below — never by
+  // touching the `uniforms` object above directly, which the project's
+  // react-hooks/immutability rule treats as frozen once useMemo returns it.
+  // materialRef.current is the live THREE.ShaderMaterial instance the
+  // renderer created from the JSX below (the same object `uniforms` was
+  // handed to), so this is the same ref-mutation pattern already used by
+  // groupRef.current.position elsewhere in this scene.
+  const materialRef = useRef<THREE.ShaderMaterial>(null);
+  useFrame(() => {
+    if (materialRef.current && fadeRef) materialRef.current.uniforms.opacity.value = opacity * fadeRef.current;
+  });
   return (
     <mesh renderOrder={1}>
       <sphereGeometry args={[radius, 40, 40]} />
       <shaderMaterial
+        ref={materialRef}
         uniforms={uniforms}
         vertexShader={MOON_SHELL_VERTEX}
         fragmentShader={MOON_SHELL_FRAGMENT}

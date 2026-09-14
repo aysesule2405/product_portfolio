@@ -3,9 +3,8 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { RimGlow, useCraterTerrainTextures } from "./procedural";
 import { Corona, GlassShell, MoonShell } from "./glass";
-import { entranceProgress } from "./motion-utils";
+import { entranceProgress, type FadeRef } from "./motion-utils";
 import { CENTERPIECE_RADIUS, CENTERPIECE_TONE } from "./config";
-import type { ThemeMorphState } from "./useThemeMorph";
 
 /**
  * The scene's one centerpiece — Glass Instruments' material language (a
@@ -16,18 +15,38 @@ import type { ThemeMorphState } from "./useThemeMorph";
  * terminator shadow no longer crushes to pure black, and gave the sun a
  * multi-frequency shader pass plus an off-axis hotspot so it reads as a
  * dimensional sphere rather than a flat gradient disc.
+ *
+ * Phase 3 replaced the old `theme === "dark"` branch (two mutually exclusive
+ * JSX subtrees) with both subtrees always mounted side by side, crossfaded
+ * by `morphRef` (see useThemeMorph) — a live theme toggle needs to animate
+ * every layer together rather than pop from one static tree to the other,
+ * and "avoid unmounting or recreating the scene" ruled out conditional
+ * rendering outright. Each subtree drives its own children's opacity via a
+ * small FadeRef (moonFadeRef/sunFadeRef) rather than each layer reading
+ * `morphRef` directly, so nothing but this component needs to know which
+ * value maps to which theme. Once a fade reaches exactly 0 its whole group
+ * is set `.visible = false`, so steady state (no transition in progress)
+ * still only draws one subtree — the Phase 2C.1 draw-call baseline holds
+ * except during the ~800ms transition window itself.
  */
-export function CelestialBody({ theme, reduced }: { theme: ThemeMorphState; reduced: boolean }) {
-  const meshRef = useRef<THREE.Mesh>(null);
+export function CelestialBody({ reduced, morphRef }: { reduced: boolean; morphRef: FadeRef }) {
   const groupRef = useRef<THREE.Group>(null);
+  const moonGroupRef = useRef<THREE.Group>(null);
+  const sunGroupRef = useRef<THREE.Group>(null);
+  const moonSurfaceRef = useRef<THREE.Mesh>(null);
+  const sunSurfaceRef = useRef<THREE.Mesh>(null);
+  const moonCoreRef = useRef<THREE.Mesh>(null);
+  const sunCoreRef = useRef<THREE.Mesh>(null);
+  const moonFadeRef = useRef(1);
+  const sunFadeRef = useRef(0);
   const pointer = useRef({ x: 0, y: 0 });
   const introStart = useRef<number | null>(null);
   const radius = CENTERPIECE_RADIUS;
 
-  // Both branches' work runs unconditionally — `theme` can change while this
-  // component stays mounted (a live theme toggle), and conditionally calling
-  // hooks on only one branch would change the hook count between renders.
-  const { colorTexture, normalTexture } = useCraterTerrainTextures(CENTERPIECE_TONE.dark.body, theme === "dark", "centerpiece-moon");
+  // Always enabled now — both the moon and sun subtrees stay mounted
+  // regardless of the live morph value, so the crater texture is always
+  // needed, not just when theme === "dark".
+  const { colorTexture, normalTexture } = useCraterTerrainTextures(CENTERPIECE_TONE.dark.body, true, "centerpiece-moon");
 
   const surfaceGeometry = useMemo(() => new THREE.SphereGeometry(radius, 64, 64), [radius]);
   useEffect(() => () => surfaceGeometry.dispose(), [surfaceGeometry]);
@@ -58,11 +77,45 @@ export function CelestialBody({ theme, reduced }: { theme: ThemeMorphState; redu
         emissive: CENTERPIECE_TONE.dark.core,
         emissiveIntensity: 0.05,
         transparent: true,
+        // The sun's surface mesh now shares this exact sphere geometry at
+        // the same transform during the crossfade — two coincident opaque-
+        // depth writers z-fight against each other. Disabling depth writes
+        // here avoids that; the small solid core sphere still anchors
+        // correct occlusion for anything genuinely behind the centerpiece.
+        depthWrite: false,
         opacity: 0.95,
       }),
     [colorTexture, normalTexture]
   );
   useEffect(() => () => moonSurfaceMaterial.dispose(), [moonSurfaceMaterial]);
+
+  const moonCoreMaterial = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: CENTERPIECE_TONE.dark.core,
+        emissive: CENTERPIECE_TONE.dark.core,
+        emissiveIntensity: 0.4,
+        roughness: 0.4,
+        transparent: true,
+        depthWrite: false,
+      }),
+    []
+  );
+  useEffect(() => () => moonCoreMaterial.dispose(), [moonCoreMaterial]);
+
+  const sunCoreMaterial = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: CENTERPIECE_TONE.light.core,
+        emissive: CENTERPIECE_TONE.light.mid,
+        emissiveIntensity: 0.6,
+        roughness: 0.35,
+        transparent: true,
+        depthWrite: false,
+      }),
+    []
+  );
+  useEffect(() => () => sunCoreMaterial.dispose(), [sunCoreMaterial]);
 
   const sunUniforms = useMemo(
     () => ({
@@ -70,16 +123,20 @@ export function CelestialBody({ theme, reduced }: { theme: ThemeMorphState; redu
       mid: { value: new THREE.Color(CENTERPIECE_TONE.light.mid) },
       edge: { value: new THREE.Color(CENTERPIECE_TONE.light.edge) },
       hotspot: { value: new THREE.Color(CENTERPIECE_TONE.light.hotspot) },
+      opacity: { value: 0 },
     }),
     []
   );
 
   useFrame((state, delta) => {
-    if (meshRef.current && !reduced) {
+    if (!reduced) {
       // Minimal static rotation, per Phase 2B/2C scope — enough to evaluate
       // the craters/gradient from more than one angle, not ambient Phase 3
-      // motion.
-      meshRef.current.rotation.y += delta * 0.045;
+      // motion. Both surfaces accumulate the identical delta from the same
+      // starting rotation, so they stay visually in sync through a crossfade
+      // instead of drifting apart.
+      if (moonSurfaceRef.current) moonSurfaceRef.current.rotation.y += delta * 0.045;
+      if (sunSurfaceRef.current) sunSurfaceRef.current.rotation.y += delta * 0.045;
     }
     pointer.current.x = state.pointer.x;
     pointer.current.y = state.pointer.y;
@@ -92,20 +149,39 @@ export function CelestialBody({ theme, reduced }: { theme: ThemeMorphState; redu
       groupRef.current.position.y = THREE.MathUtils.lerp(-4.5, 0, intro);
       groupRef.current.scale.setScalar(THREE.MathUtils.lerp(0.45, 1, intro));
     }
+
+    const morph = morphRef.current;
+    const moonFade = 1 - morph;
+    const sunFade = morph;
+    moonFadeRef.current = moonFade;
+    sunFadeRef.current = sunFade;
+    // Mutated only through these mesh refs, never through the memoized
+    // moonSurfaceMaterial/moonCoreMaterial/sunCoreMaterial/sunUniforms
+    // variables directly — the project's react-hooks/immutability rule
+    // treats a useMemo's return value as frozen once rendered. Each ref's
+    // `.current.material` is the live THREE.js instance the renderer
+    // created from the JSX below (the same object useMemo produced), so
+    // this is the same ref-mutation pattern as groupRef.current.position.
+    if (moonSurfaceRef.current) (moonSurfaceRef.current.material as THREE.MeshPhysicalMaterial).opacity = 0.95 * moonFade;
+    if (moonCoreRef.current) (moonCoreRef.current.material as THREE.MeshStandardMaterial).opacity = moonFade;
+    if (sunCoreRef.current) (sunCoreRef.current.material as THREE.MeshStandardMaterial).opacity = sunFade;
+    if (sunSurfaceRef.current) (sunSurfaceRef.current.material as THREE.ShaderMaterial).uniforms.opacity.value = sunFade;
+    if (moonGroupRef.current) moonGroupRef.current.visible = moonFade > 0.001;
+    if (sunGroupRef.current) sunGroupRef.current.visible = sunFade > 0.001;
+    if (moonSurfaceRef.current) moonSurfaceRef.current.visible = moonFade > 0.001;
+    if (sunSurfaceRef.current) sunSurfaceRef.current.visible = sunFade > 0.001;
   });
 
-  if (theme === "dark") {
-    return (
-      <group ref={groupRef}>
-        <Corona color={CENTERPIECE_TONE.dark.rim} radius={radius * 1.7} opacity={0.13} />
+  return (
+    <group ref={groupRef}>
+      <group ref={moonGroupRef}>
+        <Corona color={CENTERPIECE_TONE.dark.rim} radius={radius * 1.7} opacity={0.13} fadeRef={moonFadeRef} />
         {/* Inner core: the "cool internal glass layer" beneath the tactile
             crater surface — visible as a faint cool glow through the
             surface material's own slight translucency (opacity 0.95, not
             1), not meant to be a distinct visible shape on its own. */}
-        <mesh geometry={coreGeometry}>
-          <meshStandardMaterial color={CENTERPIECE_TONE.dark.core} emissive={CENTERPIECE_TONE.dark.core} emissiveIntensity={0.4} roughness={0.4} />
-        </mesh>
-        <mesh ref={meshRef} geometry={surfaceGeometry} material={moonSurfaceMaterial} />
+        <mesh ref={moonCoreRef} geometry={coreGeometry} material={moonCoreMaterial} />
+        <mesh ref={moonSurfaceRef} geometry={surfaceGeometry} material={moonSurfaceMaterial} />
         {/* Phase 2C's GlassShell (uniform opacity all the way around) read
             as "a visible blue ring" regardless of viewing angle — a flat-
             opacity shell can't help but trace an even circumference. This
@@ -113,35 +189,32 @@ export function CelestialBody({ theme, reduced }: { theme: ThemeMorphState; redu
             edge and dims on the side facing away from the key light, so it
             reads as a coating that reveals itself on inspection rather than
             a frame that's always fully visible. */}
-        <MoonShell radius={radius * 1.03} color={CENTERPIECE_TONE.dark.shellFront} opacity={0.24} />
-        <RimGlow color={CENTERPIECE_TONE.dark.rim} radius={radius} power={3.6} glowIntensity={0.22} />
+        <MoonShell radius={radius * 1.03} color={CENTERPIECE_TONE.dark.shellFront} opacity={0.24} fadeRef={moonFadeRef} />
+        <RimGlow color={CENTERPIECE_TONE.dark.rim} radius={radius} power={3.6} glowIntensity={0.22} fadeRef={moonFadeRef} />
       </group>
-    );
-  }
 
-  return (
-    <group ref={groupRef}>
-      <Corona color={CENTERPIECE_TONE.light.edge} radius={radius * 1.75} opacity={0.1} irregular seed="sun-corona" />
-      <Corona color={CENTERPIECE_TONE.light.core} radius={radius * 1.22} opacity={0.16} />
-      <mesh geometry={coreGeometry}>
-        <meshStandardMaterial color={CENTERPIECE_TONE.light.core} emissive={CENTERPIECE_TONE.light.mid} emissiveIntensity={0.6} roughness={0.35} />
-      </mesh>
-      <mesh ref={meshRef} geometry={surfaceGeometry}>
-        <shaderMaterial uniforms={sunUniforms} vertexShader={SUN_VERTEX} fragmentShader={SUN_FRAGMENT} />
-      </mesh>
-      {/* Lower opacity and a much softer, rougher clearcoat than the default
-          GlassShell — the sharper 0.8 clearcoat caught the key light as a
-          bright, near-white specular rim at the silhouette edge, which read
-          as "a thin grey outline" against the warm surface underneath. */}
-      <GlassShell
-        geometry={shellGeometry}
-        frontColor={CENTERPIECE_TONE.light.shellFront}
-        backColor={CENTERPIECE_TONE.light.shellBack}
-        opacity={0.09}
-        frontRoughness={0.4}
-        frontClearcoat={0.1}
-        frontClearcoatRoughness={0.5}
-      />
+      <group ref={sunGroupRef}>
+        <Corona color={CENTERPIECE_TONE.light.edge} radius={radius * 1.75} opacity={0.1} irregular seed="sun-corona" fadeRef={sunFadeRef} />
+        <Corona color={CENTERPIECE_TONE.light.core} radius={radius * 1.22} opacity={0.16} fadeRef={sunFadeRef} />
+        <mesh ref={sunCoreRef} geometry={coreGeometry} material={sunCoreMaterial} />
+        <mesh ref={sunSurfaceRef} geometry={surfaceGeometry}>
+          <shaderMaterial uniforms={sunUniforms} vertexShader={SUN_VERTEX} fragmentShader={SUN_FRAGMENT} transparent depthWrite={false} />
+        </mesh>
+        {/* Lower opacity and a much softer, rougher clearcoat than the default
+            GlassShell — the sharper 0.8 clearcoat caught the key light as a
+            bright, near-white specular rim at the silhouette edge, which read
+            as "a thin grey outline" against the warm surface underneath. */}
+        <GlassShell
+          geometry={shellGeometry}
+          frontColor={CENTERPIECE_TONE.light.shellFront}
+          backColor={CENTERPIECE_TONE.light.shellBack}
+          opacity={0.09}
+          frontRoughness={0.4}
+          frontClearcoat={0.1}
+          frontClearcoatRoughness={0.5}
+          fadeRef={sunFadeRef}
+        />
+      </group>
     </group>
   );
 }
@@ -175,6 +248,7 @@ const SUN_FRAGMENT = `
   uniform vec3 mid;
   uniform vec3 edge;
   uniform vec3 hotspot;
+  uniform float opacity;
   varying vec3 vViewNormal;
   varying vec3 vObjectNormal;
   varying vec3 vViewDir;
@@ -228,6 +302,6 @@ const SUN_FRAGMENT = `
     float grainFine = (noise3(n * 22.0) - 0.5) * 0.045;
     base += grainCoarse + grainFine;
 
-    gl_FragColor = vec4(base, 1.0);
+    gl_FragColor = vec4(base, opacity);
   }
 `;

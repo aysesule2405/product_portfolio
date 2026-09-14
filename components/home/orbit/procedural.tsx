@@ -1,6 +1,7 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import type { FadeRef } from "./motion-utils";
 
 export function mulberry32(seed: number) {
   return function random() {
@@ -72,11 +73,15 @@ export function RimGlow({
   radius,
   power = 2.4,
   glowIntensity = 1.3,
+  fadeRef,
 }: {
   color: string;
   radius: number;
   power?: number;
   glowIntensity?: number;
+  /** Optional per-frame multiplier (see FadeRef) — crossfades this rim with
+   * the rest of its subtree during the theme morph. */
+  fadeRef?: FadeRef;
 }) {
   const uniforms = useMemo(
     () => ({
@@ -87,11 +92,18 @@ export function RimGlow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [color]
   );
+  // Mutated only through this ref, only inside useFrame below — see
+  // MoonShell's identical pattern/note in glass.tsx.
+  const materialRef = useRef<THREE.ShaderMaterial>(null);
+  useFrame(() => {
+    if (materialRef.current && fadeRef) materialRef.current.uniforms.glowIntensity.value = glowIntensity * fadeRef.current;
+  });
 
   return (
     <mesh scale={1.22}>
       <sphereGeometry args={[radius, 24, 24]} />
       <shaderMaterial
+        ref={materialRef}
         uniforms={uniforms}
         vertexShader={RIM_VERTEX_SHADER}
         fragmentShader={RIM_FRAGMENT_SHADER}

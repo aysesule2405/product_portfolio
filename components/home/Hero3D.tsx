@@ -48,15 +48,17 @@ export function HeroOrbit({
   className,
   selection,
   onHoverChange,
+  scrollProgress,
 }: {
   className?: string;
   selection: FieldMapSelection;
   onHoverChange: (id: TimelineLane, hovered: boolean) => void;
+  scrollProgress?: number;
 }) {
   return (
     <div className={clsx("h-full w-full", className)}>
       <OrbitErrorBoundary>
-        <HeroOrbitScene selection={selection} onHoverChange={onHoverChange} />
+        <HeroOrbitScene selection={selection} onHoverChange={onHoverChange} scrollProgress={scrollProgress} />
       </OrbitErrorBoundary>
     </div>
   );
