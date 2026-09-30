@@ -8,6 +8,13 @@ const PARALLAX_MAX_Y = 0.35;
 // a flythrough. Reached well before scrollProgress's own short travel
 // distance (see Hero.tsx) lets the hero scroll fully out of the viewport.
 const RECEDE_DEPTH = 2.2;
+// Chosen so `1 - exp(-lambda * dt)` at a 60fps dt (~0.0167s) lands close to
+// the old fixed-factor lerp's 0.05 — same settle feel, but exp(-lambda*dt)
+// keeps the actual convergence rate in wall-clock time regardless of the
+// display's refresh rate, where a flat per-frame factor doesn't (it applies
+// twice as often, and therefore converges roughly twice as fast in real
+// time, on a 120Hz display as on 60Hz).
+const CAMERA_DAMP_LAMBDA = 3;
 
 /**
  * Phase 3's only camera motion: a small, clamped offset lerped toward the
@@ -32,13 +39,17 @@ export function CameraRig({ reduced, scrollProgress }: { reduced: boolean; scrol
   const targetPosition = useMemo(() => new THREE.Vector3(), []);
   const lookTarget = useMemo(() => new THREE.Vector3(0, 0, 0), []);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     const targetX = reduced ? 0 : THREE.MathUtils.clamp(state.pointer.x, -1, 1) * PARALLAX_MAX_X;
     const targetY = reduced ? 0 : THREE.MathUtils.clamp(state.pointer.y, -1, 1) * PARALLAX_MAX_Y;
     const base = baseZRef.current ?? camera.position.z;
     const targetZ = base + (reduced ? 0 : scrollProgress * RECEDE_DEPTH);
     targetPosition.set(targetX, targetY, targetZ);
-    camera.position.lerp(targetPosition, 0.05);
+    // Vector3.lerp already applies its factor per-component, so a single
+    // exponential-decay factor computed from delta time (the same math
+    // THREE.MathUtils.damp uses internally) gives the same frame-rate-
+    // independent result as damping x/y/z separately.
+    camera.position.lerp(targetPosition, 1 - Math.exp(-CAMERA_DAMP_LAMBDA * delta));
     camera.lookAt(lookTarget);
   });
 

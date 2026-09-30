@@ -30,7 +30,11 @@ function OrbitPlaceholder() {
 
 /** WebGL context creation can fail (old GPUs, some sandboxed browsers, driver
  * blocklists) — react-three-fiber throws when it does. A class boundary is
- * the only way to catch a render-time throw from a descendant. */
+ * the only way to catch a render-time throw from a descendant. HeroOrbitScene
+ * also bridges a *lost* context (tab backgrounding, OS memory pressure —
+ * common on mobile) into the same path: it can't throw from an async DOM
+ * event directly, so it stashes the loss as state and throws it on its next
+ * render, which lands here exactly like a creation failure. */
 class OrbitErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
 

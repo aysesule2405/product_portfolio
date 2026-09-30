@@ -11,10 +11,10 @@ import type { FieldMapSelection } from "@/components/home/FieldMapNav";
 import { CelestialBody } from "./orbit/CelestialBody";
 import { SatelliteNode } from "./orbit/SatelliteNode";
 import { CameraRig } from "./orbit/CameraRig";
-import { AtmosphereDust } from "./orbit/procedural";
+import { AtmosphereDust, CursorComet } from "./orbit/procedural";
 import { SceneLightingRig } from "./orbit/glass";
 import { useThemeMorph } from "./orbit/useThemeMorph";
-import { useQualityTier, DPR_CAP, DUST_COUNT, STAR_COUNT } from "./orbit/quality";
+import { useQualityTier, DPR_CAP, DUST_COUNT, STAR_COUNT, CRATER_TEXTURE_WIDTH } from "./orbit/quality";
 import {
   SATELLITE_POSITIONS,
   MOBILE_SATELLITE_POSITIONS,
@@ -23,6 +23,7 @@ import {
   DESKTOP_CAMERA_Z,
   MOBILE_CAMERA_Z,
   CATEGORY_ORDER,
+  CENTERPIECE_TONE,
 } from "./orbit/config";
 
 /** Tracks whether the hero is scrolled into view, so the render loop can
@@ -94,6 +95,17 @@ export function HeroOrbitScene({
    * (e.g. in isolation). */
   scrollProgress?: number;
 }) {
+  // `OrbitErrorBoundary` (Hero3D.tsx) only catches synchronous render-phase
+  // throws — it has no way to see an async DOM event like `webglcontextlost`
+  // (mobile browsers drop the context often: tab backgrounding, OS memory
+  // pressure, GPU driver resets). Without this, a mid-session context loss
+  // would leave the canvas black/frozen instead of falling back. Bridging it
+  // into something the boundary CAN catch: stash the loss as state, then
+  // throw it synchronously during this component's own render — the
+  // standard pattern for surfacing an async error to a class-based boundary.
+  const [contextLostError, setContextLostError] = useState<Error | null>(null);
+  if (contextLostError) throw contextLostError;
+
   const reduced = useReducedMotion();
   const { theme, morphRef, tick } = useThemeMorph();
   const qualityTier = useQualityTier();
@@ -135,6 +147,20 @@ export function HeroOrbitScene({
         onCreated={({ gl }) => {
           gl.toneMapping = THREE.ACESFilmicToneMapping;
           gl.toneMappingExposure = 1.15;
+          // preventDefault() signals we're deliberately handling the loss
+          // ourselves rather than leaving the browser to decide — we're not
+          // attempting real WebGL restoration (re-uploading every texture/
+          // geometry on `webglcontextrestored` is a much bigger undertaking
+          // than this scene's static hero warrants), just falling back to
+          // the same placeholder a hard failure already shows.
+          gl.domElement.addEventListener(
+            "webglcontextlost",
+            (event) => {
+              event.preventDefault();
+              setContextLostError(new Error("WebGL context lost"));
+            },
+            { once: true }
+          );
         }}
       >
         <MorphTicker tick={tick} />
@@ -152,7 +178,7 @@ export function HeroOrbitScene({
         />
         <Suspense fallback={null}>
           <group scale={compact ? MOBILE_CENTERPIECE_SCALE : 1}>
-            <CelestialBody reduced={reduced} morphRef={morphRef} />
+            <CelestialBody reduced={reduced} morphRef={morphRef} craterTextureWidth={CRATER_TEXTURE_WIDTH[qualityTier]} />
           </group>
           {CATEGORY_ORDER.map((id, index) => {
             const category = FIELD_MAP_CATEGORIES.find((c) => c.id === id)!;
@@ -172,6 +198,13 @@ export function HeroOrbitScene({
             );
           })}
         </Suspense>
+        <CursorComet
+          colorDark={CENTERPIECE_TONE.dark.rim}
+          colorLight={CENTERPIECE_TONE.light.hotspot}
+          morphRef={morphRef}
+          reduced={reduced}
+          scrollProgress={scrollProgress ?? 0}
+        />
         <CameraRig reduced={reduced} scrollProgress={scrollProgress ?? 0} />
       </Canvas>
     </div>

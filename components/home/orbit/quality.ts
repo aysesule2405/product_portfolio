@@ -11,6 +11,11 @@ export type QualityTier = "high" | "mid" | "low";
 export const DPR_CAP: Record<QualityTier, number> = { high: 1.5, mid: 1.25, low: 1 };
 export const DUST_COUNT: Record<QualityTier, number> = { high: 90, mid: 60, low: 30 };
 export const STAR_COUNT: Record<QualityTier, number> = { high: 700, mid: 450, low: 250 };
+/** Width of the centerpiece's generated crater/normal-map canvas (height is
+ * always half, a fixed 2:1 aspect) — the normal-map pass is a per-pixel loop,
+ * so this is the one place in the scene where texture resolution is a real
+ * one-time CPU cost worth scaling down on `low` tier. */
+export const CRATER_TEXTURE_WIDTH: Record<QualityTier, number> = { high: 1024, mid: 768, low: 512 };
 
 /** Best-effort device classification, not true detection — deviceMemory and
  * hardwareConcurrency are Chromium-only (undefined on Safari/Firefox), and

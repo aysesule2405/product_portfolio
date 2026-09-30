@@ -2,9 +2,16 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { FieldMapCategory } from "@/lib/data/field-map-categories";
-import { darken, lighten } from "./procedural";
-import { InstancedGlassShell, petalGeometry, type InstanceTransform } from "./glass";
-import { entranceProgress, clickPunchScale } from "./motion-utils";
+import { lighten } from "./procedural";
+import {
+  InstancedRippleShell,
+  petalGeometry,
+  injectReactiveDisplacement,
+  updateReactiveDisplacement,
+  type InstanceTransform,
+  type ReactiveShaderHandle,
+} from "./glass";
+import { entranceProgress, clickPunchScale, CLICK_PUNCH_DURATION, type FadeRef } from "./motion-utils";
 import { ConstellationLine } from "./ConstellationLine";
 import { SATELLITE_SCALE } from "./config";
 import type { ThemeMorphState } from "./useThemeMorph";
@@ -34,6 +41,30 @@ import type { ThemeMorphState } from "./useThemeMorph";
 // flythrough."
 const SCROLL_SEPARATION = 0.4;
 
+// Cursor-proximity reaction — the direct response to "not eye-catching, not
+// interactive" feedback on the whole scene: satellites now visibly speed up,
+// brighten, and grow as the cursor nears their on-screen position, an
+// unmissable payoff rather than the previous hover-only glow. Distance is
+// measured in normalized device coordinates (the same -1..1 space as
+// state.pointer), so PROXIMITY_RADIUS is a fraction of the viewport, not a
+// world-space unit.
+const PROXIMITY_RADIUS = 0.4;
+const PROXIMITY_DAMP_LAMBDA = 6;
+
+// Richer hover feedback — damping the binary isHovered flag rather than
+// snapping scale/light to it instantly gives hover a genuine ease in/out
+// instead of a hard on/off toggle.
+const HOVER_DAMP_LAMBDA = 8;
+
+// The click-confirmation pulse ring — a "sonar ping" expanding out from a
+// satellite the instant it's activated, timed to the same window as the
+// existing scale punch (CLICK_PUNCH_DURATION) rather than inventing a
+// second duration constant.
+const PULSE_RING_INNER = 0.78;
+const PULSE_RING_OUTER = 1.0;
+const PULSE_SCALE_FROM = 0.6;
+const PULSE_SCALE_TO = 2.4;
+
 export function SatelliteNode({
   category,
   theme,
@@ -62,31 +93,85 @@ export function SatelliteNode({
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const spinRef = useRef<THREE.Group>(null);
+  const pointLightRef = useRef<THREE.PointLight>(null);
+  const pulseMeshRef = useRef<THREE.Mesh>(null);
+  const pulseMaterialRef = useRef<THREE.MeshBasicMaterial>(null);
   const introStart = useRef<number | null>(null);
   const punchStart = useRef<number | null>(null);
+  const proximityRef = useRef(0);
+  const hoverAmountRef = useRef(0);
+  // Scratch vectors, allocated once — reused every frame via .copy()/scalar
+  // mutation below instead of .clone()/`new THREE.Vector3()`, which would
+  // otherwise allocate two fresh vectors per satellite per frame (eight per
+  // frame across all four) purely for GC to collect a moment later.
+  const targetScratch = useMemo(() => new THREE.Vector3(), []);
+  const startScratch = useMemo(() => new THREE.Vector3(), []);
+  const ndcScratch = useMemo(() => new THREE.Vector3(), []);
 
   const color = theme === "light" ? category.colorLight : category.colorDark;
+  // Brightened well past the satellite's own (often dark/desaturated) base
+  // tone — a click confirmation needs to read clearly against a dark scene
+  // regardless of how dim that category's color is, the same lesson
+  // InstancedRippleShell's color floor already applies to the shells.
+  const pulseColor = useMemo(() => lighten(color, 0.65), [color]);
   const bobSeed = useMemo(() => (category.id.charCodeAt(0) % 7) * 0.9, [category.id]);
   const spinSpeed = useMemo(() => 0.06 + (category.id.charCodeAt(1) % 5) * 0.02, [category.id]);
   const categoryScale = SATELLITE_SCALE[category.id];
+  const pulseRingGeometry = useDisposable(useMemo(() => new THREE.RingGeometry(PULSE_RING_INNER, PULSE_RING_OUTER, 40), []));
 
   useFrame((state, delta) => {
     const intro = entranceProgress(introStart, state.clock.elapsedTime, 0.3 + index * 0.15, 1.1, reduced);
     const punch = clickPunchScale(punchStart, state.clock.elapsedTime, isActive);
+    // clickPunchScale resets punchStart to null the instant isActive goes
+    // false, and sets it to the current elapsed time on activation — reusing
+    // that same ref here (rather than a second one) keeps the pulse ring
+    // exactly in sync with the scale punch instead of two independently
+    // timed effects drifting apart.
+    const pulseT =
+      punchStart.current === null || reduced
+        ? 1
+        : THREE.MathUtils.clamp((state.clock.elapsedTime - punchStart.current) / CLICK_PUNCH_DURATION, 0, 1);
+
+    hoverAmountRef.current = THREE.MathUtils.damp(hoverAmountRef.current, isHovered ? 1 : 0, HOVER_DAMP_LAMBDA, delta);
+    const hoverAmount = hoverAmountRef.current;
+
+    // How close the cursor is to this satellite's on-screen position, in
+    // normalized device coordinates — measured before applying this frame's
+    // own position update, so it's one frame behind during motion, which is
+    // imperceptible at this distance scale. Skipped entirely under reduced
+    // motion (near stays 0), matching how every other proximity/parallax
+    // effect in this scene degrades.
+    let near = 0;
+    if (!reduced && groupRef.current) {
+      ndcScratch.copy(groupRef.current.position).project(state.camera);
+      const screenDist = Math.hypot(ndcScratch.x - state.pointer.x, ndcScratch.y - state.pointer.y);
+      near = THREE.MathUtils.clamp(1 - screenDist / PROXIMITY_RADIUS, 0, 1);
+    }
+    proximityRef.current = THREE.MathUtils.damp(proximityRef.current, near, PROXIMITY_DAMP_LAMBDA, delta);
+    const proximity = proximityRef.current;
+
     if (groupRef.current) {
       const bob = reduced ? 0 : Math.sin(state.clock.elapsedTime * 0.7 + bobSeed) * 0.08 * intro;
       const departed = reduced ? 0 : scrollProgress;
-      const target = position.clone().multiplyScalar(1 + departed * SCROLL_SEPARATION);
-      const start = target.clone().add(new THREE.Vector3(0, -5, 0));
-      groupRef.current.position.lerpVectors(start, target, intro).add(new THREE.Vector3(0, bob, 0));
-      const hoverScale = isHovered ? 1.12 : 1;
+      targetScratch.copy(position).multiplyScalar(1 + departed * SCROLL_SEPARATION);
+      startScratch.copy(targetScratch).setY(targetScratch.y - 5);
+      groupRef.current.position.lerpVectors(startScratch, targetScratch, intro);
+      groupRef.current.position.y += bob;
+      const hoverScale = 1 + hoverAmount * 0.12 + proximity * 0.28;
       groupRef.current.scale.setScalar(THREE.MathUtils.lerp(0.3, 1, intro) * punch * hoverScale * categoryScale);
     }
     if (spinRef.current && !reduced) {
-      // Minimal static rotation for evaluating the form, not Phase 3
-      // ambient motion — slow enough that it reads as "settled," not
-      // spinning.
-      spinRef.current.rotation.y += delta * spinSpeed;
+      // Minimal static rotation for evaluating the form at rest, boosted
+      // sharply as the cursor approaches — the "wakes up" half of the
+      // proximity reaction, paired with the brightness boost below.
+      spinRef.current.rotation.y += delta * spinSpeed * (1 + proximity * 4);
+    }
+    if (pointLightRef.current) {
+      pointLightRef.current.intensity = hoverAmount * 1.6 + (isActive ? 1.0 : 0) + proximity * 2.4;
+    }
+    if (pulseMeshRef.current && pulseMaterialRef.current) {
+      pulseMeshRef.current.scale.setScalar(THREE.MathUtils.lerp(PULSE_SCALE_FROM, PULSE_SCALE_TO, pulseT) * categoryScale);
+      pulseMaterialRef.current.opacity = (1 - pulseT) * 0.85;
     }
   });
 
@@ -98,16 +183,33 @@ export function SatelliteNode({
         opacity={(isHovered || isActive ? 0.65 : 0.3) * (1 - (reduced ? 0 : scrollProgress))}
       />
       <pointLight
+        ref={pointLightRef}
         color={color}
         intensity={(isHovered ? 1.6 : 0) + (isActive ? 1.0 : 0)}
-        distance={2.2}
+        distance={2.6}
         position={[0.3, 0.25, 0.8]}
       />
+      {/* The click-confirmation pulse — a thin ring expanding outward and
+          fading over the same CLICK_PUNCH_DURATION window as the scale
+          punch, giving activation a clear "confirmed, launching" signal
+          distinct from the punch alone. Opacity-driven (never unmounted),
+          so it costs nothing extra when idle beyond the one draw call. */}
+      <mesh ref={pulseMeshRef} geometry={pulseRingGeometry}>
+        <meshBasicMaterial ref={pulseMaterialRef} color={pulseColor} transparent opacity={0} side={THREE.DoubleSide} depthWrite={false} />
+      </mesh>
       <group ref={spinRef} onPointerEnter={(e) => { e.stopPropagation(); onHoverChange(true); }} onPointerLeave={(e) => { e.stopPropagation(); onHoverChange(false); }}>
-        {category.id === "roots" ? <PetalLens color={color} theme={theme} highlighted={isHovered || isActive} /> : null}
-        {category.id === "experience" ? <ColumnLens color={color} theme={theme} highlighted={isHovered || isActive} /> : null}
-        {category.id === "projects" ? <FrameLens color={color} theme={theme} highlighted={isHovered || isActive} /> : null}
-        {category.id === "community" ? <ClusterLens color={color} theme={theme} highlighted={isHovered || isActive} /> : null}
+        {category.id === "roots" ? (
+          <PetalLens color={color} theme={theme} highlighted={isHovered || isActive} proximityRef={proximityRef} reduced={reduced} />
+        ) : null}
+        {category.id === "experience" ? (
+          <ColumnLens color={color} theme={theme} highlighted={isHovered || isActive} proximityRef={proximityRef} reduced={reduced} />
+        ) : null}
+        {category.id === "projects" ? (
+          <FrameLens color={color} theme={theme} highlighted={isHovered || isActive} proximityRef={proximityRef} reduced={reduced} />
+        ) : null}
+        {category.id === "community" ? (
+          <ClusterLens color={color} theme={theme} highlighted={isHovered || isActive} proximityRef={proximityRef} reduced={reduced} />
+        ) : null}
       </group>
     </group>
   );
@@ -145,11 +247,47 @@ function spanTransform(from: THREE.Vector3, to: THREE.Vector3) {
 /** A small solid, softly emissive sphere — the "internal emissive core"
  * shared by Practice/Community, anchoring the glass shells around it so
  * they never read as hollow/empty. */
-function LensCore({ color, radius = 0.11 }: { color: string; radius?: number }) {
+function LensCore({
+  color,
+  radius = 0.11,
+  proximityRef,
+  reduced,
+}: {
+  color: string;
+  radius?: number;
+  /** Same per-satellite proximity value InstancedRippleShell reacts to — the
+   * core now morphs right along with its own shell rather than staying a
+   * rigid anchor underneath a rippling coating. Optional so LensCore can
+   * still be used undecorated if ever needed. */
+  proximityRef?: FadeRef;
+  reduced?: boolean;
+}) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const shaderRef = useRef<ReactiveShaderHandle | null>(null);
+  const material = useMemo(() => {
+    const mat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.42, roughness: 0.4 });
+    // eslint-disable-next-line react-hooks/refs
+    injectReactiveDisplacement(mat, radius * 0.14, radius * 0.4, (shader) => {
+      shaderRef.current = shader;
+    });
+    return mat;
+  }, [color, radius]);
+  useEffect(() => () => material.dispose(), [material]);
+
+  useFrame((state) => {
+    if (reduced || !proximityRef) return;
+    updateReactiveDisplacement(shaderRef.current, state.clock.elapsedTime, state.pointer.x, state.pointer.y);
+    // The bulge term is scaled by uBulgeAmount, which is fixed — proximity
+    // instead gates the *ambient* term's effective amplitude by blending it
+    // toward zero when the cursor is far away, so an idle satellite's core
+    // stays calmer than one actively being approached, matching the shell's
+    // own proximity-scaled reaction.
+    if (shaderRef.current) shaderRef.current.uniforms.uAmbientAmount.value = radius * 0.14 * (0.35 + proximityRef.current * 0.65);
+  });
+
   return (
-    <mesh>
-      <sphereGeometry args={[radius, 14, 14]} />
-      <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.42} roughness={0.4} />
+    <mesh ref={meshRef} material={material}>
+      <sphereGeometry args={[radius, 20, 20]} />
     </mesh>
   );
 }
@@ -162,9 +300,21 @@ function LensCore({ color, radius = 0.11 }: { color: string; radius?: number }) 
  * they're visibly apart on screen, not just at different depths, and lowers
  * opacity further so overlap reads as translucent layering rather than one
  * opaque shape. */
-function PetalLens({ color, theme, highlighted }: { color: string; theme: ThemeMorphState; highlighted: boolean }) {
+function PetalLens({
+  color,
+  theme,
+  highlighted,
+  proximityRef,
+  reduced,
+}: {
+  color: string;
+  theme: ThemeMorphState;
+  highlighted: boolean;
+  proximityRef: FadeRef;
+  reduced: boolean;
+}) {
   const geo = useDisposable(useMemo(() => petalGeometry(0.6, 0.29, 0.045), []));
-  const backColor = useMemo(() => darken(color, 0.32), [color]);
+  const highlightColor = useMemo(() => lighten(color, 0.55), [color]);
   const opacity = shellOpacity(theme, highlighted, 0.32, 0.1);
   const transforms = useMemo<InstanceTransform[]>(
     () => [
@@ -176,13 +326,21 @@ function PetalLens({ color, theme, highlighted }: { color: string; theme: ThemeM
   return (
     <group scale={1.05}>
       <group position={[0, 0, 0.13]}>
-        <LensCore color={color} radius={0.13} />
+        <LensCore color={color} radius={0.13} proximityRef={proximityRef} reduced={reduced} />
       </group>
-      <InstancedGlassShell geometry={geo} frontColor={color} backColor={backColor} opacity={opacity} transforms={transforms} />
+      <InstancedRippleShell
+        geometry={geo}
+        color={color}
+        highlightColor={highlightColor}
+        opacity={opacity}
+        transforms={transforms}
+        proximityRef={proximityRef}
+        reduced={reduced}
+      />
       {/* No SatelliteRim: getting it to peek out past LensCore's edge
           without exposing the shell's unoccluded far side (see the
           root-cause note on SatelliteRim below) needs a margin thin enough
-          that it stopped being worth the extra draw call — GlassShell's own
+          that it stopped being worth the extra draw call — the shell's own
           clearcoat/fresnel response already carries edge definition. */}
     </group>
   );
@@ -228,11 +386,23 @@ function useColumnLayout() {
  * concept but makes every parameter a genuine progression (size, lens
  * proportion, rotation, position along a curved path) and rebuilds the
  * spine as segments between lens centers instead of one straight overhang. */
-function ColumnLens({ color, theme, highlighted }: { color: string; theme: ThemeMorphState; highlighted: boolean }) {
+function ColumnLens({
+  color,
+  theme,
+  highlighted,
+  proximityRef,
+  reduced,
+}: {
+  color: string;
+  theme: ThemeMorphState;
+  highlighted: boolean;
+  proximityRef: FadeRef;
+  reduced: boolean;
+}) {
   const { lensTransforms, spineTransforms } = useColumnLayout();
   const lensGeo = useDisposable(useMemo(() => new THREE.SphereGeometry(0.24, 16, 16), []));
   const spineGeo = useDisposable(useMemo(() => new THREE.CylinderGeometry(0.019, 0.019, 1, 8), []));
-  const backColor = useMemo(() => darken(color, 0.32), [color]);
+  const highlightColor = useMemo(() => lighten(color, 0.55), [color]);
   const opacity = shellOpacity(theme, highlighted, 0.42, 0.1);
 
   const spineRef = useRef<THREE.InstancedMesh>(null);
@@ -256,7 +426,15 @@ function ColumnLens({ color, theme, highlighted }: { color: string; theme: Theme
       <instancedMesh ref={spineRef} args={[spineGeo, undefined, spineTransforms.length]}>
         <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.55} roughness={0.4} transparent opacity={0.72} />
       </instancedMesh>
-      <InstancedGlassShell geometry={lensGeo} frontColor={color} backColor={backColor} opacity={opacity} transforms={lensTransforms} />
+      <InstancedRippleShell
+        geometry={lensGeo}
+        color={color}
+        highlightColor={highlightColor}
+        opacity={opacity}
+        transforms={lensTransforms}
+        proximityRef={proximityRef}
+        reduced={reduced}
+      />
       {/* No solid, depth-writing occluder runs the length of this stack (the
           spine is thin and the lenses are non-opaque glass shells with
           depthWrite disabled) — a rim shell here would show the same
@@ -276,7 +454,19 @@ function ColumnLens({ color, theme, highlighted }: { color: string; theme: Theme
  * deliberately asymmetric diagonal connector bracing a strut to the core —
  * a single "meaningful internal connector" rather than one more symmetric
  * structural member. */
-function FrameLens({ color, theme, highlighted }: { color: string; theme: ThemeMorphState; highlighted: boolean }) {
+function FrameLens({
+  color,
+  theme,
+  highlighted,
+  proximityRef,
+  reduced,
+}: {
+  color: string;
+  theme: ThemeMorphState;
+  highlighted: boolean;
+  proximityRef: FadeRef;
+  reduced: boolean;
+}) {
   const hexRadiusBottom = 0.32;
   const hexRadiusTop = 0.21;
   const strutHeight = 0.46;
@@ -287,6 +477,29 @@ function FrameLens({ color, theme, highlighted }: { color: string; theme: ThemeM
   const bottomRingGeo = useDisposable(useMemo(() => new THREE.TorusGeometry(hexRadiusBottom, 0.013, 6, 6), [hexRadiusBottom]));
   const innerGeo = useDisposable(useMemo(() => new THREE.CylinderGeometry(0.15, 0.13, 0.36, 6, 1), []));
   const connectorGeo = useDisposable(useMemo(() => new THREE.CylinderGeometry(0.008, 0.008, 1, 6), []));
+
+  // The hex core's own material — pulled out of inline JSX so
+  // injectReactiveDisplacement (glass.tsx) can graft cursor-reactive
+  // vertex displacement onto it, same treatment as LensCore. Flat shading
+  // recomputes its facet normals from screen-space derivatives of the
+  // final (post-displacement) position, so the bulge reads as genuinely
+  // faceted, not smoothed over.
+  const innerShaderRef = useRef<ReactiveShaderHandle | null>(null);
+  const innerMaterial = useMemo(() => {
+    const mat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.4, roughness: 0.32, flatShading: true });
+    // eslint-disable-next-line react-hooks/refs
+    injectReactiveDisplacement(mat, 0.02, 0.06, (shader) => {
+      innerShaderRef.current = shader;
+    });
+    return mat;
+  }, [color]);
+  useEffect(() => () => innerMaterial.dispose(), [innerMaterial]);
+
+  useFrame((state) => {
+    if (reduced) return;
+    updateReactiveDisplacement(innerShaderRef.current, state.clock.elapsedTime, state.pointer.x, state.pointer.y);
+    if (innerShaderRef.current) innerShaderRef.current.uniforms.uAmbientAmount.value = 0.02 * (0.35 + proximityRef.current * 0.65);
+  });
 
   const frameColor = useMemo(() => lighten(color, 0.22), [color]);
   const frameMaterial = useMemo(
@@ -333,9 +546,7 @@ function FrameLens({ color, theme, highlighted }: { color: string; theme: ThemeM
 
   return (
     <group rotation={[0.2, 0.5, 0.06]}>
-      <mesh geometry={innerGeo} rotation={[0, Math.PI / 6, 0]}>
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.4} roughness={0.32} flatShading />
-      </mesh>
+      <mesh geometry={innerGeo} material={innerMaterial} rotation={[0, Math.PI / 6, 0]} />
       <instancedMesh ref={strutRef} args={[strutGeo, undefined, strutCount]} material={frameMaterial} />
       <mesh geometry={topRingGeo} material={frameMaterial} position={[0, strutHeight / 2, 0]} rotation={[Math.PI / 2, 0, 0]} />
       <mesh geometry={bottomRingGeo} material={frameMaterial} position={[0, -strutHeight / 2, 0]} rotation={[Math.PI / 2, 0, 0]} />
@@ -362,11 +573,23 @@ const CLUSTER_NODE_SCALES = [1, 0.78, 1.18] as const;
  * here by Community's Phase 2C size increase without re-checking the rim
  * radius against it. Shrunk to hug just the central lens instead. The three
  * companions and their rails are also now instanced (5 draws -> 2). */
-function ClusterLens({ color, theme, highlighted }: { color: string; theme: ThemeMorphState; highlighted: boolean }) {
+function ClusterLens({
+  color,
+  theme,
+  highlighted,
+  proximityRef,
+  reduced,
+}: {
+  color: string;
+  theme: ThemeMorphState;
+  highlighted: boolean;
+  proximityRef: FadeRef;
+  reduced: boolean;
+}) {
   const orbitRadius = 0.56;
   const nodeGeo = useDisposable(useMemo(() => new THREE.SphereGeometry(0.15, 18, 18), []));
   const railGeo = useDisposable(useMemo(() => new THREE.CylinderGeometry(0.007, 0.007, 1, 6), []));
-  const backColor = useMemo(() => darken(color, 0.32), [color]);
+  const highlightColor = useMemo(() => lighten(color, 0.55), [color]);
   const opacity = shellOpacity(theme, highlighted, 0.44, 0.11);
   const nodeCount = CLUSTER_NODE_SCALES.length;
 
@@ -400,7 +623,7 @@ function ClusterLens({ color, theme, highlighted }: { color: string; theme: Them
 
   return (
     <group rotation={[0.1, 0.25, 0.08]}>
-      <LensCore color={color} radius={0.2} />
+      <LensCore color={color} radius={0.2} proximityRef={proximityRef} reduced={reduced} />
       <mesh rotation={[Math.PI / 2.6, 0.1, 0]}>
         <torusGeometry args={[orbitRadius, 0.02, 8, 44]} />
         <meshStandardMaterial color={color} transparent opacity={0.6} roughness={0.3} />
@@ -411,7 +634,15 @@ function ClusterLens({ color, theme, highlighted }: { color: string; theme: Them
       <instancedMesh ref={railRef} args={[railGeo, undefined, nodeCount]}>
         <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.18} transparent opacity={0.4} roughness={0.5} />
       </instancedMesh>
-      <InstancedGlassShell geometry={nodeGeo} frontColor={color} backColor={backColor} opacity={opacity} transforms={nodeTransforms} />
+      <InstancedRippleShell
+        geometry={nodeGeo}
+        color={color}
+        highlightColor={highlightColor}
+        opacity={opacity}
+        transforms={nodeTransforms}
+        proximityRef={proximityRef}
+        reduced={reduced}
+      />
       {/* No SatelliteRim — see the component doc comment above: this is
           the satellite whose Phase 2C.1 "hug the core instead of the whole
           cluster" fix (radius 0.62 -> 0.26) still left a small visible

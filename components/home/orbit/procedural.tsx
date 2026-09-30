@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { FadeRef } from "./motion-utils";
@@ -336,11 +336,17 @@ function heightCanvasToNormalCanvas(heightCanvas: HTMLCanvasElement, strength: n
  * instead of looking painted on. Skipped entirely when `enabled` is false
  * (the sun doesn't need it) so the per-pixel normal pass never runs for
  * nothing. */
-export function useCraterTerrainTextures(baseColor: string, enabled: boolean, seed = "moon") {
+export function useCraterTerrainTextures(baseColor: string, enabled: boolean, seed = "moon", resolutionWidth = 1024) {
   return useMemo(() => {
     if (!enabled) return { colorTexture: null, normalTexture: null };
-    const width = 1024;
-    const height = 512;
+    // Kept at a fixed 2:1 aspect ratio; only the absolute resolution scales
+    // by quality tier. The normal-map pass below is a per-pixel loop
+    // (heightCanvasToNormalCanvas), so this is the one place in the scene
+    // where texture size is a real, if one-time, CPU cost — worth scaling
+    // down on `low` tier rather than paying the same generation cost as
+    // `high` regardless of device.
+    const width = resolutionWidth;
+    const height = Math.round(resolutionWidth / 2);
     const rand = mulberry32(hashString(seed));
 
     const colorCanvas = document.createElement("canvas");
@@ -373,5 +379,134 @@ export function useCraterTerrainTextures(baseColor: string, enabled: boolean, se
     const normalTexture = new THREE.CanvasTexture(normalCanvas);
     normalTexture.needsUpdate = true;
     return { colorTexture, normalTexture };
-  }, [baseColor, enabled, seed]);
+  }, [baseColor, enabled, seed, resolutionWidth]);
+}
+
+const COMET_TRAIL_LENGTH = 10;
+// In front of every satellite and the centerpiece (the furthest satellite
+// sits around z=2.35 — see config.ts) so the trail never gets clipped behind
+// something it's meant to float above.
+const COMET_DEPTH = 3.4;
+const COMET_HEAD_LERP = 0.55;
+const COMET_CHAIN_LERP = 0.5;
+
+interface CometState {
+  links: THREE.Vector3[];
+  matrix: THREE.Matrix4;
+  quaternion: THREE.Quaternion;
+  scaleVec: THREE.Vector3;
+  darkColor: THREE.Color;
+  lightColor: THREE.Color;
+  mixedColor: THREE.Color;
+  targetWorld: THREE.Vector3;
+}
+
+/** A glowing trail of shrinking dots chasing the cursor — Direction 3 of the
+ * user's requested redo ("bolder celestial," reacting boldly and obviously
+ * to the cursor rather than the previous restrained parallax). Each link
+ * lerps toward the one ahead of it rather than all links lerping toward the
+ * cursor directly, which is what gives the classic "inchworm" trailing feel
+ * instead of a cluster of dots all converging independently. One instanced
+ * draw call regardless of trail length; the fade-out is done with shrinking
+ * scale only (no per-instance opacity — InstancedMesh shares one material),
+ * which reads correctly against the mostly-dark scene without needing a
+ * more expensive per-instance alpha attribute. Reused theme tones
+ * (CENTERPIECE_TONE.dark.rim / .light.hotspot are the intended callers)
+ * rather than a new color, and hidden entirely under reduced motion — a
+ * cursor-chasing trail is pure decorative motion with no functional
+ * purpose, the clear case for removing it outright rather than just
+ * freezing it. */
+export function CursorComet({
+  colorDark,
+  colorLight,
+  morphRef,
+  reduced,
+  scrollProgress,
+}: {
+  colorDark: string;
+  colorLight: string;
+  morphRef: FadeRef;
+  reduced: boolean;
+  scrollProgress: number;
+}) {
+  const meshRef = useRef<THREE.InstancedMesh>(null);
+  // Declared via JSX + ref below, not constructed with `new
+  // THREE.MeshBasicMaterial()` in a useMemo — color and opacity both need
+  // mutating every frame, and the project's react-hooks/immutability rule
+  // treats a memoized value's properties as frozen once returned. A ref to
+  // the live instance the renderer creates from the JSX is exempt, the same
+  // pattern GlassShell/RippleShell use for their materials.
+  const materialRef = useRef<THREE.MeshBasicMaterial>(null);
+  const geometry = useMemo(() => new THREE.SphereGeometry(1, 12, 12), []);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+
+  // Trail links and scratch objects, held in a ref built lazily on the first
+  // frame — never a useMemo (everything here is mutated every frame below)
+  // and never read during render (only inside this useFrame callback), the
+  // same two constraints every other imperative effect in this scene works
+  // around the same way.
+  const cometRef = useRef<CometState | null>(null);
+  // R3F initializes state.pointer to exactly (0, 0) before any real pointer
+  // event has landed on the canvas — a benign default for the camera
+  // parallax and centerpiece tilt (it just means "centered, no offset yet"),
+  // but for this trail it means "parked directly in front of the
+  // centerpiece," which briefly showed up as a bright stray dot on first
+  // load in testing. Stay hidden until the pointer has genuinely moved away
+  // from that sentinel at least once.
+  const activatedRef = useRef(false);
+
+  useFrame((state) => {
+    if (!meshRef.current) return;
+    if (reduced) {
+      meshRef.current.visible = false;
+      return;
+    }
+    if (!activatedRef.current) {
+      if (state.pointer.x !== 0 || state.pointer.y !== 0) {
+        activatedRef.current = true;
+      } else {
+        meshRef.current.visible = false;
+        return;
+      }
+    }
+    meshRef.current.visible = true;
+    if (cometRef.current === null) {
+      cometRef.current = {
+        links: Array.from({ length: COMET_TRAIL_LENGTH }, () => new THREE.Vector3()),
+        matrix: new THREE.Matrix4(),
+        quaternion: new THREE.Quaternion(),
+        scaleVec: new THREE.Vector3(),
+        darkColor: new THREE.Color(colorDark),
+        lightColor: new THREE.Color(colorLight),
+        mixedColor: new THREE.Color(),
+        targetWorld: new THREE.Vector3(),
+      };
+    }
+    const c = cometRef.current;
+    c.targetWorld.set((state.pointer.x * state.viewport.width) / 2, (state.pointer.y * state.viewport.height) / 2, COMET_DEPTH);
+    c.links[0].lerp(c.targetWorld, COMET_HEAD_LERP);
+    for (let i = 1; i < COMET_TRAIL_LENGTH; i++) {
+      c.links[i].lerp(c.links[i - 1], COMET_CHAIN_LERP);
+    }
+
+    if (materialRef.current) {
+      c.mixedColor.copy(c.darkColor).lerp(c.lightColor, morphRef.current);
+      materialRef.current.color.copy(c.mixedColor);
+      materialRef.current.opacity = 1 - scrollProgress;
+    }
+
+    for (let i = 0; i < COMET_TRAIL_LENGTH; i++) {
+      const t = 1 - i / COMET_TRAIL_LENGTH;
+      c.scaleVec.setScalar(0.05 + 0.09 * t * t);
+      c.matrix.compose(c.links[i], c.quaternion, c.scaleVec);
+      meshRef.current.setMatrixAt(i, c.matrix);
+    }
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  });
+
+  return (
+    <instancedMesh ref={meshRef} args={[geometry, undefined, COMET_TRAIL_LENGTH]} frustumCulled={false}>
+      <meshBasicMaterial ref={materialRef} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
+    </instancedMesh>
+  );
 }

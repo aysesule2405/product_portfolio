@@ -10,7 +10,7 @@ of re-deriving it. See `AGENTS.md` for the redesign brief this implements (Phase
 |---|---|---|
 | Editor shell | Structure and navigation | `components/shell/*` (sidebar, top bar, command palette, status bar) |
 | Field notes | Project evidence and written content | Case studies, decision logs, evidence rail |
-| Night sky | Dark-mode atmosphere, systems thinking | `--star-*` tokens, `CelestialBackdrop`, `CommitConstellation` |
+| Night sky | Dark-mode atmosphere, systems thinking | `--star-*` tokens, `CelestialBackdrop`, `CommitConstellation`, the home hero's WebGL field map (`HeroOrbitScene`) |
 | Ocean & shells | Light-mode atmosphere, creative practice | `--morning-*` tokens, `waves.gif`, `SHELL_ASSETS` in `CommitConstellation.tsx` |
 
 No new visual metaphor should be added on top of these — extend one of the four instead.
@@ -101,9 +101,12 @@ that phase will use.
 
 ## Rules for stars, shells, grids, glows, textures
 
-- **Stars** (`CommitConstellation`, `CelestialBackdrop`): dark-mode only motif, represent
-  nodes/relationships in the field map and the ambient night sky. Never used as pure
-  decoration outside those two components.
+- **Stars** (`CommitConstellation`, `CelestialBackdrop`, and the hero's own `<Stars>` field
+  inside `HeroOrbitScene`): dark-mode only motif, represent nodes/relationships in the field
+  map and the ambient night sky. The hero's is a separate implementation (drei's WebGL
+  `Stars`, not a DOM/CSS layer) because it lives inside a 3D canvas the other two can't
+  render into — same motif and same dark-mode-only rule, different medium. Never used as
+  pure decoration outside these three.
 - **Shells**: light-mode equivalent of stars in the field map — one shell asset per problem
   category via `CATEGORY_SHELL_INDEX`, not randomly assigned.
 - **Grids**: `grid-field` background texture (`Hero.tsx`) marks "structure/code" moments —

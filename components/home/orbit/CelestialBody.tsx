@@ -2,9 +2,21 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { RimGlow, useCraterTerrainTextures } from "./procedural";
-import { Corona, GlassShell, MoonShell } from "./glass";
+import {
+  Corona,
+  RippleShell,
+  injectReactiveDisplacement,
+  updateReactiveDisplacement,
+  SIMPLEX_NOISE_GLSL,
+  type ReactiveShaderHandle,
+} from "./glass";
 import { entranceProgress, type FadeRef } from "./motion-utils";
 import { CENTERPIECE_RADIUS, CENTERPIECE_TONE } from "./config";
+
+// Equivalent settle feel to the previous fixed 0.04-per-frame lerp at 60fps,
+// but frame-rate-independent — see CameraRig's identical CAMERA_DAMP_LAMBDA
+// for the derivation.
+const TILT_DAMP_LAMBDA = 2.5;
 
 /**
  * The scene's one centerpiece — Glass Instruments' material language (a
@@ -29,7 +41,18 @@ import { CENTERPIECE_RADIUS, CENTERPIECE_TONE } from "./config";
  * still only draws one subtree — the Phase 2C.1 draw-call baseline holds
  * except during the ~800ms transition window itself.
  */
-export function CelestialBody({ reduced, morphRef }: { reduced: boolean; morphRef: FadeRef }) {
+export function CelestialBody({
+  reduced,
+  morphRef,
+  craterTextureWidth = 1024,
+}: {
+  reduced: boolean;
+  morphRef: FadeRef;
+  /** Passed down from HeroOrbitScene's quality tier — see CRATER_TEXTURE_WIDTH
+   * in quality.ts. Defaults to the previous fixed value so this component
+   * still works if ever rendered without a quality-tier owner. */
+  craterTextureWidth?: number;
+}) {
   const groupRef = useRef<THREE.Group>(null);
   const moonGroupRef = useRef<THREE.Group>(null);
   const sunGroupRef = useRef<THREE.Group>(null);
@@ -39,54 +62,83 @@ export function CelestialBody({ reduced, morphRef }: { reduced: boolean; morphRe
   const sunCoreRef = useRef<THREE.Mesh>(null);
   const moonFadeRef = useRef(1);
   const sunFadeRef = useRef(0);
+  // 0 at rest, peaking at the transition's midpoint — drives RippleShell's
+  // extra morph-distortion term (see glass.tsx) so the crossfade itself
+  // reads as the shell convulsing through a transformation, not just fading
+  // opacity while a separate ripple idles underneath.
+  const morphBoostRef = useRef(0);
   const pointer = useRef({ x: 0, y: 0 });
   const introStart = useRef<number | null>(null);
   const radius = CENTERPIECE_RADIUS;
+  // Populated once, asynchronously, the first time the moon's surface
+  // material actually compiles (see injectReactiveDisplacement in
+  // glass.tsx) — never read during render, only inside useFrame below. The
+  // sun doesn't need this: its surface is already a fully custom shader
+  // (SUN_VERTEX/SUN_FRAGMENT below), so displacement is added directly
+  // there instead of grafted on via onBeforeCompile.
+  const moonShaderRef = useRef<ReactiveShaderHandle | null>(null);
 
   // Always enabled now — both the moon and sun subtrees stay mounted
   // regardless of the live morph value, so the crater texture is always
   // needed, not just when theme === "dark".
-  const { colorTexture, normalTexture } = useCraterTerrainTextures(CENTERPIECE_TONE.dark.body, true, "centerpiece-moon");
+  const { colorTexture, normalTexture } = useCraterTerrainTextures(
+    CENTERPIECE_TONE.dark.body,
+    true,
+    "centerpiece-moon",
+    craterTextureWidth
+  );
 
   const surfaceGeometry = useMemo(() => new THREE.SphereGeometry(radius, 64, 64), [radius]);
   useEffect(() => () => surfaceGeometry.dispose(), [surfaceGeometry]);
-  // Thinner shell (1.045x vs Phase 2B's 1.06x) so it hugs the surface as an
-  // optical coating rather than standing off far enough to read as a ring.
-  const shellGeometry = useMemo(() => new THREE.SphereGeometry(radius * 1.045, 48, 48), [radius]);
-  useEffect(() => () => shellGeometry.dispose(), [shellGeometry]);
   const coreGeometry = useMemo(() => new THREE.SphereGeometry(radius * 0.6, 32, 32), [radius]);
   useEffect(() => () => coreGeometry.dispose(), [coreGeometry]);
 
-  const moonSurfaceMaterial = useMemo(
-    () =>
-      new THREE.MeshPhysicalMaterial({
-        map: colorTexture,
-        normalMap: normalTexture,
-        normalScale: new THREE.Vector2(0.85, 0.85),
-        roughness: 0.64,
-        metalness: 0.04,
-        // Reduced from 0.35/0.3 (Phase 2B) — the clearcoat highlight was
-        // large and smooth enough to wash out maria detail underneath it.
-        clearcoat: 0.2,
-        clearcoatRoughness: 0.5,
-        // A low emissive floor, not scene lighting — keeps the shadow side
-        // of the terminator from crushing to pure black regardless of
-        // camera/light angle, without brightening the lit side (which stays
-        // ~10x stronger from the key light and would swamp anything this
-        // subtle).
-        emissive: CENTERPIECE_TONE.dark.core,
-        emissiveIntensity: 0.05,
-        transparent: true,
-        // The sun's surface mesh now shares this exact sphere geometry at
-        // the same transform during the crossfade — two coincident opaque-
-        // depth writers z-fight against each other. Disabling depth writes
-        // here avoids that; the small solid core sphere still anchors
-        // correct occlusion for anything genuinely behind the centerpiece.
-        depthWrite: false,
-        opacity: 0.95,
-      }),
-    [colorTexture, normalTexture]
-  );
+  const moonSurfaceMaterial = useMemo(() => {
+    const material = new THREE.MeshPhysicalMaterial({
+      map: colorTexture,
+      normalMap: normalTexture,
+      normalScale: new THREE.Vector2(0.85, 0.85),
+      roughness: 0.64,
+      metalness: 0.04,
+      // Reduced from 0.35/0.3 (Phase 2B) — the clearcoat highlight was
+      // large and smooth enough to wash out maria detail underneath it.
+      clearcoat: 0.2,
+      clearcoatRoughness: 0.5,
+      // A low emissive floor, not scene lighting — keeps the shadow side
+      // of the terminator from crushing to pure black regardless of
+      // camera/light angle, without brightening the lit side (which stays
+      // ~10x stronger from the key light and would swamp anything this
+      // subtle).
+      emissive: CENTERPIECE_TONE.dark.core,
+      emissiveIntensity: 0.05,
+      transparent: true,
+      // The sun's surface mesh now shares this exact sphere geometry at
+      // the same transform during the crossfade — two coincident opaque-
+      // depth writers z-fight against each other. Disabling depth writes
+      // here avoids that; the small solid core sphere still anchors
+      // correct occlusion for anything genuinely behind the centerpiece.
+      depthWrite: false,
+      opacity: 0.95,
+    });
+    // Grafted on right after construction, before this material is ever
+    // handed to three.js for compilation — see injectReactiveDisplacement's
+    // doc comment in glass.tsx. Heavy, by design: "go with direction 1
+    // heavily... re-model the 3D objects to be morphing upon interaction."
+    // The crater surface itself now genuinely deforms toward the cursor, not
+    // just the glass coating around it — a much bigger, more obvious bulge
+    // than the shell's own (radius * 0.11), since this is the object the
+    // whole redo is about.
+    // The linter can't see that three.js invokes onBeforeCompile
+    // asynchronously (at first actual GPU compile, inside the render loop,
+    // never synchronously here) — this ref write never happens during this
+    // render.
+    // eslint-disable-next-line react-hooks/refs
+    injectReactiveDisplacement(material, radius * 0.12, radius * 0.32, (shader) => {
+      moonShaderRef.current = shader;
+    });
+    return material;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [colorTexture, normalTexture]);
   useEffect(() => () => moonSurfaceMaterial.dispose(), [moonSurfaceMaterial]);
 
   const moonCoreMaterial = useMemo(
@@ -124,7 +176,16 @@ export function CelestialBody({ reduced, morphRef }: { reduced: boolean; morphRe
       edge: { value: new THREE.Color(CENTERPIECE_TONE.light.edge) },
       hotspot: { value: new THREE.Color(CENTERPIECE_TONE.light.hotspot) },
       opacity: { value: 0 },
+      // Same displacement amplitude as the moon's — already a fully custom
+      // shader, so no onBeforeCompile graft needed here, just the same
+      // ambient-ripple + cursor-bulge terms added directly to SUN_VERTEX
+      // below.
+      uTime: { value: 0 },
+      uPointerDir: { value: new THREE.Vector3(0, 0, 1) },
+      uAmbientAmount: { value: radius * 0.12 },
+      uBulgeAmount: { value: radius * 0.32 },
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
@@ -140,11 +201,17 @@ export function CelestialBody({ reduced, morphRef }: { reduced: boolean; morphRe
     }
     pointer.current.x = state.pointer.x;
     pointer.current.y = state.pointer.y;
+    if (!reduced) {
+      updateReactiveDisplacement(moonShaderRef.current, state.clock.elapsedTime, pointer.current.x, pointer.current.y);
+    }
     if (groupRef.current) {
       const targetX = reduced ? 0 : pointer.current.y * 0.14;
       const targetY = reduced ? 0 : pointer.current.x * 0.18;
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, targetX, 0.04);
-      groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, targetY, 0.04);
+      // Frame-rate-independent damping (see CameraRig's identical fix) rather
+      // than a fixed per-frame lerp factor, which would settle roughly twice
+      // as fast in wall-clock time on a 120Hz display as on 60Hz.
+      groupRef.current.rotation.x = THREE.MathUtils.damp(groupRef.current.rotation.x, targetX, TILT_DAMP_LAMBDA, delta);
+      groupRef.current.rotation.y = THREE.MathUtils.damp(groupRef.current.rotation.y, targetY, TILT_DAMP_LAMBDA, delta);
       const intro = entranceProgress(introStart, state.clock.elapsedTime, 0, 1.8, reduced);
       groupRef.current.position.y = THREE.MathUtils.lerp(-4.5, 0, intro);
       groupRef.current.scale.setScalar(THREE.MathUtils.lerp(0.45, 1, intro));
@@ -155,6 +222,12 @@ export function CelestialBody({ reduced, morphRef }: { reduced: boolean; morphRe
     const sunFade = morph;
     moonFadeRef.current = moonFade;
     sunFadeRef.current = sunFade;
+    // A parabola in morph — 0 at either settled end (morph=0 or 1), peaking
+    // at exactly 1 halfway through the crossfade (morph=0.5) — rather than
+    // just tracking "is a transition in progress" as a flat boolean, so the
+    // extra distortion ramps in and back out smoothly with the transition
+    // itself instead of snapping on and off.
+    morphBoostRef.current = 4 * morph * (1 - morph);
     // Mutated only through these mesh refs, never through the memoized
     // moonSurfaceMaterial/moonCoreMaterial/sunCoreMaterial/sunUniforms
     // variables directly — the project's react-hooks/immutability rule
@@ -165,7 +238,14 @@ export function CelestialBody({ reduced, morphRef }: { reduced: boolean; morphRe
     if (moonSurfaceRef.current) (moonSurfaceRef.current.material as THREE.MeshPhysicalMaterial).opacity = 0.95 * moonFade;
     if (moonCoreRef.current) (moonCoreRef.current.material as THREE.MeshStandardMaterial).opacity = moonFade;
     if (sunCoreRef.current) (sunCoreRef.current.material as THREE.MeshStandardMaterial).opacity = sunFade;
-    if (sunSurfaceRef.current) (sunSurfaceRef.current.material as THREE.ShaderMaterial).uniforms.opacity.value = sunFade;
+    if (sunSurfaceRef.current) {
+      const sunMaterial = sunSurfaceRef.current.material as THREE.ShaderMaterial;
+      sunMaterial.uniforms.opacity.value = sunFade;
+      if (!reduced) {
+        sunMaterial.uniforms.uTime.value = state.clock.elapsedTime;
+        (sunMaterial.uniforms.uPointerDir.value as THREE.Vector3).set(pointer.current.x, pointer.current.y, 0.6).normalize();
+      }
+    }
     if (moonGroupRef.current) moonGroupRef.current.visible = moonFade > 0.001;
     if (sunGroupRef.current) sunGroupRef.current.visible = sunFade > 0.001;
     if (moonSurfaceRef.current) moonSurfaceRef.current.visible = moonFade > 0.001;
@@ -182,14 +262,25 @@ export function CelestialBody({ reduced, morphRef }: { reduced: boolean; morphRe
             1), not meant to be a distinct visible shape on its own. */}
         <mesh ref={moonCoreRef} geometry={coreGeometry} material={moonCoreMaterial} />
         <mesh ref={moonSurfaceRef} geometry={surfaceGeometry} material={moonSurfaceMaterial} />
-        {/* Phase 2C's GlassShell (uniform opacity all the way around) read
-            as "a visible blue ring" regardless of viewing angle — a flat-
-            opacity shell can't help but trace an even circumference. This
-            view-dependent shell instead rises only near the true grazing
-            edge and dims on the side facing away from the key light, so it
-            reads as a coating that reveals itself on inspection rather than
-            a frame that's always fully visible. */}
-        <MoonShell radius={radius * 1.03} color={CENTERPIECE_TONE.dark.shellFront} opacity={0.24} fadeRef={moonFadeRef} />
+        {/* Phase 2C's uniform-opacity shell read as "a visible blue ring"
+            regardless of viewing angle — a flat-opacity shell can't help but
+            trace an even circumference. This view-dependent shell instead
+            rises only near the true grazing edge and dims on the side
+            facing away from the key light, so it reads as a coating that
+            reveals itself on inspection rather than a frame that's always
+            fully visible. Its surface now also ripples continuously and
+            bulges toward the cursor (RippleShell, glass.tsx) — the direct
+            response to "not eye-catching, not interactive" feedback on the
+            whole scene. */}
+        <RippleShell
+          radius={radius * 1.03}
+          color={CENTERPIECE_TONE.dark.shellFront}
+          highlightColor={CENTERPIECE_TONE.dark.rim}
+          opacity={0.24}
+          fadeRef={moonFadeRef}
+          morphBoostRef={morphBoostRef}
+          reduced={reduced}
+        />
         <RimGlow color={CENTERPIECE_TONE.dark.rim} radius={radius} power={3.6} glowIntensity={0.22} fadeRef={moonFadeRef} />
       </group>
 
@@ -200,19 +291,19 @@ export function CelestialBody({ reduced, morphRef }: { reduced: boolean; morphRe
         <mesh ref={sunSurfaceRef} geometry={surfaceGeometry}>
           <shaderMaterial uniforms={sunUniforms} vertexShader={SUN_VERTEX} fragmentShader={SUN_FRAGMENT} transparent depthWrite={false} />
         </mesh>
-        {/* Lower opacity and a much softer, rougher clearcoat than the default
-            GlassShell — the sharper 0.8 clearcoat caught the key light as a
-            bright, near-white specular rim at the silhouette edge, which read
-            as "a thin grey outline" against the warm surface underneath. */}
-        <GlassShell
-          geometry={shellGeometry}
-          frontColor={CENTERPIECE_TONE.light.shellFront}
-          backColor={CENTERPIECE_TONE.light.shellBack}
-          opacity={0.09}
-          frontRoughness={0.4}
-          frontClearcoat={0.1}
-          frontClearcoatRoughness={0.5}
+        {/* Same reactive RippleShell as the moon, themed with the sun's own
+            tone — sharing one mechanism rather than the moon alone feeling
+            upgraded when the theme toggles. Previously a two-pass GlassShell
+            (front+back tint); this is a single custom-shader pass, so the
+            sun's subtree also loses a draw call in the swap. */}
+        <RippleShell
+          radius={radius * 1.045}
+          color={CENTERPIECE_TONE.light.shellFront}
+          highlightColor={CENTERPIECE_TONE.light.hotspot}
+          opacity={0.22}
           fadeRef={sunFadeRef}
+          morphBoostRef={morphBoostRef}
+          reduced={reduced}
         />
       </group>
     </group>
@@ -220,18 +311,33 @@ export function CelestialBody({ reduced, morphRef }: { reduced: boolean; morphRe
 }
 
 const SUN_VERTEX = `
+  uniform float uTime;
+  uniform vec3 uPointerDir;
+  uniform float uAmbientAmount;
+  uniform float uBulgeAmount;
   varying vec3 vViewNormal;
   varying vec3 vObjectNormal;
   varying vec3 vViewDir;
+
+  ${SIMPLEX_NOISE_GLSL}
+
   void main() {
-    vViewNormal = normalize(normalMatrix * normal);
     // Deliberately NOT multiplied by any matrix — this stays in the mesh's
     // own local space, so the hotspot/grain below are painted onto the
     // sphere's surface and rotate together with it (see meshRef's rotation
     // in useFrame), unlike vViewNormal which is used for the view-facing
-    // gradient and should NOT rotate with the mesh.
+    // gradient and should NOT rotate with the mesh. The same local normal
+    // also drives displacement below, for the same reason: the bulge should
+    // stay fixed on the sun's own rotating surface, not slide around in
+    // view space.
     vObjectNormal = normalize(normal);
-    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+
+    float ambientDisp = snoise(vObjectNormal * 2.1 + vec3(0.0, 0.0, uTime * 0.1)) * uAmbientAmount;
+    float bulgeDisp = pow(max(dot(vObjectNormal, uPointerDir), 0.0), 3.0) * uBulgeAmount;
+    vec3 displacedPosition = position + vObjectNormal * (ambientDisp + bulgeDisp);
+
+    vViewNormal = normalize(normalMatrix * normal);
+    vec4 mvPosition = modelViewMatrix * vec4(displacedPosition, 1.0);
     vViewDir = normalize(-mvPosition.xyz);
     gl_Position = projectionMatrix * mvPosition;
   }
