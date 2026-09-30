@@ -331,9 +331,17 @@ const SUN_VERTEX = `
     // stay fixed on the sun's own rotating surface, not slide around in
     // view space.
     vObjectNormal = normalize(normal);
+    // The bulge test uses a view-space-transformed normal (normalMatrix *
+    // normal), not vObjectNormal — sunSurfaceRef spins continuously
+    // (rotation.y += delta * 0.045 in useFrame below), and a local-space dot
+    // product would anchor the "facing the cursor" patch to a fixed set of
+    // vertices that rotates away with the sun instead of tracking the
+    // cursor. Displacement itself still moves along vObjectNormal, since it's
+    // added before the model transform is applied.
+    vec3 viewNormalForBulge = normalize(normalMatrix * normal);
 
     float ambientDisp = snoise(vObjectNormal * 2.1 + vec3(0.0, 0.0, uTime * 0.1)) * uAmbientAmount;
-    float bulgeDisp = pow(max(dot(vObjectNormal, uPointerDir), 0.0), 3.0) * uBulgeAmount;
+    float bulgeDisp = pow(max(dot(viewNormalForBulge, uPointerDir), 0.0), 3.0) * uBulgeAmount;
     vec3 displacedPosition = position + vObjectNormal * (ambientDisp + bulgeDisp);
 
     vViewNormal = normalize(normalMatrix * normal);

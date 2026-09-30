@@ -128,7 +128,16 @@ export function HeroOrbitScene({
     if (!wrapperNode) return;
     function onWheel(e: WheelEvent) {
       e.preventDefault();
-      window.scrollBy({ top: e.deltaY, behavior: "auto" });
+      // `behavior: "instant"`, not "auto" — globals.css sets a page-wide
+      // `html { scroll-behavior: smooth }`, and per spec an explicit "auto"
+      // defers to that CSS value rather than overriding it, so this was
+      // silently animating every single wheel tick. Rapid wheel events (a
+      // trackpad fires many per gesture) each restarted a new smooth-scroll
+      // animation over the last one's barely-progressed position, which read
+      // as the canvas "resisting" the first scroll attempt before catching up
+      // on a second one. "instant" is the one behavior value that always
+      // scrolls synchronously regardless of the CSS property.
+      window.scrollBy({ top: e.deltaY, behavior: "instant" });
     }
     wrapperNode.addEventListener("wheel", onWheel, { passive: false });
     return () => wrapperNode.removeEventListener("wheel", onWheel);

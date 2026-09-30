@@ -436,9 +436,23 @@ export function injectReactiveDisplacement(
         "#include <begin_vertex>",
         `#include <begin_vertex>
         {
+          // The bulge test compares uPointerDir (roughly view-space) against
+          // a VIEW-space-transformed normal (normalMatrix * normal), not the
+          // raw local-space one — these meshes spin continuously on their own
+          // axis (see CelestialBody/SatelliteNode's rotation.y += delta*...),
+          // and a local-space dot product anchors the "facing the cursor"
+          // patch to a fixed set of vertices that rotates away with the mesh
+          // instead of tracking the cursor. normalMatrix already folds in the
+          // mesh's live rotation (and any parent tilt), so this keeps the
+          // reactive patch on whichever side is currently facing the cursor
+          // regardless of spin. The actual displacement direction/amount
+          // still uses the local-space normal, since it's added to the
+          // running transformed position before the model transform is
+          // applied.
           vec3 dispNormal = normalize(normal);
+          vec3 viewNormal = normalize(normalMatrix * normal);
           float ambientDisp = snoise(dispNormal * 2.1 + vec3(0.0, 0.0, uTime * 0.1)) * uAmbientAmount;
-          float bulgeDisp = pow(max(dot(dispNormal, uPointerDir), 0.0), 3.0) * uBulgeAmount;
+          float bulgeDisp = pow(max(dot(viewNormal, uPointerDir), 0.0), 3.0) * uBulgeAmount;
           transformed += dispNormal * (ambientDisp + bulgeDisp);
         }
         `
@@ -569,13 +583,25 @@ const INSTANCED_RIPPLE_VERTEX = `
 
   void main() {
     vec3 n = normalize(normal);
+    // The bulge test uses a view-space-transformed normal, not the raw
+    // local-space one — this shell sits inside SatelliteNode's spinRef group,
+    // which spins continuously, and a local-space dot product would anchor
+    // the "facing the cursor" patch to a fixed set of vertices that rotates
+    // away with the satellite instead of tracking the cursor (same fix as
+    // injectReactiveDisplacement in this file). normalMatrix here reflects
+    // the mesh's own (and its spinning parent's) current rotation, though not
+    // each instance's own additional offset rotation within the shared
+    // geometry — a per-instance-correct version would need the instance
+    // matrix's inverse-transpose, which the fragment shader's note above
+    // already opted out of for the same non-uniform-scale reason.
+    vec3 viewNormal = normalize(normalMatrix * normal);
     float ambient = snoise(n * 2.8 + vec3(0.0, 0.0, uTime * 0.15)) * uAmbientAmount;
     // Bulge is scaled by uProximity — how close the cursor is to *this
     // satellite* (computed once per satellite in SatelliteNode, not
     // per-instance) — so a satellite being approached ripples noticeably
     // harder than one sitting idle across the scene, rather than every
     // satellite reacting equally to a global pointer direction.
-    float bulge = pow(max(dot(n, uPointerDir), 0.0), 3.0) * uBulgeAmount * uProximity;
+    float bulge = pow(max(dot(viewNormal, uPointerDir), 0.0), 3.0) * uBulgeAmount * uProximity;
     float displacement = ambient + bulge;
     vDisplacement = displacement;
     vec3 pos = position + n * displacement;
