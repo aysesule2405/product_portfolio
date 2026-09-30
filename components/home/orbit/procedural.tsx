@@ -389,15 +389,20 @@ const COMET_TRAIL_LENGTH = 10;
 const COMET_DEPTH = 3.4;
 const COMET_HEAD_LERP = 0.55;
 const COMET_CHAIN_LERP = 0.5;
+// Hue cycles within this band (0–1 hue space) rather than the full color
+// wheel — deliberately never visits the duller yellow/green/red range, so it
+// always reads as the same "iridescent plasma" family Direction 1's
+// exploration prototype used, cycling continuously rather than sitting on
+// one fixed tone.
+const COMET_HUE_CENTER = 0.78;
+const COMET_HUE_SPREAD = 0.22;
 
 interface CometState {
   links: THREE.Vector3[];
   matrix: THREE.Matrix4;
   quaternion: THREE.Quaternion;
   scaleVec: THREE.Vector3;
-  darkColor: THREE.Color;
-  lightColor: THREE.Color;
-  mixedColor: THREE.Color;
+  instanceColor: THREE.Color;
   targetWorld: THREE.Vector3;
 }
 
@@ -407,35 +412,39 @@ interface CometState {
  * lerps toward the one ahead of it rather than all links lerping toward the
  * cursor directly, which is what gives the classic "inchworm" trailing feel
  * instead of a cluster of dots all converging independently. One instanced
- * draw call regardless of trail length; the fade-out is done with shrinking
- * scale only (no per-instance opacity — InstancedMesh shares one material),
- * which reads correctly against the mostly-dark scene without needing a
- * more expensive per-instance alpha attribute. Reused theme tones
- * (CENTERPIECE_TONE.dark.rim / .light.hotspot are the intended callers)
- * rather than a new color, and hidden entirely under reduced motion — a
+ * draw call regardless of trail length.
+ *
+ * Color is its own system now, deliberately not tied to the celestial theme
+ * tones ("the comet could be a different coloring system") — each instance
+ * gets its own hue via `setColorAt`, continuously cycling through an
+ * iridescent purple/magenta/cyan band independent of dark/light mode, so the
+ * trail reads as a distinct, live element rather than an extension of
+ * whichever theme is active. Hidden entirely under reduced motion — a
  * cursor-chasing trail is pure decorative motion with no functional
  * purpose, the clear case for removing it outright rather than just
  * freezing it. */
 export function CursorComet({
-  colorDark,
-  colorLight,
-  morphRef,
   reduced,
   scrollProgress,
 }: {
-  colorDark: string;
-  colorLight: string;
-  morphRef: FadeRef;
   reduced: boolean;
   scrollProgress: number;
 }) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   // Declared via JSX + ref below, not constructed with `new
-  // THREE.MeshBasicMaterial()` in a useMemo — color and opacity both need
-  // mutating every frame, and the project's react-hooks/immutability rule
-  // treats a memoized value's properties as frozen once returned. A ref to
-  // the live instance the renderer creates from the JSX is exempt, the same
-  // pattern GlassShell/RippleShell use for their materials.
+  // THREE.MeshBasicMaterial()` in a useMemo — opacity needs mutating every
+  // frame, and the project's react-hooks/immutability rule treats a
+  // memoized value's properties as frozen once returned. A ref to the live
+  // instance the renderer creates from the JSX is exempt, the same pattern
+  // GlassShell/RippleShell use for their materials. Base color is white so
+  // the automatic per-instance color multiplication three.js applies
+  // whenever an InstancedMesh has an instanceColor attribute (populated via
+  // setColorAt below) is a pure pass-through, not tinted by a second color.
+  // Deliberately not using the material's own `vertexColors` flag — that's
+  // for a *geometry*-level per-vertex color attribute (a different
+  // mechanism), and this geometry doesn't have one; setting it anyway
+  // multiplied the result by an unset (zeroed) attribute and rendered every
+  // instance solid black, caught in testing.
   const materialRef = useRef<THREE.MeshBasicMaterial>(null);
   const geometry = useMemo(() => new THREE.SphereGeometry(1, 12, 12), []);
   useEffect(() => () => geometry.dispose(), [geometry]);
@@ -476,9 +485,7 @@ export function CursorComet({
         matrix: new THREE.Matrix4(),
         quaternion: new THREE.Quaternion(),
         scaleVec: new THREE.Vector3(),
-        darkColor: new THREE.Color(colorDark),
-        lightColor: new THREE.Color(colorLight),
-        mixedColor: new THREE.Color(),
+        instanceColor: new THREE.Color(),
         targetWorld: new THREE.Vector3(),
       };
     }
@@ -490,23 +497,29 @@ export function CursorComet({
     }
 
     if (materialRef.current) {
-      c.mixedColor.copy(c.darkColor).lerp(c.lightColor, morphRef.current);
-      materialRef.current.color.copy(c.mixedColor);
       materialRef.current.opacity = 1 - scrollProgress;
     }
 
+    const t = state.clock.elapsedTime;
     for (let i = 0; i < COMET_TRAIL_LENGTH; i++) {
-      const t = 1 - i / COMET_TRAIL_LENGTH;
-      c.scaleVec.setScalar(0.05 + 0.09 * t * t);
+      const tailFraction = 1 - i / COMET_TRAIL_LENGTH;
+      c.scaleVec.setScalar(0.05 + 0.09 * tailFraction * tailFraction);
       c.matrix.compose(c.links[i], c.quaternion, c.scaleVec);
       meshRef.current.setMatrixAt(i, c.matrix);
+      // Each instance's hue drifts independently over time and along the
+      // trail (the `i * 0.12` phase offset), so the gradient itself visibly
+      // travels down the tail rather than staying static per-position.
+      const hue = COMET_HUE_CENTER + Math.sin(t * 0.5 + i * 0.5) * COMET_HUE_SPREAD;
+      c.instanceColor.setHSL(hue, 0.82, 0.64);
+      meshRef.current.setColorAt(i, c.instanceColor);
     }
     meshRef.current.instanceMatrix.needsUpdate = true;
+    if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
   });
 
   return (
     <instancedMesh ref={meshRef} args={[geometry, undefined, COMET_TRAIL_LENGTH]} frustumCulled={false}>
-      <meshBasicMaterial ref={materialRef} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
+      <meshBasicMaterial ref={materialRef} color="#ffffff" transparent depthWrite={false} blending={THREE.AdditiveBlending} />
     </instancedMesh>
   );
 }

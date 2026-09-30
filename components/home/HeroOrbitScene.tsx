@@ -23,7 +23,6 @@ import {
   DESKTOP_CAMERA_Z,
   MOBILE_CAMERA_Z,
   CATEGORY_ORDER,
-  CENTERPIECE_TONE,
 } from "./orbit/config";
 
 /** Tracks whether the hero is scrolled into view, so the render loop can
@@ -198,13 +197,7 @@ export function HeroOrbitScene({
             );
           })}
         </Suspense>
-        <CursorComet
-          colorDark={CENTERPIECE_TONE.dark.rim}
-          colorLight={CENTERPIECE_TONE.light.hotspot}
-          morphRef={morphRef}
-          reduced={reduced}
-          scrollProgress={scrollProgress ?? 0}
-        />
+        <CursorComet reduced={reduced} scrollProgress={scrollProgress ?? 0} />
         <CameraRig reduced={reduced} scrollProgress={scrollProgress ?? 0} />
       </Canvas>
     </div>
