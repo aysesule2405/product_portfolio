@@ -382,23 +382,38 @@ export function useCraterTerrainTextures(baseColor: string, enabled: boolean, se
   }, [baseColor, enabled, seed, resolutionWidth]);
 }
 
-const COMET_TRAIL_LENGTH = 10;
+const DUST_TRAIL_LENGTH = 10;
+const ION_TRAIL_LENGTH = 7;
 // In front of every satellite and the centerpiece (the furthest satellite
 // sits around z=2.35 — see config.ts) so the trail never gets clipped behind
 // something it's meant to float above.
 const COMET_DEPTH = 3.4;
-const COMET_HEAD_LERP = 0.55;
-const COMET_CHAIN_LERP = 0.5;
-// Hue cycles within this band (0–1 hue space) rather than the full color
-// wheel — deliberately never visits the duller yellow/green/red range, so it
-// always reads as the same "iridescent plasma" family Direction 1's
-// exploration prototype used, cycling continuously rather than sitting on
-// one fixed tone.
-const COMET_HUE_CENTER = 0.78;
-const COMET_HUE_SPREAD = 0.22;
+// "Tight & responsive" — chosen after comparing five motion-tuning options
+// side by side at app/comet-lab (now removed). An earlier version added a
+// small per-link bias pulling each tail away from the centerpiece,
+// modeling the real physics of a comet's tail pointing away from the Sun
+// regardless of its own direction of travel — accurate, but it read as the
+// trail not directly reflecting how you'd just moved the cursor. Pure
+// inertial lag instead, with a snappier lerp than the first pass so the
+// chain hugs the cursor closely and collapses back to a point quickly once
+// it stops.
+const COMET_HEAD_LERP = 0.78;
+const DUST_CHAIN_LERP = 0.7;
+const ION_CHAIN_LERP = 0.8;
+// A small fixed sideways offset applied to the ion tail's head only (not
+// every link — see where this is used below), so it reads as a distinct
+// second streak alongside the dust tail rather than exactly overlapping it.
+// Without this, both tails' coma-brightness head instances additively
+// blended at the identical position and blew out to a flat white blob in
+// testing. Direction comes from the dust trail's own current heading
+// (computed per frame below), not a fixed world-space axis, so the offset
+// stays perpendicular to the trail regardless of which way the cursor is
+// moving.
+const ION_PERP_OFFSET = 0.05;
 
 interface CometState {
-  links: THREE.Vector3[];
+  dustLinks: THREE.Vector3[];
+  ionLinks: THREE.Vector3[];
   matrix: THREE.Matrix4;
   quaternion: THREE.Quaternion;
   scaleVec: THREE.Vector3;
@@ -411,18 +426,22 @@ interface CometState {
  * to the cursor rather than the previous restrained parallax). Each link
  * lerps toward the one ahead of it rather than all links lerping toward the
  * cursor directly, which is what gives the classic "inchworm" trailing feel
- * instead of a cluster of dots all converging independently. One instanced
- * draw call regardless of trail length.
+ * instead of a cluster of dots all converging independently; it also means
+ * the trail naturally stretches longer when the cursor moves fast and balls
+ * up when it slows down, with no extra velocity tracking needed.
  *
- * Color is its own system now, deliberately not tied to the celestial theme
- * tones ("the comet could be a different coloring system") — each instance
- * gets its own hue via `setColorAt`, continuously cycling through an
- * iridescent purple/magenta/cyan band independent of dark/light mode, so the
- * trail reads as a distinct, live element rather than an extension of
- * whichever theme is active. Hidden entirely under reduced motion — a
- * cursor-chasing trail is pure decorative motion with no functional
- * purpose, the clear case for removing it outright rather than just
- * freezing it. */
+ * Modeled after real comet anatomy rather than an arbitrary color cycle: a
+ * bright coma (an enlarged, hot white-gold head instance) sheds two tails —
+ * a broad, gold dust tail (dust reflects sunlight, so it reads yellow/white)
+ * and a thinner, pale-blue ion tail running alongside it, both following the
+ * cursor's recent path with pure inertial lag (see COMET_HEAD_LERP above for
+ * why this isn't also leaning away from the centerpiece the way a real
+ * comet's tail leans away from the Sun — tried, didn't feel right). A real
+ * PointLight rides the coma so the comet actually illuminates nearby
+ * satellites as it passes, not just an additively-blended glow that only
+ * affects itself. Hidden entirely under reduced motion — a cursor-chasing
+ * trail is pure decorative motion with no functional purpose, the clear
+ * case for removing it outright rather than just freezing it. */
 export function CursorComet({
   reduced,
   scrollProgress,
@@ -430,7 +449,8 @@ export function CursorComet({
   reduced: boolean;
   scrollProgress: number;
 }) {
-  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const dustMeshRef = useRef<THREE.InstancedMesh>(null);
+  const ionMeshRef = useRef<THREE.InstancedMesh>(null);
   // Declared via JSX + ref below, not constructed with `new
   // THREE.MeshBasicMaterial()` in a useMemo — opacity needs mutating every
   // frame, and the project's react-hooks/immutability rule treats a
@@ -445,9 +465,19 @@ export function CursorComet({
   // mechanism), and this geometry doesn't have one; setting it anyway
   // multiplied the result by an unset (zeroed) attribute and rendered every
   // instance solid black, caught in testing.
-  const materialRef = useRef<THREE.MeshBasicMaterial>(null);
+  const dustMaterialRef = useRef<THREE.MeshBasicMaterial>(null);
+  const ionMaterialRef = useRef<THREE.MeshBasicMaterial>(null);
+  const lightRef = useRef<THREE.PointLight>(null);
+  // One shared sphere geometry for both tails — per-instance scale (set in
+  // the matrix composed below) handles sizing, so there's no need for a
+  // second geometry just for the thinner ion tail.
   const geometry = useMemo(() => new THREE.SphereGeometry(1, 12, 12), []);
   useEffect(() => () => geometry.dispose(), [geometry]);
+  // Reused every frame as the target argument to getCurrentViewport below —
+  // never a fresh `new THREE.Vector3()` inside useFrame, the same
+  // allocate-once-reuse-via-mutation pattern as every other scratch vector
+  // in this scene.
+  const cometDepthScratch = useMemo(() => new THREE.Vector3(), []);
 
   // Trail links and scratch objects, held in a ref built lazily on the first
   // frame — never a useMemo (everything here is mutated every frame below)
@@ -465,23 +495,21 @@ export function CursorComet({
   const activatedRef = useRef(false);
 
   useFrame((state) => {
-    if (!meshRef.current) return;
-    if (reduced) {
-      meshRef.current.visible = false;
+    if (!dustMeshRef.current || !ionMeshRef.current) return;
+    const hide = reduced || (!activatedRef.current && state.pointer.x === 0 && state.pointer.y === 0);
+    if (!activatedRef.current && !hide) activatedRef.current = true;
+    if (hide) {
+      dustMeshRef.current.visible = false;
+      ionMeshRef.current.visible = false;
+      if (lightRef.current) lightRef.current.visible = false;
       return;
     }
-    if (!activatedRef.current) {
-      if (state.pointer.x !== 0 || state.pointer.y !== 0) {
-        activatedRef.current = true;
-      } else {
-        meshRef.current.visible = false;
-        return;
-      }
-    }
-    meshRef.current.visible = true;
+    dustMeshRef.current.visible = true;
+    ionMeshRef.current.visible = true;
     if (cometRef.current === null) {
       cometRef.current = {
-        links: Array.from({ length: COMET_TRAIL_LENGTH }, () => new THREE.Vector3()),
+        dustLinks: Array.from({ length: DUST_TRAIL_LENGTH }, () => new THREE.Vector3()),
+        ionLinks: Array.from({ length: ION_TRAIL_LENGTH }, () => new THREE.Vector3()),
         matrix: new THREE.Matrix4(),
         quaternion: new THREE.Quaternion(),
         scaleVec: new THREE.Vector3(),
@@ -490,36 +518,118 @@ export function CursorComet({
       };
     }
     const c = cometRef.current;
-    c.targetWorld.set((state.pointer.x * state.viewport.width) / 2, (state.pointer.y * state.viewport.height) / 2, COMET_DEPTH);
-    c.links[0].lerp(c.targetWorld, COMET_HEAD_LERP);
-    for (let i = 1; i < COMET_TRAIL_LENGTH; i++) {
-      c.links[i].lerp(c.links[i - 1], COMET_CHAIN_LERP);
+    // state.viewport.width/height are the world-space viewport size at z=0
+    // (the camera's default reference plane) — using them directly to
+    // convert the pointer's NDC coordinates into world space at
+    // COMET_DEPTH (a different, closer distance from the camera) was wrong
+    // under this perspective camera: the true world-space viewport at a
+    // closer depth is narrower, so the old math overshot increasingly the
+    // further the cursor sat from screen-center, reading as the comet
+    // visibly drifting away from the actual pointer. getCurrentViewport
+    // computes the viewport size at the depth actually passed in.
+    const depthViewport = state.viewport.getCurrentViewport(state.camera, cometDepthScratch.set(0, 0, COMET_DEPTH));
+    c.targetWorld.set((state.pointer.x * depthViewport.width) / 2, (state.pointer.y * depthViewport.height) / 2, COMET_DEPTH);
+    c.dustLinks[0].lerp(c.targetWorld, COMET_HEAD_LERP);
+    // Pure inertial lag-chain — each link just chases the one ahead of it,
+    // no outward bias. See COMET_HEAD_LERP's comment for why an earlier
+    // centerpiece-relative bias was removed.
+    for (let i = 1; i < DUST_TRAIL_LENGTH; i++) {
+      c.dustLinks[i].lerp(c.dustLinks[i - 1], DUST_CHAIN_LERP);
     }
 
-    if (materialRef.current) {
-      materialRef.current.opacity = 1 - scrollProgress;
+    // The ion tail sheds from the same coma, not a second independent head —
+    // but offset a little sideways so it reads as a distinct second streak
+    // rather than exactly overlapping the dust tail (without this, both
+    // tails' head instances additively blended at the identical position
+    // and blew the coma out to a flat white blob in testing). The offset
+    // direction is perpendicular to the dust trail's own current heading
+    // (link 0 toward link 1), not a fixed world-space axis, so it stays
+    // correctly oriented regardless of which way the cursor is moving; a
+    // fallback axis covers the one moment that heading is undefined (right
+    // at activation, before the chain has any separation yet).
+    const headingX = c.dustLinks[0].x - c.dustLinks[1].x;
+    const headingY = c.dustLinks[0].y - c.dustLinks[1].y;
+    const headingLen = Math.hypot(headingX, headingY);
+    const perpX = headingLen > 1e-4 ? -headingY / headingLen : 0;
+    const perpY = headingLen > 1e-4 ? headingX / headingLen : 1;
+    c.ionLinks[0].copy(c.dustLinks[0]);
+    c.ionLinks[0].x += perpX * ION_PERP_OFFSET;
+    c.ionLinks[0].y += perpY * ION_PERP_OFFSET;
+    for (let i = 1; i < ION_TRAIL_LENGTH; i++) {
+      c.ionLinks[i].lerp(c.ionLinks[i - 1], ION_CHAIN_LERP);
+    }
+
+    const visibility = 1 - scrollProgress;
+    // Several of the largest, brightest instances sit close together and
+    // visibly overlap near the coma (the chain hasn't stretched out yet at
+    // low cursor speed) — at full material opacity their additive sum blew
+    // straight past gold to a flat white blob in testing, since overlapping
+    // fragments each add their own full-strength color on top of each
+    // other. Capping opacity below 1 keeps that same stacked-up brightness
+    // within gold's range instead of saturating out of it.
+    if (dustMaterialRef.current) dustMaterialRef.current.opacity = visibility * 0.7;
+    if (ionMaterialRef.current) ionMaterialRef.current.opacity = visibility * 0.5;
+    if (lightRef.current) {
+      lightRef.current.visible = true;
+      lightRef.current.position.copy(c.dustLinks[0]);
+      lightRef.current.intensity = 1.5 * visibility;
     }
 
     const t = state.clock.elapsedTime;
-    for (let i = 0; i < COMET_TRAIL_LENGTH; i++) {
-      const tailFraction = 1 - i / COMET_TRAIL_LENGTH;
-      c.scaleVec.setScalar(0.05 + 0.09 * tailFraction * tailFraction);
-      c.matrix.compose(c.links[i], c.quaternion, c.scaleVec);
-      meshRef.current.setMatrixAt(i, c.matrix);
-      // Each instance's hue drifts independently over time and along the
-      // trail (the `i * 0.12` phase offset), so the gradient itself visibly
-      // travels down the tail rather than staying static per-position.
-      const hue = COMET_HUE_CENTER + Math.sin(t * 0.5 + i * 0.5) * COMET_HUE_SPREAD;
-      c.instanceColor.setHSL(hue, 0.82, 0.64);
-      meshRef.current.setColorAt(i, c.instanceColor);
+    for (let i = 0; i < DUST_TRAIL_LENGTH; i++) {
+      const tailFraction = 1 - i / DUST_TRAIL_LENGTH;
+      // An enlarged, hot head instance reads as the coma (the bright cloud
+      // sublimating off the nucleus) rather than just the first, biggest dot
+      // in an otherwise-even taper.
+      c.scaleVec.setScalar(0.045 + 0.115 * tailFraction ** 2.2);
+      c.matrix.compose(c.dustLinks[i], c.quaternion, c.scaleVec);
+      dustMeshRef.current.setMatrixAt(i, c.matrix);
+      // Dust reflects sunlight, so real dust tails read yellow/white — kept
+      // as one consistent gold hue at high saturation throughout (not
+      // desaturating toward white at the coma, which a first pass did and
+      // just read as a plain white blob under additive blending) with only
+      // lightness tapering for the brighter-near-head, dimmer-down-the-tail
+      // falloff. A gentle shimmer (dust catching the light at slightly
+      // different angles) keeps it from reading as static.
+      const shimmer = Math.sin(t * 1.6 + i * 0.8) * 0.03;
+      const hue = 0.105;
+      const saturation = 0.82;
+      const lightness = THREE.MathUtils.clamp(THREE.MathUtils.lerp(0.3, 0.6, tailFraction ** 1.8) + shimmer, 0, 1);
+      c.instanceColor.setHSL(hue, saturation, lightness);
+      dustMeshRef.current.setColorAt(i, c.instanceColor);
     }
-    meshRef.current.instanceMatrix.needsUpdate = true;
-    if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true;
+    dustMeshRef.current.instanceMatrix.needsUpdate = true;
+    if (dustMeshRef.current.instanceColor) dustMeshRef.current.instanceColor.needsUpdate = true;
+
+    for (let i = 0; i < ION_TRAIL_LENGTH; i++) {
+      const tailFraction = 1 - i / ION_TRAIL_LENGTH;
+      // Thinner than the dust tail throughout, per the real proportions.
+      c.scaleVec.setScalar(0.022 + 0.05 * tailFraction ** 2);
+      c.matrix.compose(c.ionLinks[i], c.quaternion, c.scaleVec);
+      ionMeshRef.current.setMatrixAt(i, c.matrix);
+      // Ionized CO+ scatters blue light most efficiently, which is why real
+      // ion tails read pale blue — kept closer to white than a saturated
+      // neon blue so it reads as "pale," the word every source used.
+      const lightness = THREE.MathUtils.lerp(0.55, 0.88, tailFraction);
+      c.instanceColor.setHSL(0.58, 0.45, lightness);
+      ionMeshRef.current.setColorAt(i, c.instanceColor);
+    }
+    ionMeshRef.current.instanceMatrix.needsUpdate = true;
+    if (ionMeshRef.current.instanceColor) ionMeshRef.current.instanceColor.needsUpdate = true;
   });
 
   return (
-    <instancedMesh ref={meshRef} args={[geometry, undefined, COMET_TRAIL_LENGTH]} frustumCulled={false}>
-      <meshBasicMaterial ref={materialRef} color="#ffffff" transparent depthWrite={false} blending={THREE.AdditiveBlending} />
-    </instancedMesh>
+    <>
+      <instancedMesh ref={dustMeshRef} args={[geometry, undefined, DUST_TRAIL_LENGTH]} frustumCulled={false}>
+        <meshBasicMaterial ref={dustMaterialRef} color="#ffffff" transparent depthWrite={false} blending={THREE.AdditiveBlending} />
+      </instancedMesh>
+      <instancedMesh ref={ionMeshRef} args={[geometry, undefined, ION_TRAIL_LENGTH]} frustumCulled={false}>
+        <meshBasicMaterial ref={ionMaterialRef} color="#ffffff" transparent depthWrite={false} blending={THREE.AdditiveBlending} />
+      </instancedMesh>
+      {/* The coma actually illuminating its surroundings, not just an
+          additively-blended glow that only affects its own pixels — a real
+          PointLight riding the head, warm-gold to match the dust tail. */}
+      <pointLight ref={lightRef} color="#ffcf8a" intensity={0} distance={3.4} decay={2} />
+    </>
   );
 }
